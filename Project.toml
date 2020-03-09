@@ -1,0 +1,13 @@
+name = "SpecialPolynomials"
+uuid = "a25cea48-d430-424a-8ee7-0d3ad3742e9e"
+authors = ["jverzani <jverzani@gmail.com>"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
