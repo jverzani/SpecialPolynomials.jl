@@ -1,6 +1,7 @@
 using SpecialPolynomials
+using Polynomials
 using Test
 
-@testset "SpecialPolynomials.jl" begin
-    # Write your own tests here.
-end
+@testset "ChebyshevU" begin include("ChebyshevU.jl") end
+@testset "Legendre" begin include("Legendre.jl") end
+@testset "Bernstein" begin include("Bernstein.jl") end
