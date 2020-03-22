@@ -36,28 +36,33 @@ end
 
 Polynomials.@register ChebyshevTT
 
-
-function Polynomials.showterm(io::IO, ::Type{ChebyshevTT{T}}, pj::T, var, j, first::Bool, mimetype) where {N, T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, hasneg(T)  && isneg(pj) ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅T_$j($var)")
-    return true
-end
-
+basis_symbol(::Type{<:ChebyshevTT}) = "T"
 Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1)
 weight_function(::Type{ChebyshevTT{T}}) where {T} = x -> 1/sqrt(one(T) - x^2)
 generating_function(::Type{ChebyshevTT{T}}) where {T} =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)/2
 
-An(::Type{<:ChebyshevTT}, n) = 2
+An(::Type{<:ChebyshevTT}, n) = iszero(n) ? 1 : 2
 Bn(::Type{<:ChebyshevTT}, n) = 0
 Cn(::Type{<:ChebyshevTT}, n) = -1
-P0(::Type{<:ChebyshevTT}, x) = 1
+P0(::Type{<:ChebyshevTT}, x) = one(x)
 P1(::Type{<:ChebyshevTT}, x) = x
 
+norm2(P::ChebyshevTT{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
 
+## used discrete cosine  transformation to compute the ck:
+## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+function ck(P::Type{ChebyshevTT{T}}, f, k::Int, n::Int) where  {T}
+    #n =  k
+    tot = zero(T)/1
+    an   =  pi/(n+1)
+    for j in 0:n
+        thetaj = (j+1/2)*an
+        tot += f(cos(thetaj)) * cos(k * thetaj)
+    end
+    (iszero(k) ? 1 : 2) * tot  / (n+1)
+end
 
 function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
     res = zero(C)

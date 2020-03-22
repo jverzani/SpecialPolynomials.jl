@@ -23,14 +23,7 @@ Jacobi{α, β, T}(n::S, var=:x) where {α, β, T, S <: Number} = Jacobi{α, β, 
 Jacobi{α, β, T}(xs::AbstractVector{S}, var=:x) where {α, β, T, S <: Number} = Jacobi{α, β, T}(T.(xs), var)
 
 
-
-function Polynomials.showterm(io::IO, ::Type{Jacobi{α, β, T}}, pj::T, var, j, first::Bool, mimetype) where {α, β, T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T) && pj < 0 ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅J^(α, β)_$j($var)")
-    return true
-end
+basis_symbol(::Type{Jacobi{α, β, T}}) where {α, β, T} = "J^(α, β)"
 
 
 weight_function(::Type{Jacobi{α, β, T}}) where {α, β, T} = x -> (1-x)^α *  (1+x)^β
@@ -43,32 +36,14 @@ Polynomials.domain(::Type{<:Jacobi}) = Polynomials.Interval(-1, 1)
 Polynomials.variable(::Type{Jacobi{α, β, T}}, var::Polynomials.SymbolLike=:x) where {α, β, T} =
     P([(α+1) - (α+β+2)/2, (α+β+2)/2], var)
 
-An(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (2n+α+β-1)*(2n+α+β)/(2n*(n+α+β))
-Bn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (α^2-β^2)*(2n+α+β-1)/(2n*(n+α+β)*(2n+α+β-2))
-Cn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = -(n+α-1)*(n+β-1)*(2n+α+β)/(n*(n+α+β)*(2n+α+β-2))
-P0(::Type{Jacobi{α, β, T}}, x) where {α, β, T} = 1
-P1(::Type{Jacobi{α, β, T}}, x) where {α, β, T} = (α+1) + (α+β+2)*(x-1)/2
-
-# compute <Jn, Jn>
-function Base.abs2(::Type{Jacobi{α, β, T}}, n) where{α, β, T}
-    α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
-    2^(α+β+1)/(2n+α+β+1) * (gamma(n+α+1) *  gamma(n + β +1))/(gamma(n+α+β+1)*gamma(n+1))
-end
+An(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (2n+α+β+2)*(2n+α+β+1)/((2n+2)*(n+α+β+1))
+Bn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (α^2-β^2)*(2n+α+β+1)/((2n+2)*(n+α+β+1)*(2n+α+β))
+Cn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = -2(n+α)*(n+β)*(2n+α+β+2)/((2n+2)*(n+α+β+1)*(2n+α+β))
 
 (ch::Jacobi)(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
-## This is going  to be slow!
-function Base.convert(P::Type{J}, p::Polynomial) where {J <: Jacobi}
-    d = degree(p)
-    R = eltype(one(eltype(p))/1)
-    qs = zeros(R, d+1)
-    for i in 0:d
-        qs[i+1] = sum(p[j] * _jacobi_lambda(J, j, i) for j in i:d)
-    end
-    J(qs, p.var)
-end
-
-function _jacobi_lambda(J, n, j)
-   p = convert(Polynomial, Polynomials.basis(J, j))
-   innerproduct(J, x->x^n,  p) / abs2(J, j)
+# compute <Jn, Jn>
+function norm2(::Type{Jacobi{α, β, T}}, n) where{α, β, T}
+    α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
+    2^(α+β+1)/(2n+α+β+1) * (gamma(n+α+1) *  gamma(n + β +1))/(gamma(n+α+β+1)*gamma(n+1))
 end

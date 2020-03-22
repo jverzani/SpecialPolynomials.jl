@@ -13,14 +13,7 @@ export ChebyshevU
 
 Polynomials.@register ChebyshevU
 
-function Polynomials.showterm(io::IO, ::Type{ChebyshevU{T}}, pj::T, var, j, first::Bool, mimetype) where {T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T) && pj < 0 ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅U_$j($var)")
-    return true
-end
-
+basis_symbol(::Type{<:ChebyshevU}) = "U"
 
 weight_function(::Type{ChebyshevU{T}}) where {T} = x -> sqrt(one(T) - x^2)
 generating_function(::Type{<: ChebyshevU}) = (t, x) -> 1 /  (1 - 2t*x + t^2)
@@ -31,9 +24,8 @@ Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Cheb
 An(::Type{<:ChebyshevU}, n) = 2
 Bn(::Type{<:ChebyshevU}, n) = 0
 Cn(::Type{<:ChebyshevU}, n) = -1
-P0(::Type{<:ChebyshevU}, x) = 1
-P1(::Type{<:ChebyshevU}, x) = 2x
 
+norm2(::Type{ChebyshevU{T}}, n) where {T} = pi/2 * one(T)
 
 (ch::ChebyshevU{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 

@@ -16,13 +16,7 @@ export Hermite
 
 Polynomials.@register Hermite
 
-function Polynomials.showterm(io::IO, ::Type{Hermite{T}}, pj::T, var, j, first::Bool, mimetype) where {T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T) && pj < 0 ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅H_$j($var)")
-    return true
-end
+basis_symbol(::Type{<:Hermite}) = "H"
 
 Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
 weight_function(::Type{Hermite{T}}) where {T} = x -> exp(-x^2/2)
@@ -35,8 +29,8 @@ Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Herm
 An(::Type{<:Hermite}, n)  = 1
 Bn(::Type{<:Hermite}, n) = 0
 Cn(::Type{<:Hermite}, n) = -(n-1)
-P0(::Type{<:Hermite}, x) = 1
-P1(::Type{<:Hermite}, x) = x
+
+norm2(::Type{<:Hermite}, n) = sqrt(2pi) * gamma(n+1)
 
 (ch::Hermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 

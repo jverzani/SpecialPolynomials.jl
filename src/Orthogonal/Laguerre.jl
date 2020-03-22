@@ -15,15 +15,7 @@ end
 export Laguerre
 Polynomials.@register Laguerre
 
-
-
-function Polynomials.showterm(io::IO, ::Type{Laguerre{T}}, pj::T, var, j, first::Bool, mimetype) where {T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T) && pj < 0 ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅L_$j($var)")
-    return true
-end
+basis_symbol(::Type{<:Laguerre}) = "L"
 
 # Pn = (An*x + Bn) * P_{n-1} + Cn P_{n-2}
 # (k+1) L_{k+1} = (2k+1 - x) L_k  - k L_{k-1}
@@ -31,21 +23,19 @@ end
 # An  = -1.n
 # Bn = (2n-1)/n
 # Cn  = (n-2)/n
-An(::Type{Laguerre{T}}, n) where {T <: Integer} = -1//n
-An(::Type{<:Laguerre}, n) = -1/n
-Bn(::Type{Laguerre{T}}, n) where {T <: Integer} = (2n-1)//n
-Bn(::Type{<:Laguerre}, n) = (2n-1)/n
+An(::Type{Laguerre{T}}, n) where {T <: Integer} = iszero(n) ? -1//1 : -1//n
+An(::Type{<:Laguerre}, n) = iszero(n) ? -1/1 : -1/n
+Bn(::Type{Laguerre{T}}, n) where {T <: Integer} = iszero(n) ? 1//1 : (2n-1)//n
+Bn(::Type{<:Laguerre}, n) = iszero(n) ? 1/1 : (2n-1)/n
 Cn(::Type{Laguerre{T}}, n) where {T <: Integer} = -(n-1)//n
 Cn(::Type{<:Laguerre}, n) = -(n-1)/n
-P0(::Type{<:Laguerre}, x) = 1
-P1(::Type{<:Laguerre}, x) = -x .+ 1
 
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 weight_function(::Type{Laguerre{T}}) where {T} = x -> exp(-x)
 generating_function(::Type{<:Laguerre}) = (t, x)  -> exp(-t*x/(1-t)) / (1-t)
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Laguerre} = P([1, -1], var)
-
+norm2(::Type{Laguerre{T}}, n) where {T} =  one(T)
 (ch::Laguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 

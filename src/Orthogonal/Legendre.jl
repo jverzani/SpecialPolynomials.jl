@@ -13,13 +13,7 @@ export Legendre
 
 Polynomials.@register Legendre
 
-function Polynomials.showterm(io::IO, ::Type{Legendre{T}}, pj::T, var, j, first::Bool, mimetype) where {T}
-    iszero(pj) && return false
-    !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T) && pj < 0 ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅L_$j($var)")
-    return true
-end
+basis_symbol(::Type{<:Legendre}) = "L"
 
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 weight_function(::Type{Legendre{T}}) where {T} = x -> one(x)
@@ -27,13 +21,13 @@ generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
 
 # Bonnet's expresssion
-An(::Type{Legendre{T}}, n) where {T <: Integer} = (2n-1)//n
-An(::Type{<:Legendre}, n)  = (2n-1)/n
+An(::Type{Legendre{T}}, n) where {T <: Integer} = iszero(n) ? 1//1 : (2n-1)//n
+An(::Type{<:Legendre}, n) = iszero(n) ? 1/1 : (2n-1)/n
 Bn(::Type{<:Legendre}, n) = 0
 Cn(::Type{Legendre{T}}, n) where {T <: Integer} = -(n-1)//n
 Cn(::Type{<:Legendre}, n) = -(n-1)/n
-P0(::Type{<:Legendre}, x) = 1
-P1(::Type{<:Legendre}, x) = x
+
+norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 
 (ch::Legendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
