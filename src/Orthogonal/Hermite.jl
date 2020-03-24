@@ -28,7 +28,7 @@ Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Herm
 
 An(::Type{<:Hermite}, n)  = 1
 Bn(::Type{<:Hermite}, n) = 0
-Cn(::Type{<:Hermite}, n) = -(n-1)
+Cn(::Type{<:Hermite}, n) = -n
 
 norm2(::Type{<:Hermite}, n) = sqrt(2pi) * gamma(n+1)
 

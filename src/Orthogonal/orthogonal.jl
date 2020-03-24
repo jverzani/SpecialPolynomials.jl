@@ -30,7 +30,8 @@ generating_function(::Type{P}) where {P <: OrthogonalPolynomial} = throw(MethodE
 
 # cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
 # We have this () for orthogonal polynomials
-# Pn = (An*x + Bn) * P_{n-1} + Cn P_{n-2}
+# Pn =
+# P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
 # which is used to express in terms of c0 Po + c1 P1
 An(::Type{P}, n) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
 Bn(::Type{P}, n) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
@@ -39,14 +40,17 @@ An(p::P, n) where {P <: OrthogonalPolynomial} = An(P,n)
 Bn(p::P, n) where {P <: OrthogonalPolynomial} = Bn(P,n)
 Cn(p::P, n) where {P <: OrthogonalPolynomial} = Cn(P,n)
 
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: OrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
+
+
 P0(::Type{P}, x) where {P <: OrthogonalPolynomial} = one(x)
 P0(p::P, x) where {P <: OrthogonalPolynomial} = one(x)
-P1(::Type{P}, x) where {P <: OrthogonalPolynomial} = An(P,0)*x + Bn(P,0)
+P1(::Type{P}, x) where {P <: OrthogonalPolynomial} = An(P,0)*x .+ Bn(P,0)
 P1(p::P, x) where {P <: OrthogonalPolynomial} = An(p,0)*x + Bn(p,0)
 
 function alphas_betas(::Type{P}, n) where {P <: OrthogonalPolynomial}
-    ani = An(P,1)
-    alpha0 = -Bn(P,1)/ani
+    ani = An(P,0)
+    alpha0 = -Bn(P,0)/ani
     T = eltype(alpha0)
     alphas = zeros(T, n)
     betas = zeros(T, n-1)
@@ -89,12 +93,12 @@ function orthogonal_polyval(ch::P, x::S) where {P <: OrthogonalPolynomial, S}
     #R = promote_type(T, S)
     length(ch) == 0 && return zero(R)
     length(ch) == 1 && return ch[0]
-    length(ch) == 2 && return ch[0] + ch[1]*x
+
 
     c0 = ch[end - 1]
     c1 = ch[end]
     @inbounds for i in degree(ch):-1:2
-        c0, c1 = ch[i - 2] + c1 * Cn(ch, i), c0 + c1 * (An(ch, i) * x + Bn(ch, i))
+        c0, c1 = ch[i - 2] + c1 * Cn(ch, i-1), c0 + c1 * (An(ch, i-1) * x + Bn(ch, i-1))
     end
     # Now have c0 P_0(x) + c1 P_1 = c0 + c1*x
     return c0 * P0(ch, x) + c1 * P1(ch, x)
@@ -106,32 +110,54 @@ function Base.convert(P::Type{<:Polynomial}, ch::OrthogonalPolynomial)
     end
     T = eltype(ch)
     ##
-    ## P_n = (An x + Bn)P_{n-1} + CnP_{n-2}
+    ## P_{n+1} = (An x + Bn)P_n + CnP_{n-1}
     ## so ... c0 P_{n-1} + c1 P_n
     ## c1 = c0 + (An x+ Bn)
     ## c0 = p[i-1] + Cn
     c0 = P(ch[end - 1], ch.var)
     c1 = P(ch[end], ch.var)
     x = variable(P)
+    Q= typeof(ch)
     @inbounds for i in degree(ch):-1:2
-        c0, c1 = ch[i - 2] + c1 * Cn(ch, i), c0 + c1 * (An(ch, i) * x + Bn(ch, i))
+        c0, c1 = ch[i - 2] + c1 * Cn(ch, i-1), c0 + c1 * (An(ch, i-1) * x + Bn(ch, i-1))
     end
     return c0 *  P0(ch,  x) + c1 * P1(ch, x)
 end
 
-## This is going  to be slow!
-## Use orthogonality:
-## x^n = sum( λ(P,n,i) P_i for i in 0:n)
-## so <x^n, P_j>/<P_j,P_j> =  λ(P,n,j), the other terms being 0
+# brute force this, by matching up leading terms and subtracting
 function Base.convert(P::Type{J}, p::Polynomial) where {J <: OrthogonalPolynomial}
+
     d = degree(p)
     R = eltype(one(eltype(p))/1)
     qs = zeros(R, d+1)
-    for i in 0:d
-        qs[i+1] = sum(p[j] * λ(J, j, i) for j in i:d)
+    for i in d:-1:0
+        Pn = convert(Polynomial, Polynomials.basis(P,  i))
+        qs[i+1] = lambda =  p[i]/Pn[i]
+        p = p - lambda*Pn
     end
     J(qs, p.var)
 end
+
+## Use orthogonality:
+## x^n = sum( λ(P,n,i) P_i for i in 0:n)
+## so <x^n, P_j>/<P_j,P_j> =  λ(P,n,j), the other terms being 0
+## function Base.convert(P::Type{J}, p::Polynomial) where {J <: OrthogonalPolynomial}
+##     d = degree(p)
+##     R = eltype(one(eltype(p))/1)
+##     qs = zeros(R, d+1)
+##     for i in 0:d
+##         qs[i+1] = sum(p[j] * λ(J, j, i) for j in i:d)
+##     end
+##     J(qs, p.var)
+## end
+
+## function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
+##     res = zero(C)
+##     @inbounds for i in degree(p):-1:0
+##         res = variable(C) * res + p[i]
+##     end
+##     return res
+## end
 
 # find <x^n, P_n>
 # * must define abs2(J,j) =  <P_j, P_j>
@@ -146,8 +172,8 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where 
     A[:, 1] .= P0(P, one(T))
     if n > 0
         A[:, 2] .= P1(P, x)
-        @inbounds for i in 3:n + 1
-            A[:, i] .= A[:, i - 1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i - 2])
+        @inbounds for i in 1:n-1
+            A[:, i+2] .= A[:, i+1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i])
         end
     end
     return A
@@ -191,9 +217,9 @@ function cks(::Type{P}, f, n::Int) where {P  <:  OrthogonalPolynomial}
       cks[2] = dot(fxs, p1) / norm2(P,1) / pi
 
 
-      for i in 2:n
+      for i in 1:n-1
           p0[:], p1[:] = p1, p1 .* (An(P, i)*xs .+ Bn(P,i)) .+ (Cn(P,i) * p0)
-          cks[i+1] =  dot(fxs, p1) / norm2(P,i) / pi
+          cks[i+2] =  dot(fxs, p1) / norm2(P,i) / pi
       end
       cks / (n+1)
 end

@@ -33,8 +33,8 @@ Polynomials.variable(::Type{GeneralizedLaguerre{α, T}}, var::Polynomials.Symbol
     GeneralizedLaguerre{α, T}([(1+α), -1])
 
 An(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -1/(n+1)
-Bn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = 1 + α/(n+1)
-Cn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -(1 + (α - 1)/(k+1))
+Bn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = (2n + 1 +  α)/(n+1)
+Cn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -(n + α)/(n+1)
 
 # compute <Jn, Jn>
 function norm2(::Type{GeneralizedLaguerre{α, T}}, n) where{α, T}

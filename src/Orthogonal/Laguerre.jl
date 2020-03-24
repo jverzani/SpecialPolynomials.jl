@@ -17,18 +17,16 @@ Polynomials.@register Laguerre
 
 basis_symbol(::Type{<:Laguerre}) = "L"
 
-# Pn = (An*x + Bn) * P_{n-1} + Cn P_{n-2}
 # (k+1) L_{k+1} = (2k+1 - x) L_k  - k L_{k-1}
-# n Ln = (2n-1 -  x)L_{n-1} - (n-2)L_{n-2}
-# An  = -1.n
-# Bn = (2n-1)/n
-# Cn  = (n-2)/n
-An(::Type{Laguerre{T}}, n) where {T <: Integer} = iszero(n) ? -1//1 : -1//n
-An(::Type{<:Laguerre}, n) = iszero(n) ? -1/1 : -1/n
-Bn(::Type{Laguerre{T}}, n) where {T <: Integer} = iszero(n) ? 1//1 : (2n-1)//n
-Bn(::Type{<:Laguerre}, n) = iszero(n) ? 1/1 : (2n-1)/n
-Cn(::Type{Laguerre{T}}, n) where {T <: Integer} = -(n-1)//n
-Cn(::Type{<:Laguerre}, n) = -(n-1)/n
+# An  = -1/(n+1)
+# Bn = (2n+1)/(n+1)
+# Cn  =k/k+1
+An(::Type{Laguerre{T}}, n) where {T <: Integer} = -1//(n+1)
+An(::Type{<:Laguerre}, n) = -1/(n+1)
+Bn(::Type{Laguerre{T}}, n) where {T <: Integer} =  (2n+1)//(n+1)
+Bn(::Type{<:Laguerre}, n) =  (2n+1)/(n+1)
+Cn(::Type{Laguerre{T}}, n) where {T <: Integer} = -n//(n+1)
+Cn(::Type{<:Laguerre}, n) = -n/(n+1)
 
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 weight_function(::Type{Laguerre{T}}) where {T} = x -> exp(-x)

@@ -61,6 +61,7 @@ end
     c = fromroots(ChebyshevT, r)
     @test c ≈ ChebyshevT([1.5 + 0im, 0 + 0im, 0.5 + 0im])
     @test roots(c) ≈ r
+
 end
 
 @testset "Values" begin
@@ -172,12 +173,6 @@ end
         @test res ≈ target
         @test derivative(cint) == cheb
     end
-
-    for i in 1:10
-        p = ChebyshevT{Float64}(rand(1:5, 6))
-        @test degree(round(p - integrate(derivative(p)), digits=13)) <= 0
-        @test degree(round(p - derivative(integrate(p)), digits=13)) <= 0
-    end
 end
 
 @testset "z-series" for i in 0:5
@@ -195,4 +190,17 @@ end
     q, r = Polynomials._z_division(z1, z2)
     @test q == [1]
     @test r == [0]
+end
+
+
+@testset "Fit" begin
+
+    f(x) = exp(x)
+    p = fit(ChebyshevTT{Float64}, f, 16)
+    @test maximum(abs.(p(x) - f(x) for  x in range(0, 1, length=100))) <= 100*eps()
+
+    f(x) = sin(6x) - sin(60*exp(x)) # chebfun example
+    p = fit(ChebyshevTT{Float64}, f, 150)
+    @test maximum(abs.(p(x) - f(x) for  x in range(0, 1, length=100))) <= 1000*eps()
+
 end

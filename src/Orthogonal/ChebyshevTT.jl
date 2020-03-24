@@ -41,7 +41,7 @@ Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1)
 weight_function(::Type{ChebyshevTT{T}}) where {T} = x -> 1/sqrt(one(T) - x^2)
 generating_function(::Type{ChebyshevTT{T}}) where {T} =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)/2
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)
 
 An(::Type{<:ChebyshevTT}, n) = iszero(n) ? 1 : 2
 Bn(::Type{<:ChebyshevTT}, n) = 0
@@ -64,13 +64,13 @@ function ck(P::Type{ChebyshevTT{T}}, f, k::Int, n::Int) where  {T}
     (iszero(k) ? 1 : 2) * tot  / (n+1)
 end
 
-function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
-    res = zero(C)
-    @inbounds for i in degree(p):-1:0
-        res = variable(C) * res + p[i]
-    end
-    return res
-end
+## function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
+##     res = zero(C)
+##     @inbounds for i in degree(p):-1:0
+##         res = variable(C) * res + p[i]
+##     end
+##     return res
+## end
 
 
 
@@ -166,7 +166,7 @@ function Base.:*(p1::ChebyshevTT{T}, p2::ChebyshevTT{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
     z1 = _c_to_z(p1.coeffs)
     z2 = _c_to_z(p2.coeffs)
-    prod = fastconv(z1, z2)
+    prod = Polynomials.fastconv(z1, z2)
     ret = ChebyshevTT(_z_to_c(prod), p1.var)
     return truncate!(ret)
 end

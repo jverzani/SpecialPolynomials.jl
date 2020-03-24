@@ -33,12 +33,10 @@ generating_function(::Type{Jacobi{α, β, T}}) where {α, β, T} = (t,x) -> begi
 end
 
 Polynomials.domain(::Type{<:Jacobi}) = Polynomials.Interval(-1, 1)
-Polynomials.variable(::Type{Jacobi{α, β, T}}, var::Polynomials.SymbolLike=:x) where {α, β, T} =
-    P([(α+1) - (α+β+2)/2, (α+β+2)/2], var)
 
-An(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (2n+α+β+2)*(2n+α+β+1)/((2n+2)*(n+α+β+1))
-Bn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = (α^2-β^2)*(2n+α+β+1)/((2n+2)*(n+α+β+1)*(2n+α+β))
-Cn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = -2(n+α)*(n+β)*(2n+α+β+2)/((2n+2)*(n+α+β+1)*(2n+α+β))
+An(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = iszero(n) ? (α+β+2)/2  : (2n+α+β+1) * (2n+α+β+2) / (2(n+1)*(n+α+β+1))
+Bn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = iszero(n) ? (α-β)/2    : (α^2-β^2)  * (2n+α+β+1) / (2(n+1)*(n+α+β+1)*(2n+α+β))
+Cn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = iszero(n) ? α*β*(α+β+2)/((α+β)*(α+β+1)) : -(n+α)*(n+β)*(2n+α+β+2)/((n+1)*(n+α+β+1)*(2n+α+β))
 
 (ch::Jacobi)(x::S) where {T,S} = orthogonal_polyval(ch, x)
 

@@ -29,6 +29,13 @@ norm2(::Type{ChebyshevU{T}}, n) where {T} = pi/2 * one(T)
 
 (ch::ChebyshevU{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
+# could do directly
+function Base.convert(P::Type{<:ChebyshevU}, p::Polynomial)
+    q = convert(ChebyshevTT,  p)
+    convert(ChebyshevU, q )
+end
+
+
 # direct conversions between U and T types
 function Base.convert(P::Type{<:ChebyshevTT}, p::ChebyshevU{T}) where {T}
     # Use

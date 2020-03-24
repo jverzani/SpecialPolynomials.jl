@@ -21,11 +21,11 @@ generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
 
 # Bonnet's expresssion
-An(::Type{Legendre{T}}, n) where {T <: Integer} = iszero(n) ? 1//1 : (2n-1)//n
-An(::Type{<:Legendre}, n) = iszero(n) ? 1/1 : (2n-1)/n
+An(::Type{Legendre{T}}, n) where {T <: Integer} = (2n+1)//(n+1)
+An(::Type{<:Legendre}, n) = (2n+1)/(n+1)
 Bn(::Type{<:Legendre}, n) = 0
-Cn(::Type{Legendre{T}}, n) where {T <: Integer} = -(n-1)//n
-Cn(::Type{<:Legendre}, n) = -(n-1)/n
+Cn(::Type{Legendre{T}}, n) where {T <: Integer} = -n//(n+1)
+Cn(::Type{<:Legendre}, n) = -n/(n+1)
 
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 

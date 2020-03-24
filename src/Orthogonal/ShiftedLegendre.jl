@@ -20,9 +20,21 @@ weight_function(::Type{ShiftedLegendre{T}}) where {T} = x -> one(x)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ShiftedLegendre} = P([0, 1], var)
 
 # Bonnet's expresssion
-An(::Type{<:ShiftedLegendre}, n) = iszero(n) ? 2 : (4n - 2)//n
-Bn(::Type{<:ShiftedLegendre}, n) = iszero(n) ? -1 : -(2n - 1)//n
-Cn(::Type{<:ShiftedLegendre}, n) =  -(n-1)//n
+An(::Type{<:ShiftedLegendre{T}}, n) where {T <: Integer} = (4n + 2)//(n + 1)
+An(::Type{<:ShiftedLegendre}, n) = (4n + 2)/(n + 1)
+Bn(::Type{<:ShiftedLegendre{T}}, n) where {T <: Integer} = -(2n + 1)//(n + 1)
+Bn(::Type{<:ShiftedLegendre}, n) = -(2n + 1)/(n + 1)
+Cn(::Type{<:ShiftedLegendre}, n) = -n //(n  + 1)
 
 
 (ch::ShiftedLegendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+function Base.convert(::Type{P}, p::Legendre{T}) where {P <: ShiftedLegendre, T}
+    x = variable(Legendre{T})
+    P(coeffs(p(2x-1)), p.var)
+end
+
+function Base.convert(::Type{P}, p::ShiftedLegendre{T}) where {P <: Legendre, T}
+    q = convert(Polynomial, p)
+    convert(P, q)
+end
