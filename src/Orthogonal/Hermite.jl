@@ -19,13 +19,13 @@ Polynomials.@register Hermite
 basis_symbol(::Type{<:Hermite}) = "H"
 
 Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
+
 weight_function(::Type{Hermite{T}}) where {T} = x -> exp(-x^2/2)
 generating_function(::Type{<:Hermite}) = (t, x)  -> exp(t*x - t^2/2)
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Hermite} = P([0, 1], var)
+
 
 # https://en.wikipedia.org/wiki/Hermite_polynomials
 # we use Probabalists version
-
 An(::Type{<:Hermite}, n)  = 1
 Bn(::Type{<:Hermite}, n) = 0
 Cn(::Type{<:Hermite}, n) = -n
@@ -63,12 +63,6 @@ function _hermite_lambda(n,j)
     tot
 end
 
-
-
-##function Base.:*(p1::Hermite{T}, p2::Hermite{S}) where {T,S}
-##    p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
-##    ....
-##end
 
 
 function Polynomials.derivative(p::Hermite{T}, order::Integer = 1) where {T}

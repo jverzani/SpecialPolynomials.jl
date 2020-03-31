@@ -16,9 +16,11 @@ Polynomials.@register Legendre
 basis_symbol(::Type{<:Legendre}) = "L"
 
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
+
 weight_function(::Type{Legendre{T}}) where {T} = x -> one(x)
 generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
+
 
 # Bonnet's expresssion
 An(::Type{Legendre{T}}, n) where {T <: Integer} = (2n+1)//(n+1)
@@ -32,27 +34,6 @@ norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 (ch::Legendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 
-
-# l = n - 2k ; k = (n-l)/2
-# https://mathworld.wolfram.com/LegendrePolynomial.html
-# compute (2l+1)n! / (2^(n-1)/2 * [1/2(n-l)]! * (l + n + 1)!!)
-#      =  (2n+1-4k)n! / (2^k k! (2n+1-2k)!!)
-function _legendre_lambda(n, l)
-    k = div((n-l),2)
-    N = n
-    tot = 1/1
-    tot *= (2n+1-4k)/1
-    for i in 1:k
-        tot *= N/(2i)  # n!/(2^k k!)
-        N -= 1
-    end
-
-    for i in (2n+1-2k):-2:2
-        tot *= N/i     # n!/(2n+1 - 2k)!!
-        N -= 1
-    end
-    tot
-end
 
 function Base.convert(P::Type{<:Legendre}, p::Polynomial)
     d = degree(p)
@@ -93,21 +74,6 @@ function Base.:*(p1::Legendre{T}, p2::Legendre{S}) where {T,S}
     end
 
     Legendre(out, p1.var)
-end
-
-
-function _legendre_A(p,q,twok)
-    k = div(twok, 2)
-    (2p + 2q - 4k+1)/(2p+2q-2k+1) * _legendre_l(k) * _legendre_l(p-k) * _legendre_l(q-k)  / _legendre_l(p+q-k)
-end
-
-function _legendre_l(n)
-    n < 0 && return 0/1
-    out  = 1/1
-    for i  in 1:n
-        out  *= (2i-1)/i
-    end
-    out
 end
 
 
@@ -152,4 +118,42 @@ function Polynomials.integrate(p::Legendre{T}, C::Number=0) where {T}
     q = q - q(0) + R(C)
 
     return q
+end
+
+
+## utils
+
+# l = n - 2k ; k = (n-l)/2
+# https://mathworld.wolfram.com/LegendrePolynomial.html
+# compute (2l+1)n! / (2^(n-1)/2 * [1/2(n-l)]! * (l + n + 1)!!)
+#      =  (2n+1-4k)n! / (2^k k! (2n+1-2k)!!)
+function _legendre_lambda(n, l)
+    k = div((n-l),2)
+    N = n
+    tot = 1/1
+    tot *= (2n+1-4k)/1
+    for i in 1:k
+        tot *= N/(2i)  # n!/(2^k k!)
+        N -= 1
+    end
+
+    for i in (2n+1-2k):-2:2
+        tot *= N/i     # n!/(2n+1 - 2k)!!
+        N -= 1
+    end
+    tot
+end
+
+function _legendre_A(p,q,twok)
+    k = div(twok, 2)
+    (2p + 2q - 4k+1)/(2p+2q-2k+1) * _legendre_l(k) * _legendre_l(p-k) * _legendre_l(q-k)  / _legendre_l(p+q-k)
+end
+
+function _legendre_l(n)
+    n < 0 && return 0/1
+    out  = 1/1
+    for i  in 1:n
+        out  *= (2i-1)/i
+    end
+    out
 end

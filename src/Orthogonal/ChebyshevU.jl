@@ -27,6 +27,19 @@ Cn(::Type{<:ChebyshevU}, n) = -1
 
 norm2(::Type{ChebyshevU{T}}, n) where {T} = pi/2 * one(T)
 
+## return xs ws
+function lagrange_barycentric_nodes_weights(::Type{<:ChebyshevU}, n::Int)
+    xs = cos.((0:n-1)*pi/n)
+    ws = ones(n)
+    ws[1] = ws[end] = 1/2
+    for i in  2:2:n
+        ws[i] *= -1
+    end
+    xs, ws
+end
+
+
+
 (ch::ChebyshevU{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 # could do directly

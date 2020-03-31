@@ -14,6 +14,7 @@ end
 
 export GeneralizedLaguerre
 
+## Boilerplate code reproduced here, as there are two type parameters
 Base.convert(::Type{P}, p::P) where {P <: GeneralizedLaguerre} =  p
 Base.promote_rule(::Type{GeneralizedLaguerre{α, T}}, ::Type{GeneralizedLaguerre{α, S}}) where {α, T, S} = GeneralizedLaguerre{α, promote_type(T,S)}
 Base.promote_rule(::Type{GeneralizedLaguerre{α, T}}, ::Type{S}) where {α, T, S <: Number} = GeneralizedLaguerre{α, promote_type(T,S)}
@@ -21,16 +22,20 @@ GeneralizedLaguerre{α}(n::Number, var=:x) where  {α}= GeneralizedLaguerre{α}(
 GeneralizedLaguerre{α, T}(n::S, var=:x) where {α, T, S <: Number} = GeneralizedLaguerre{α, T}(T[n], var)
 GeneralizedLaguerre{α, T}(xs::AbstractVector{S}, var=:x) where {α, T, S <: Number} = GeneralizedLaguerre{α, T}(T.(xs), var)
 
-basis_symbol(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = "L^($α)"
 
-weight_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = x^α * exp(-x)
-generating_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = (t,x) -> begin
-    exp(-t*x/(1-t))/(1-t)^(α-1)
-end
+basis_symbol(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = "L^($α)"
 
 Polynomials.domain(::Type{<:GeneralizedLaguerre}) = Polynomials.Interval(0, Inf)
 Polynomials.variable(::Type{GeneralizedLaguerre{α, T}}, var::Polynomials.SymbolLike=:x) where {α, T} =
     GeneralizedLaguerre{α, T}([(1+α), -1])
+
+
+
+weight_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = x  -> x^α * exp(-x)
+generating_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = (t,x) -> begin
+    exp(-t*x/(1-t))/(1-t)^(α-1)
+end
+
 
 An(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -1/(n+1)
 Bn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = (2n + 1 +  α)/(n+1)
@@ -58,7 +63,7 @@ function Base.convert(P::Type{GeneralizedLaguerre{β, T}}, p::GeneralizedLaguerr
     P(qs, p.var)
 end
 
-# compute generlized binomial coefficient
+# compute generalized binomial coefficient
 function  generalized_binomial(N,K)
     tot = 1/1
     for k in K:-1:1

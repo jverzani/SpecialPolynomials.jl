@@ -20,10 +20,13 @@ include("Orthogonal/Jacobi.jl")
 include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Legendre.jl")
 include("Orthogonal/ShiftedLegendre.jl")
-include("Orthogonal/Weight.jl")
+include("Orthogonal/ContinuousWeight.jl")
 
-#include("Interpolating/Newton.jl")
-#include("Interpolating/Laplace.jl")
+
+include("Interpolating/interpolating.jl")
+include("Interpolating/Lagrange.jl")
+include("Interpolating/Newton.jl")
+
 include("Bernstein.jl")
 
 end # module

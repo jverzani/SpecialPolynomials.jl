@@ -14,6 +14,7 @@ end
 
 export Jacobi
 
+# boilerplate code, as we have 3 type parameters
 Base.convert(::Type{P}, p::P) where {P <: Jacobi} =  p
 Base.convert(P::Type{<:Jacobi}, p::Jacobi) =  P(p.coeffs, p.var)
 Base.promote_rule(::Type{Jacobi{α, β, T}}, ::Type{Jacobi{α, β, S}}) where {α, β, T, S} = Jacobi{α, β, promote_type(T,S)}
@@ -25,6 +26,8 @@ Jacobi{α, β, T}(xs::AbstractVector{S}, var=:x) where {α, β, T, S <: Number} 
 
 basis_symbol(::Type{Jacobi{α, β, T}}) where {α, β, T} = "J^(α, β)"
 
+Polynomials.domain(::Type{<:Jacobi}) = Polynomials.Interval(-1, 1)
+
 
 weight_function(::Type{Jacobi{α, β, T}}) where {α, β, T} = x -> (1-x)^α *  (1+x)^β
 generating_function(::Type{Jacobi{α, β, T}}) where {α, β, T} = (t,x) -> begin
@@ -32,7 +35,6 @@ generating_function(::Type{Jacobi{α, β, T}}) where {α, β, T} = (t,x) -> begi
     2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
 end
 
-Polynomials.domain(::Type{<:Jacobi}) = Polynomials.Interval(-1, 1)
 
 An(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = iszero(n) ? (α+β+2)/2  : (2n+α+β+1) * (2n+α+β+2) / (2(n+1)*(n+α+β+1))
 Bn(::Type{Jacobi{α, β, T}}, n) where {α, β, T} = iszero(n) ? (α-β)/2    : (α^2-β^2)  * (2n+α+β+1) / (2(n+1)*(n+α+β+1)*(2n+α+β))

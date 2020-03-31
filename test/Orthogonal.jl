@@ -8,7 +8,10 @@ Ps = (ChebyshevTT{T},
       Jacobi{1/2, 1/2, T},
       Jacobi{0,0,T},
       Jacobi{0,1,T},
-      Legendre{T})
+      Legendre{T},
+      Gegenbauer{1/2,T},
+      GeneralizedLaguerre{1/2, T}
+      )
 
 
 @testset "Construction" begin
@@ -165,7 +168,7 @@ end
     ys = f.(xs)
 
     for P in Ps
-        if !(P <: Laguerre || P <: Hermite)
+        if !(P <: Laguerre || P <: GeneralizedLaguerre || P <: Hermite)
             q = fit(P, xs, ys, domain=domain(P))
             @test maximum(abs.(q.(xs) - ys)) <= sqrt(eps())
         end
@@ -173,4 +176,18 @@ end
         q = fit(P, xs, ys, 4)
         @test degree(q) <= 4
     end
+end
+
+@testset "quadrature" begin
+
+    f(x) = x^7
+    n = 4
+
+    for P in Ps
+        !all(isfinite.(extrema(P))) && continue
+        q = sum(f(tau)*w for (tau, w)  in  zip(SP.gauss_nodes_weights(P,n)...))
+        p = SP._quadgk(x -> f(x) * SP.weight_function(P)(x), extrema(P)...)
+        @test abs(p - q)  <= sqrt(eps(T))
+     end
+
 end

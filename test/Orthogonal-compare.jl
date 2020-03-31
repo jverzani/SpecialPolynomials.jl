@@ -115,3 +115,41 @@ end
 
 
 end
+
+
+@testset "Gegenbauer" begin
+
+    for α in (1/4, 1/3, 1/2, 1, 2)
+        P = Gegenbauer{α, Float64}
+        p0 = P([1])  # 1
+        p1 = P([0,1]) # x
+        p2 = P([0,0,1]) #
+        p3 = P([0,0,0,1]) #
+        p4 = P([0,0,0,0,1]) #
+
+        for x in range(-1, 1, length=5)
+            @test p0(x) ≈ 1
+            @test p1(x) ≈ 2α*x
+            @test p2(x) ≈ -α + 2α*(1+α)*x^2
+            @test p3(x) ≈ -2α * (1 + α) *x + 4/3*α*(1+α) * (2 + α)*x^3
+        end
+    end
+end
+
+@testset "Jacobi" begin
+
+    T = Float64
+    ps  = [0,0,0,0,0,1]
+    # ChebyshevT = J(-1/2, -1/2)
+    for (alpha_beta, P) in  (((-1/2, -1/2), ChebyshevTT{T}),
+                             ((1/2,1/2), ChebyshevU{T}),
+                             ((0,0), Legendre{T})
+                             )
+        for x  in range(-1, 1, length=6)
+            p1 = Jacobi{alpha_beta..., T}(ps)
+            q1 = P(ps)
+            @test SP._monic(p1)(x) ≈ SP._monic(q1)(x)
+        end
+    end
+
+end

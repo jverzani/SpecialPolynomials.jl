@@ -17,6 +17,12 @@ Polynomials.@register Laguerre
 
 basis_symbol(::Type{<:Laguerre}) = "L"
 
+Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Laguerre} = P([1, -1], var)
+
+weight_function(::Type{Laguerre{T}}) where {T} = x -> exp(-x)
+generating_function(::Type{<:Laguerre}) = (t, x)  -> exp(-t*x/(1-t)) / (1-t)
+
 # (k+1) L_{k+1} = (2k+1 - x) L_k  - k L_{k-1}
 # An  = -1/(n+1)
 # Bn = (2n+1)/(n+1)
@@ -28,11 +34,6 @@ Bn(::Type{<:Laguerre}, n) =  (2n+1)/(n+1)
 Cn(::Type{Laguerre{T}}, n) where {T <: Integer} = -n//(n+1)
 Cn(::Type{<:Laguerre}, n) = -n/(n+1)
 
-Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
-weight_function(::Type{Laguerre{T}}) where {T} = x -> exp(-x)
-generating_function(::Type{<:Laguerre}) = (t, x)  -> exp(-t*x/(1-t)) / (1-t)
-
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Laguerre} = P([1, -1], var)
 norm2(::Type{Laguerre{T}}, n) where {T} =  one(T)
 (ch::Laguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 

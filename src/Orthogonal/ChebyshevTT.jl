@@ -38,7 +38,7 @@ Polynomials.@register ChebyshevTT
 
 basis_symbol(::Type{<:ChebyshevTT}) = "T"
 Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1)
-weight_function(::Type{ChebyshevTT{T}}) where {T} = x -> 1/sqrt(one(T) - x^2)
+weight_function(::Type{ChebyshevTT{T}}) where {T} = x -> 1/sqrt(1 - x^2)
 generating_function(::Type{ChebyshevTT{T}}) where {T} =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)
@@ -51,8 +51,15 @@ P1(::Type{<:ChebyshevTT}, x) = x
 
 norm2(P::ChebyshevTT{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
 
+function lagrange_barycentric_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
+    xs = [cos((2j+1)*pi/(2n+2)) for j in 0:n-1]
+    ws = [(-1)^j*sin((2j+1)*pi/(2n+2)) for j in 0:n-1]  # XX one loop
+    xs, ws
+end
+
 ## used discrete cosine  transformation to compute the ck:
 ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+cks(P::Type{ChebyshevTT{T}}, f, n::Int) where  {T} =  [ck(P,f,k,n) for k in 0:n]
 function ck(P::Type{ChebyshevTT{T}}, f, k::Int, n::Int) where  {T}
     #n =  k
     tot = zero(T)/1
@@ -63,14 +70,6 @@ function ck(P::Type{ChebyshevTT{T}}, f, k::Int, n::Int) where  {T}
     end
     (iszero(k) ? 1 : 2) * tot  / (n+1)
 end
-
-## function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
-##     res = zero(C)
-##     @inbounds for i in degree(p):-1:0
-##         res = variable(C) * res + p[i]
-##     end
-##     return res
-## end
 
 
 
@@ -97,6 +96,16 @@ julia> c.(-1:0.5:1)
 ```
 """
 (ch::ChebyshevTT{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+
+function Base.:*(p1::ChebyshevTT{T}, p2::ChebyshevTT{S}) where {T,S}
+    p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
+    z1 = _c_to_z(p1.coeffs)
+    z2 = _c_to_z(p2.coeffs)
+    prod = Polynomials.fastconv(z1, z2)
+    ret = ChebyshevTT(_z_to_c(prod), p1.var)
+    return truncate!(ret)
+end
 
 function Polynomials.integrate(p::ChebyshevTT{T}, C::S) where {T,S <: Number}
     R = promote_type(eltype(one(T) / 1), S)
@@ -160,15 +169,6 @@ function Polynomials.companion(p::ChebyshevTT{T}) where T
     monics = p.coeffs ./ p.coeffs[end]
     comp[:, end] .-= monics[1:d] .* scl ./ scl[end] ./ 2
     return R.(comp)
-end
-
-function Base.:*(p1::ChebyshevTT{T}, p2::ChebyshevTT{S}) where {T,S}
-    p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
-    z1 = _c_to_z(p1.coeffs)
-    z2 = _c_to_z(p2.coeffs)
-    prod = Polynomials.fastconv(z1, z2)
-    ret = ChebyshevTT(_z_to_c(prod), p1.var)
-    return truncate!(ret)
 end
 
 function Base.divrem(num::ChebyshevTT{T}, den::ChebyshevTT{S}) where {T,S}

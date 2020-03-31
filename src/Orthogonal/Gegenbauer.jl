@@ -14,13 +14,19 @@ end
 
 export Gegenbauer
 
+# boilerplate code needed, as two type parameters
 Base.convert(::Type{P}, p::P) where {P <: Gegenbauer} =  p
 Base.promote_rule(::Type{Gegenbauer{α, T}}, ::Type{Gegenbauer{α, S}}) where {α, T, S} = Gegenbauer{α, promote_type(T,S)}
 Base.promote_rule(::Type{Gegenbauer{α, T}}, ::Type{S}) where {α, T, S <: Number} = Gegenbauer{α, promote_type(T,S)}
 Gegenbauer{α}(n::Number, var=:x) where  {α}= Gegenbauer{α}([n], var)
 Gegenbauer{α, T}(n::S, var=:x) where {α, T, S <: Number} = Gegenbauer{α, T}(T[n], var)
-Gegenbauer{α, T}(xs::AbstractVector{S}, var=:x) where {α, T, S <: Number} = Gegenbauer{α, T}(T.(xs), var)
+function Gegenbauer{α, T}(xs::AbstractVector{S}, var=:x) where {α, T, S <: Number}
+    R = promote_type(T, S)
+    Gegenbauer{α, R}(R.(xs), var)
+end
 
+
+Polynomials.domain(::Type{<:Gegenbauer}) = Polynomials.Interval(-1, 1)
 basis_symbol(::Type{Gegenbauer{α, T}}) where {α, T} = "C^($α)"
 
 weight_function(::Type{Gegenbauer{α, T}}) where {α, T} = x -> (1-x^2)^(α-1/2)
@@ -28,7 +34,6 @@ generating_function(::Type{Gegenbauer{α, T}}) where {α, T} = (t,x) -> begin
     1/(1-2x*t +t^2)^α
 end
 
-Polynomials.domain(::Type{<:Gegenbauer}) = Polynomials.Interval(-1, 1)
 
 An(::Type{Gegenbauer{α,T}}, n) where {α,T} = 2(n+α)/(n+1)
 An(::Type{Gegenbauer{α}}, n) where {α} = 2(n+α)/(n+1)
@@ -46,15 +51,10 @@ end
 
 (ch::Gegenbauer)(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
-function Base.:*(p1::P, p2::Q) where {P <: Gegenbauer, Q <: AbstractSpecialPolynomial}
-    throw(ArgumentError("not implemented"))
-end
 
-function Base.convert(P::Type{Gegenbauer{β, T}}, p::Gegenbauer{α, S}) where {α, β, T, S}
-    throw(ArgumentError("not implemented"))
-end
 
 # XXX could tidy up by doing higher orders at once
+# XXX this returns answer in a different basis.
 function Polynomials.derivative(p::Gegenbauer{α, T}, order::Int=1) where {α,T}
     order == 0 && return p
     order < 0 && throw(ArgumentError("order must be ≥ 0"))

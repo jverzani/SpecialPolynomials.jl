@@ -1,3 +1,8 @@
+## References
+## Gautschi: https://www.cs.purdue.edu/homes/wxg/Madrid.pdf
+##
+
+
 abstract type OrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} end
 
 basis_symbol(::Type{<:AbstractSpecialPolynomial}) = "P"
@@ -16,8 +21,8 @@ end
 
 For orthogonal polynomials, a function w with `integrate Bn Bm w dt = 0` when n and m are not equal
 """
-weight_function(::P) where {P <: OrthogonalPolynomial} = weight_function(P)
 weight_function(::Type{P}) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
+weight_function(::P) where {P <: OrthogonalPolynomial} = weight_function(P)
 
 """
     generating_function(p)
@@ -25,14 +30,13 @@ weight_function(::Type{P}) where {P <: OrthogonalPolynomial} = throw(MethodError
 
 (t,x) -> sum(t^n Pn(x) for n in 0:oo)
 """
-generating_function(::P) where {P <: OrthogonalPolynomial} = generating_function(P)
 generating_function(::Type{P}) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
+generating_function(::P) where {P <: OrthogonalPolynomial} = generating_function(P)
 
 # cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
-# We have this () for orthogonal polynomials
-# Pn =
+# Orthogonal polynomials have a three-point recursion formula
+# parameterized here through:
 # P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
-# which is used to express in terms of c0 Po + c1 P1
 An(::Type{P}, n) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
 Bn(::Type{P}, n) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
 Cn(::Type{P}, n) where {P <: OrthogonalPolynomial} = throw(MethodError("Not implemented"))
@@ -40,49 +44,71 @@ An(p::P, n) where {P <: OrthogonalPolynomial} = An(P,n)
 Bn(p::P, n) where {P <: OrthogonalPolynomial} = Bn(P,n)
 Cn(p::P, n) where {P <: OrthogonalPolynomial} = Cn(P,n)
 
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: OrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
 
+## For monic polynomials, we have
+## π_{n+1} = (x - α(n)) π_{n} - β(n)π_{n-1}
+alpha(P::Type{<:OrthogonalPolynomial}, n)        = - Bn(P,n) / An(P,n)
+alpha(p::P, n) where {P <: OrthogonalPolynomial} = alpha(P, n)
 
-P0(::Type{P}, x) where {P <: OrthogonalPolynomial} = one(x)
-P0(p::P, x) where {P <: OrthogonalPolynomial} = one(x)
-P1(::Type{P}, x) where {P <: OrthogonalPolynomial} = An(P,0)*x .+ Bn(P,0)
-P1(p::P, x) where {P <: OrthogonalPolynomial} = An(p,0)*x + Bn(p,0)
-
-function alphas_betas(::Type{P}, n) where {P <: OrthogonalPolynomial}
-    ani = An(P,0)
-    alpha0 = -Bn(P,0)/ani
-    T = eltype(alpha0)
-    alphas = zeros(T, n)
-    betas = zeros(T, n-1)
-    alphas[1] = alpha0
-    for i in 1:n-1
-        ani_1 = ani
-        ani = An(P,i)
-        alphas[i+1] = -Bn(P,i)/ani
-        betas[i] = sqrt(-Cn(P,i)/ani/ani_1)
-    end
-
-    (alphas, betas)
+function beta(P::Type{<:OrthogonalPolynomial}, n)
+    iszero(n) &&  return _quadgk(weight_function(P), extrema(P)...)
+    -Cn(P,n)/An(P,n)/An(P, n-1)
 end
+beta(p::P, n) where {P <: OrthogonalPolynomial} = beta(P, n)
+
+# typically, P_0 = 1; P_{-1} = 0 and P_1 from recursion, but here we compute P1
+P0(::Type{P}, x) where {P <: OrthogonalPolynomial} = one(x)
+P0(p::P, x) where {P <: OrthogonalPolynomial} = P0(P,x)
+P1(::Type{P}, x) where {P <: OrthogonalPolynomial} = An(P,0)*x .+ Bn(P,0)
+P1(p::P, x) where {P <: OrthogonalPolynomial} = P1(P,x)
+
+
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: OrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
+Polynomials.variable(p::P, var::Polynomials.SymbolLike=:x) where {P <: OrthogonalPolynomial} = variable(P)
+
+
+function Base.extrema(::Type{P}) where {P <: OrthogonalPolynomial}
+    dom = domain(P)
+    first(dom), last(dom)
+end
+Base.extrema(p::P) where {P <: OrthogonalPolynomial} = extrema(P)
 
 
 # Jacobi matrix
 # roots(basis(P,n)) = eigvals(jacobi_matrix(P,n)), but this is more stable
+# https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
 function jacobi_matrix(::Type{P}, n) where {P <: OrthogonalPolynomial}
-    LinearAlgebra.SymTridiagonal(alphas_betas(P, n)...)
+    LinearAlgebra.SymTridiagonal([alpha(P,i) for i in 0:n-1], [sqrt(beta(P,i)) for i in 1:n-1])
 end
+jacobi_matrix(p::P, n) where {P <: OrthogonalPolynomial} = jacobi_matrix(P,n)
 
-## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
-Base.abs2(::Type{P}, n) where {P <: OrthogonalPolynomial} = norm2(P, n)
+##  Compute weights and nodes for quadrature
+"""
+    gauss_nodes_weights(::P, n)
 
-## Compute <p_i, p_i> = \| p \|^2
-## Slow default; generally should  be directly expressed for each family
-function norm2(::Type{P}, n) where {P <: OrthogonalPolynomial}
-    p = Polynomials.basis(P,n)
-    innerproduct(P, p, p)
+Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal family.
+
+Uses the Jacobi matrix, J_n, for which ([Golub Welsch](https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm))
+yields:
+
+* nodes -- roots of the orthogonal polynomial π_{n} computed from the eigenvalues of J_n
+* weights -- if vs are the normalized eigen vectors of J_n, then  β_0 * [v[1] for v in vs]
+
+"""
+function gauss_nodes_weights(p::Type{P}, n) where {P <: OrthogonalPolynomial}
+    J = jacobi_matrix(P, n)
+    eig = eigen(J, extrema(P)...)
+    # Is this necessary?
+    nm  = 1 #diag(eig.vectors * eig.vectors')
+    wts =  beta(P,0) * (eig.vectors[1,:] ./ nm).^2
+    eig.values,  wts
 end
+gauss_nodes_weights(p::P, n) where {P <: OrthogonalPolynomial} = gauss_nodes_weights(P, n)
 
-## Evaluate an orthogonal polynomial
+
+
+
+## Evaluate an orthogonal polynomial using the three-point recursion representation
 ## Need to specify for each type (ch::Type)(x) = orthogonal_polyval(ch, x)
 ## as we can't have abstract type  here
 function orthogonal_polyval(ch::P, x::S) where {P <: OrthogonalPolynomial, S}
@@ -104,6 +130,8 @@ function orthogonal_polyval(ch::P, x::S) where {P <: OrthogonalPolynomial, S}
     return c0 * P0(ch, x) + c1 * P1(ch, x)
 end
 
+# conversion to Polynomial is simply evaluating
+# the polynomial on `variable(Polynomial)`
 function Base.convert(P::Type{<:Polynomial}, ch::OrthogonalPolynomial)
     if length(ch) == 1
         return P(ch.coeffs, ch.var)
@@ -126,45 +154,18 @@ end
 
 # brute force this, by matching up leading terms and subtracting
 function Base.convert(P::Type{J}, p::Polynomial) where {J <: OrthogonalPolynomial}
-
     d = degree(p)
     R = eltype(one(eltype(p))/1)
+    pp =  convert(Polynomial{R}, p)
     qs = zeros(R, d+1)
     for i in d:-1:0
-        Pn = convert(Polynomial, Polynomials.basis(P,  i))
-        qs[i+1] = lambda =  p[i]/Pn[i]
-        p = p - lambda*Pn
+        Pn = convert(Polynomial{R}, Polynomials.basis(P,  i))
+        qs[i+1] = lambda =  pp[i]/Pn[i]
+        pp = pp - lambda*Pn
     end
-    J(qs, p.var)
+    P(qs, p.var)
 end
 
-## Use orthogonality:
-## x^n = sum( λ(P,n,i) P_i for i in 0:n)
-## so <x^n, P_j>/<P_j,P_j> =  λ(P,n,j), the other terms being 0
-## function Base.convert(P::Type{J}, p::Polynomial) where {J <: OrthogonalPolynomial}
-##     d = degree(p)
-##     R = eltype(one(eltype(p))/1)
-##     qs = zeros(R, d+1)
-##     for i in 0:d
-##         qs[i+1] = sum(p[j] * λ(J, j, i) for j in i:d)
-##     end
-##     J(qs, p.var)
-## end
-
-## function Base.convert(C::Type{<:ChebyshevTT}, p::Polynomial)
-##     res = zero(C)
-##     @inbounds for i in degree(p):-1:0
-##         res = variable(C) * res + p[i]
-##     end
-##     return res
-## end
-
-# find <x^n, P_n>
-# * must define abs2(J,j) =  <P_j, P_j>
-function λ(J::Type{<: OrthogonalPolynomial}, n, j)
-   p = convert(Polynomial, Polynomials.basis(J, j))
-   innerproduct(J, x->x^n,  p) / norm2(J, j)
-end
 
 
 function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where {P <:  OrthogonalPolynomial, T <: Number}
@@ -179,13 +180,32 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where 
     return A
 end
 
-### This is too slow...
+
+
+
+
+
+
+
+# <f,g> = ∫ f⋅g⋅w dx
 function innerproduct(P::Type{<: OrthogonalPolynomial}, f, g)
     dom = domain(P)
     fn = x -> f(x) * g(x) * weight_function(P)(x)
     a,err =  quadgk(fn, first(dom)+sqrt(eps()), last(dom)-sqrt(eps()))
     a
 end
+
+## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
+Base.abs2(::Type{P}, n) where {P <: OrthogonalPolynomial} = norm2(P, n)
+Base.abs2(p::P, n) where {P <: OrthogonalPolynomial} = norm2(p, n)
+
+## Compute <p_i, p_i> = \| p \|^2
+## Slow default; generally should  be directly expressed for each family
+function norm2(::Type{P}, n) where {P <: OrthogonalPolynomial}
+    p = Polynomials.basis(P,n)
+    innerproduct(P, p, p)
+end
+norm2(p::P, n) where {P <: OrthogonalPolynomial} = norm2(P, n)
 
 function dot(p::P, q::P) where {P <: OrthogonalPolynomial}
     # use orthogonality  here
@@ -201,27 +221,25 @@ end
 dot(::Type{P}, f, i::Int) where {P <: OrthogonalPolynomial} = innerproduct(P, f, Polynomials.basis(P, i))
 dot(::Type{P}, f, p::P) where {P <: OrthogonalPolynomial} = innerproduct(P, f, p)
 
-## return ck =  <f,P_k>/<P_k,P_k>
-ck(::Type{P}, f, k::Int, n::Int) where {P  <:  OrthogonalPolynomial} = dot(P,f,k)/norm2(P,k)
-
+## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
 function cks(::Type{P}, f, n::Int) where {P  <:  OrthogonalPolynomial}
-      P_n1 = Polynomials.basis(P, n+1)
-    xs::Vector{Float64} = roots(P_n1)
-      fxs  = f.(xs)
 
-      p0 = P0.(P, xs)
-      p1 = P1.(P, xs)
+    xs =  eigvals(jacobi_matrix(P,n+1))
+    fxs  = f.(xs)
 
-      cks = similar(xs)
-      cks[1] = dot(fxs, p0) / norm2(P,0) / pi
-      cks[2] = dot(fxs, p1) / norm2(P,1) / pi
+    p0 = P0.(P, xs)
+    p1 = P1.(P, xs)
+
+    cks = similar(xs)
+    cks[1] = dot(fxs, p0) / norm2(P,0) / pi
+    cks[2] = dot(fxs, p1) / norm2(P,1) / pi
 
 
-      for i in 1:n-1
-          p0[:], p1[:] = p1, p1 .* (An(P, i)*xs .+ Bn(P,i)) .+ (Cn(P,i) * p0)
-          cks[i+2] =  dot(fxs, p1) / norm2(P,i) / pi
-      end
-      cks / (n+1)
+    for i in 1:n-1
+        p0[:], p1[:] = p1, p1 .* (An(P, i)*xs .+ Bn(P,i)) .+ (Cn(P,i) * p0)
+        cks[i+2] =  dot(fxs, p1) / norm2(P,i) / pi
+    end
+    cks / (n+1)
 end
 
 
@@ -230,6 +248,10 @@ end
 ## where a_i = <f, p_i>/<p_i,p_i>
 function Polynomials.fit(P::Type{<:OrthogonalPolynomial}, f, deg::Int; var=:x)
     # use least squares fit of orthogonal polynomial family to f
-    cs = [ck(P,f,k,deg) for k in 0:deg]
-    P(cs, var)
+    P(cks(P,f,deg), var)
 end
+
+
+## Some utilities
+_quadgk(f, a, b) = quadgk(f, a+eps(), b-eps())[1]
+_monic(p::OrthogonalPolynomial) = p/convert(Polynomial,p)[end]
