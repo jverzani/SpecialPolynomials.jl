@@ -4,7 +4,7 @@
     ComplexF64[1 - 1im, 2 + 3im],
     [3 // 4, -2 // 1, 1 // 1]
 ]
-    p = ChebyshevT(coeff)
+    p = ChebyshevTT(coeff)
     @test p.coeffs == coeff
     @test coeffs(p) == coeff
     @test degree(p) == length(coeff) - 1
@@ -18,35 +18,35 @@ end
 
 @testset "Other Construction" begin
     # Leading 0s
-    p = ChebyshevT([1, 2, 0, 0])
+    p = ChebyshevTT([1, 2, 0, 0])
     @test p.coeffs == [1, 2]
     @test length(p) == 2
 
     # Different type
-    p = ChebyshevT{Float64}(ones(Int32, 4))
+    p = ChebyshevTT{Float64}(ones(Int32, 4))
     @test p.coeffs == ones(Float64, 4)
 
-    p = ChebyshevT(30)
+    p = ChebyshevTT(30)
     @test p.coeffs == [30]
 
-    p = zero(ChebyshevT{Int})
+    p = zero(ChebyshevTT{Int})
     @test p.coeffs == [0]
 
-    p = one(ChebyshevT{Int})
+    p = one(ChebyshevTT{Int})
     @test p.coeffs == [1]
 
-    pNULL = ChebyshevT(Int[])
+    pNULL = ChebyshevTT(Int[])
     @test iszero(pNULL)
     @test degree(pNULL) == -1
 
-    p0 = ChebyshevT([0])
+    p0 = ChebyshevTT([0])
     @test iszero(p0)
     @test degree(p0) == -1
 end
 
 @testset "Roots $i" for i in 1:5
     roots = cos.(range(-π, 0, length = 2i + 1)[2:2:end])
-    target = ChebyshevT(vcat(zeros(i), 1))
+    target = ChebyshevTT(vcat(zeros(i), 1))
     res = fromroots(ChebyshevT, roots) .* 2^(i - 1)
     @test res == target
 end
@@ -54,25 +54,25 @@ end
 @testset "Roots" begin
     r = [-1, 1, 0]
     c = fromroots(ChebyshevT, r)
-    @test c == ChebyshevT([0, -0.25, 0, 0.25])
+    @test c == ChebyshevTT([0, -0.25, 0, 0.25])
     @test roots(c) ≈ r
 
     r = [1im, -1im]
     c = fromroots(ChebyshevT, r)
-    @test c ≈ ChebyshevT([1.5 + 0im, 0 + 0im, 0.5 + 0im])
+    @test c ≈ ChebyshevTT([1.5 + 0im, 0 + 0im, 0.5 + 0im])
     @test roots(c) ≈ r
 
 end
 
 @testset "Values" begin
-    c1 = ChebyshevT([2.5, 2.0, 1.5]) # 1 + 2x + 3x^2
+    c1 = ChebyshevTT([2.5, 2.0, 1.5]) # 1 + 2x + 3x^2
     x = -1:0.5:1
     expected = [2.0, 0.75, 1.0, 2.75, 6.0]
     @test c1.(x) == expected
 end
 
 @testset "Conversions" begin
-    c1 = ChebyshevT([2.5, 2.0, 1.5])
+    c1 = ChebyshevTT([2.5, 2.0, 1.5])
     @test c1 ≈ Polynomial([1, 2, 3])
     p = convert(Polynomial{Float64}, c1)
     @test p == Polynomial{Float64}([1, 2, 3])
@@ -81,16 +81,16 @@ end
 end
 
 @testset "Companion" begin
-    c_null = ChebyshevT(Int[])
-    c_1 = ChebyshevT([1])
-    @test_throws ErrorException companion(c_null)
-    @test_throws ErrorException companion(c_1)
+    c_null = ChebyshevTT(Int[])
+    c_1 = ChebyshevTT([1])
+    @test_throws ArgumentError companion(c_null)
+    @test_throws ArgumentError companion(c_1)
     for i in 1:5
         coef = vcat(zeros(i), 1)
-        c = ChebyshevT(coef)
+        c = ChebyshevTT(coef)
         @test size(companion(c)) == (i, i)
     end
-    c = ChebyshevT([1, 2])
+    c = ChebyshevTT([1, 2])
     @test companion(c)[1, 1] == -0.5
 end
 
@@ -100,7 +100,7 @@ end
     @test size(v) == (length(x), 6)
     @inbounds for i in 1:6
         coef = vcat(zeros(i - 1), 1)
-        c = ChebyshevT(coef)
+        c = ChebyshevTT(coef)
         @test v[:, i] ≈ c.(x)
     end
 end
@@ -110,9 +110,9 @@ end
     target = zeros(i + j + 1)
     target[end] += 0.5
     target[abs(i - j) + 1] += 0.5
-    c1 = ChebyshevT(vcat(zeros(i), 1))
-    c2 = ChebyshevT(vcat(zeros(j), 1))
-    @test c1 * c2 ≈ ChebyshevT(target)
+    c1 = ChebyshevTT(vcat(zeros(i), 1))
+    c2 = ChebyshevTT(vcat(zeros(j), 1))
+    @test c1 * c2 ≈ ChebyshevTT(target)
 
     # divrem
     target = c1 + c2
@@ -133,17 +133,17 @@ end
 
 @testset "Arithmetic" begin
     # multiplication
-    c1 = ChebyshevT([1, 2, 3])
-    c2 = ChebyshevT([3, 2, 1])
-    @test c1 * c2 == ChebyshevT([6.5, 12, 12, 4, 1.5])
+    c1 = ChebyshevTT([1, 2, 3])
+    c2 = ChebyshevTT([3, 2, 1])
+    @test c1 * c2 == ChebyshevTT([6.5, 12, 12, 4, 1.5])
 
-    c1 = ChebyshevT([1, 2, 3])
-    c2 = ChebyshevT([3, 2, 1])
+    c1 = ChebyshevTT([1, 2, 3])
+    c2 = ChebyshevTT([3, 2, 1])
     d, r = divrem(c1, c2)
     @test d.coeffs ≈ [3]
     @test r.coeffs ≈ [-8, -4]
 
-    c2 = ChebyshevT([0, 1, 2, 3])
+    c2 = ChebyshevTT([0, 1, 2, 3])
     d, r = divrem(c2, c1)
 
     @test d.coeffs ≈ [0, 2]
@@ -151,16 +151,16 @@ end
 
 
     # GCD
-    c1 = ChebyshevT([1, 2, 3])
-    c2 = ChebyshevT([3, 2, 1])
-    @test gcd(c1, c2) ≈ ChebyshevT(6)
+    c1 = ChebyshevTT([1, 2, 3])
+    c2 = ChebyshevTT([3, 2, 1])
+    @test gcd(c1, c2) ≈ ChebyshevTT(6)
 end
 
 @testset "integrals derivatives" begin
-    c1 = one(ChebyshevT{Int})
-    @test integrate(c1) == ChebyshevT([0, 1])
+    c1 = one(ChebyshevTT{Int})
+    @test integrate(c1) == ChebyshevTT([0, 1])
     for k in [-3, 0, 2]
-        @test integrate(c1, k) == ChebyshevT([k, 1])
+        @test integrate(c1, k) == ChebyshevTT([k, 1])
     end
 
     for i in 0:4

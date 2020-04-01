@@ -19,7 +19,7 @@ ChebyshevTT([1, 0, 3, 4])
 julia> ChebyshevTT([1, 2, 3, 0], :s)
 ChebyshevTT([1, 2, 3])
 
-julia> one(ChebyshevTT)
+julia> one(ChebyshevT)
 ChebyshevTT([1.0])
 ```
 

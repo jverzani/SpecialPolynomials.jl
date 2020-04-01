@@ -1,20 +1,4 @@
-"""
-    AbstractSpecialPolynomial{T}
 
-An abstract type to distinguish the families of polynomials in this package.
-
-The families consist of different bases for the space of polynomials of degree `n` or less. 
-
-This package includes: 
-
-* several orthgonal polynomial familes.
-* Newton and Lagrange interpolating polynomials
-* Bernstein polynomials
-
-As many of the methods for the base `Polynomials` class are directly coded if possible, but quite a few
-depend on conversion to the base `Polynomial` type (which uses the standard polynomial basis).
-
-"""
 abstract type AbstractSpecialPolynomial{T} <: Polynomials.AbstractPolynomial{T} end
 
 # set up some defaults

@@ -5,41 +5,34 @@ abstract type AbstractBernstein{T} <: Polynomials.AbstractPolynomial{T} end
     Bernstein{N, T}
 
 A [Bernstein  polynomial](https://en.wikipedia.org/wiki/Bernstein_polynomial) is a polynomial expressed in terms of
-Bernstein basic polynomials. For each degree, `n`, this is a set of `n+1` degree `n` polynomials of the form:
-`beta_{ν, n} =  (ν choose n) x^ν  (1-x)^{n-ν}`, `0 ≤ x ≤ 1.`
+Bernsteing basic polynomials. For each degree, `n`, this is a set of `n+1` degree `n` polynomials of the form:
+beta_{ν, n} =  (ν choose n) x^ν  (1-x)^{n-ν}, 0 ≤ x ≤ 1.
 
 The  `Bernstein{N,T}` type represents a polynomial of degree `N` or with a linear combination of the basis vectors using coefficients  of  type `T`.
 
-```jldoctest
-julia> p = Bernstein{3,Int}([0,0,1,0])
-Bernstein(1⋅β(3, 2)(x))
-
-julia> convert(Polynomial, p)
-Polynomial(3*x^2 - 3*x^3)
-```
 
 """
 struct Bernstein{N, T<:Number} <: AbstractBernstein{T}
 coeffs::Vector{T}
 var::Symbol
-    function Bernstein{N, T}(x::Number, var::Symbol=:x) where  {N, T <: Number}
-        convert(Bernstein{N,T}, Polynomial{T}(x))
-    end
-    function Bernstein{N, T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {N, T <: Number, S <: Number}
-        M = length(coeffs)
-        R = promote_type(T, S)
-        @assert M == N + 1
-        new{N, R}(R.(coeffs), var)
-    end
-    function Bernstein{T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {T <: Number, S <: Number}
-        N =  length(coeffs) - 1
-        R =  promote_type(T,S)
-        new{N, R}(R.(coeffs), var)
-    end
-    function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x) where {T <: Number}
-        N = length(coeffs) - 1
-        new{N,T}(coeffs, var)
-    end
+function Bernstein{N, T}(x::Number, var::Symbol=:x) where  {N, T <: Number}
+    convert(Bernstein{N,T}, Polynomial{T}(x))
+end
+function Bernstein{N, T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {N, T <: Number, S <: Number}
+    M = length(coeffs)
+    R = promote_type(T, S)
+    @assert M == N + 1
+    new{N, R}(R.(coeffs), var)
+end
+function Bernstein{T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {T <: Number, S <: Number}
+    N =  length(coeffs) - 1
+    R =  promote_type(T,S)
+    new{N, R}(R.(coeffs), var)
+end
+function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x) where {T <: Number}
+    N = length(coeffs) - 1
+    new{N,T}(coeffs, var)
+end
 end
 
 export Bernstein
