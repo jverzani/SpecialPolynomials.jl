@@ -8,6 +8,13 @@ Documentation for SpecialPolynomials.jl.
 CurrentModule = SpecialPolynomials
 ```
 
+
+```@meta
+DocTestSetup = quote
+  using Polynomials, SpecialPolynomials
+end
+```
+
 ## Overview
 
 This package provides a number of different polynomial families to
@@ -20,7 +27,7 @@ SpecialPolynomials.AbstractSpecialPolynomial
 ## Orthogonal Polynomials
 
 ```@docs
-SpecialPolynomials.OrthogonalPolynomial
+SpecialPolynomials.AbstractOrthogonalPolynomial
 ```
 
 There are  several families of orthogonal polynomials available.
@@ -35,6 +42,14 @@ Jacobi
 Laguerre
 Legendre
 ShiftedLegendre
+```
+
+```@docs
+DiscreteChebyshev
+```
+
+```@docs
+WeightFunction
 ```
 
 Some  non-exported methods define each:

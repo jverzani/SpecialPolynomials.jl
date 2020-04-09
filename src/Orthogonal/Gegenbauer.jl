@@ -1,7 +1,9 @@
 """
    Gegenbauer{α, T <: Number}
 
-The Gegenbauer family of orthogonal polynomials has weight function `(1-x^2)^(α-1/2)`. The parameter `α` is  specified  in the constructor.
+The Gegenbauer family of orthogonal polynomials has weight function
+`(1-x^2)^(α-1/2)` over the domain `[-1,1]`. The parameter `α` is
+specified in the constructor.
 
 ```jldoctest
 julia> p =  Gegenbauer{1/2}([1,2,3])
@@ -21,46 +23,29 @@ struct Gegenbauer{α, T <: Number} <: OrthogonalPolynomial{T}
         last = max(1, last_nz === nothing ? 0 : last_nz)
         return new{α, T}(coeffs[1:last], var)
     end
-    function Gegenbauer{α}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
-        Gegenbauer{α, T}(coeffs, var)
-    end
 end
 
 export Gegenbauer
 
-# boilerplate code needed, as two type parameters
-Base.convert(::Type{P}, p::P) where {P <: Gegenbauer} =  p
-Base.promote_rule(::Type{Gegenbauer{α, T}}, ::Type{Gegenbauer{α, S}}) where {α, T, S} = Gegenbauer{α, promote_type(T,S)}
-Base.promote_rule(::Type{Gegenbauer{α, T}}, ::Type{S}) where {α, T, S <: Number} = Gegenbauer{α, promote_type(T,S)}
-Gegenbauer{α}(n::Number, var=:x) where  {α}= Gegenbauer{α}([n], var)
-Gegenbauer{α, T}(n::S, var=:x) where {α, T, S <: Number} = Gegenbauer{α, T}(T[n], var)
-function Gegenbauer{α, T}(xs::AbstractVector{S}, var=:x) where {α, T, S <: Number}
-    R = promote_type(T, S)
-    Gegenbauer{α, R}(R.(xs), var)
-end
+@register1 Gegenbauer
 
 
-Polynomials.domain(::Type{<:Gegenbauer}) = Polynomials.Interval(-1, 1)
-basis_symbol(::Type{Gegenbauer{α, T}}) where {α, T} = "C^($α)"
+Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1, 1, α < 1/2, α < 1/2)
+basis_symbol(::Type{<:Gegenbauer{α}}) where {α} = "C^($α)"
 
-weight_function(::Type{Gegenbauer{α, T}}) where {α, T} = x -> (1-x^2)^(α-1/2)
-generating_function(::Type{Gegenbauer{α, T}}) where {α, T} = (t,x) -> begin
+weight_function(::Type{<:Gegenbauer{α}}) where {α} = x -> (1-x^2)^(α-1/2)
+generating_function(::Type{<:Gegenbauer{α}}) where {α} = (t,x) -> begin
     1/(1-2x*t +t^2)^α
 end
 
 
-An(::Type{Gegenbauer{α,T}}, n) where {α,T} = 2(n+α)/(n+1)
-An(::Type{Gegenbauer{α}}, n) where {α} = 2(n+α)/(n+1)
-Bn(::Type{Gegenbauer{α,T}}, n) where {α,T} = zero(T)/1
-Bn(::Type{Gegenbauer{α}}, n) where {α} = 0/1
-Cn(::Type{Gegenbauer{α,T}}, n) where {α,T} = - (n - 1 + 2α)/(n+1)
-Cn(::Type{Gegenbauer{α}}, n) where {α} = - (n - 1 + 2α)/(n+1)
+An(::Type{<:Gegenbauer{α}}, n) where {α} = 2(n+α)/(n+1)
+Bn(::Type{<:Gegenbauer{α}}, n) where {α} = 0/1
+Cn(::Type{<:Gegenbauer{α}}, n) where {α} = - (n - 1 + 2α)/(n+1)
 
 # compute <Jn, Jn>
-function norm2(::Type{Gegenbauer{α, T}}, n) where{α, T}
+function norm2(::Type{<:Gegenbauer{α}}, n) where{α}
     pi * 2^(1-2α) * gamma(n + 2α) / (gamma(n+1) * (n+α) * gamma(α)^2)
-
-    gamma(n + α + 1) / gamma(n+1)
 end
 
 (ch::Gegenbauer)(x::S) where {T,S} = orthogonal_polyval(ch, x)

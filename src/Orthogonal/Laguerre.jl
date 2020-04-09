@@ -30,7 +30,7 @@ basis_symbol(::Type{<:Laguerre}) = "L"
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Laguerre} = P([1, -1], var)
 
-weight_function(::Type{Laguerre{T}}) where {T} = x -> exp(-x)
+weight_function(::Type{<: Laguerre}) = x -> exp(-x)
 generating_function(::Type{<:Laguerre}) = (t, x)  -> exp(-t*x/(1-t)) / (1-t)
 
 # (k+1) L_{k+1} = (2k+1 - x) L_k  - k L_{k-1}
@@ -45,6 +45,16 @@ Cn(::Type{Laguerre{T}}, n) where {T <: Integer} = -n//(n+1)
 Cn(::Type{<:Laguerre}, n) = -n/(n+1)
 
 norm2(::Type{Laguerre{T}}, n) where {T} =  one(T)
+norm2(::Type{Laguerre},n) =  1
+
+# for gauss nodes
+pqr(p::Laguerre) = (x,n) -> (p=x^2, q=x, r=-(1/4*x^2-(n+1/2)*x), dp=2x, dq=1, dr=-x/2+(n+1/2))
+pqr_scale(p::Laguerre) = (x,n) ->  (one(x),  iszero(n) ? exp(-x/2) :  one(x), zero(x), iszero(n)  ? -1/2*exp(-x/2) : zero(x))
+pqr_start(p::Laguerre, n) = 2/(4n+2)
+pqr_symmetry(p::Laguerre) = false
+pqr_weight(p::Laguerre, n, x, dπx) = 1/(x*dπx^2)
+gauss_nodes_weights(p::P, n) where {P <: Laguerre} = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
+
 (ch::Laguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 

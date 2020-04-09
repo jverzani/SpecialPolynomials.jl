@@ -4,7 +4,7 @@ import LinearAlgebra: eigvals
 import SpecialFunctions: gamma
 using Test
 
-@testset "Orthogonal" begin include("Orthogonal.jl") end
+#@testset "Orthogonal" begin include("Orthogonal.jl") end
 @testset "Orthogonal compare with tables" begin include("Orthogonal-compare.jl") end
 @testset "ChebyshevT" begin include("ChebyshevT.jl") end
 @testset "ChebyshevU" begin include("ChebyshevU.jl") end

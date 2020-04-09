@@ -39,15 +39,16 @@ basis_symbol(::Type{<:ShiftedLegendre}) = "L̃"
 Polynomials.domain(::Type{<:ShiftedLegendre}) = Polynomials.Interval(0, 1)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ShiftedLegendre} = P([0, 1], var)
 
-weight_function(::Type{ShiftedLegendre{T}}) where {T} = x -> one(x)
+weight_function(::Type{<:ShiftedLegendre}) = x -> one(x)
 generating_function(::Type{<:ShiftedLegendre}) = (t, x)  -> 1/sqrt(1 - 2*(2x-1)*t +t^2)
 
 # 3 point recursion
-An(::Type{<:ShiftedLegendre{T}}, n) where {T <: Integer} = (4n + 2)//(n + 1)
+An(::Type{ShiftedLegendre{T}}, n) where {T <: Integer} = (4n + 2)//(n + 1)
 An(::Type{<:ShiftedLegendre}, n) = (4n + 2)/(n + 1)
-Bn(::Type{<:ShiftedLegendre{T}}, n) where {T <: Integer} = -(2n + 1)//(n + 1)
+Bn(::Type{ShiftedLegendre{T}}, n) where {T <: Integer} = -(2n + 1)//(n + 1)
 Bn(::Type{<:ShiftedLegendre}, n) = -(2n + 1)/(n + 1)
-Cn(::Type{<:ShiftedLegendre}, n) = -n //(n  + 1)
+Cn(::Type{ShiftedLegendre{T}}, n) where {T <: Integer} = -n //(n  + 1)
+Cn(::Type{<:ShiftedLegendre}, n) = -n / (n  + 1)
 
 
 (ch::ShiftedLegendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)

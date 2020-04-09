@@ -47,10 +47,10 @@ end
 
     for x in range(-1, 1, length=5)
         @test p0(x) ≈ 1
-        @test p1(x) ≈ x
-        @test p2(x) ≈ x^2 - 1
-        @test p3(x) ≈ x^3 - 3x
-        @test p4(x) ≈ x^4 - 6x^2 + 3
+        @test p1(x) ≈ 2x
+        @test p2(x) ≈ 4x^2 - 2
+        @test p3(x) ≈ 8x^3 - 12x
+        @test p4(x) ≈ 16x^4 - 48x^2 + 12
     end
 
 end

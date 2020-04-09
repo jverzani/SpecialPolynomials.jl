@@ -85,7 +85,7 @@ end
     # multiplication
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([3, 2, 1])
-    @test_broken c1 * c2 == Bernstein([3, 5, 3])
+    @test iszero(c1 * c2 - convert(Polynomial, c1) * convert(Polynomial,c2))
 
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([1, 2, 3, 4])
@@ -110,10 +110,10 @@ end
     @test coeffs(z)  ==  zeros(length(z))
 
 
-    # GCD
-    c1 = Bernstein(Float64[1, 2, 3])
-    c2 = Bernstein(Float64[3, 2, 1])
-    @test_broken gcd(c1, c2) ≈ Bernstein([4.0])
+    # GCD 
+    c1 = Bernstein(Float64[1//1, 2, 3])
+    c2 = Bernstein(Float64[3//1, 2, 1])
+    @test gcd(c1, c2) ≈ Bernstein([4.0])
 
     for i in 0:5, j in 0:5
         # multiplication

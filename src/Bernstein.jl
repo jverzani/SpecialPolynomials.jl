@@ -68,6 +68,7 @@ end
 
 
 function Base.convert(P::Type{<:Polynomial}, ch::Bernstein{N,T}) where {N, T}
+    N == -1 && return zero(Polynomial{T})
     out = P(zeros(T,1), ch.var)
     x = P([zero(T),one(T)], ch.var)
     @inbounds for (i,ai) in enumerate(coeffs(ch))
@@ -213,13 +214,10 @@ end
 
 
 function Base.divrem(num::Bernstein{N,T}, den::Bernstein{M,S}) where {N, T, M, S}
-
     p1 = convert(Polynomial{T}, num)
     p2 = convert(Polynomial{S}, den)
     q,r = divrem(p1, p2)
-    R = eltype(q)
-
-    convert.(AbstractBernstein{R}, (q,r))
+    convert.(Bernstein, (q,r))
 end
 
 

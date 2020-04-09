@@ -31,7 +31,7 @@ basis_symbol(::Type{<:Legendre}) = "L"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
 
-weight_function(::Type{Legendre{T}}) where {T} = x -> one(x)
+weight_function(::Type{<:Legendre})  = x -> one(x)
 generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
 
 
@@ -43,6 +43,11 @@ Cn(::Type{Legendre{T}}, n) where {T <: Integer} = -n//(n+1)
 Cn(::Type{<:Legendre}, n) = -n/(n+1)
 
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
+
+pqr(p::Legendre) = (x,n) -> (p=1-x^2, q=-2x, r= n*(n+1), dp=-2x, dq=-2,dr=0)
+pqr_symmetry(p::Legendre) = true
+pqr_weight(p::Legendre, n, x, dπx) = 2/(1-x^2)/dπx^2
+gauss_nodes_weights(p::P, n) where {P <: Legendre} = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
 
 (ch::Legendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
@@ -79,16 +84,21 @@ function Base.:*(p1::Legendre{T}, p2::Legendre{S}) where {T,S}
             bn = p2[n]
             iszero(bn) && continue
             ambn = am * bn
-            for d in p+q:-2:0
-                twok = p+q-d
-                out[d+1] += ambn * _legendre_A(p,q,twok)
+            ls = legendre_lambda.((m,n,m+n))
+            Ak = ls[1]*ls[2]/ls[3]
+            k = 0
+            for d in m+n:-2:0
+                out[d+1] += ambn * Ak
+                λ = (2k+1)*(m-k)*(n-k)*(2m+2n-4k-3)*(2m+2n-2k+1)/((k+1)*(m+n-k)*(2m-1-2k)*(2n-1-2k)*(2m+2n-4k+1))
+                Ak *= λ
+                k += 1
             end
         end
     end
-
     Legendre(out, p1.var)
 end
-
+legendre_phi(n) = n <= 0 ? 1 : (2n+1)/(n+1)
+legendre_lambda(n) = n <= 1 ? 1/1 : prod((2*i-1)/i for i in 2:n)
 
 function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))

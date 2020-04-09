@@ -1,8 +1,13 @@
-## General continuous weight function
+## General  weight function
 ## Wheeler algorithm, https://authors.library.caltech.edu/86868/1/1.4822929.pdf
 ## algorithm not considered, just text
 
-struct ContinuousWeight{P, F, T <: Number} <: OrthogonalPolynomial{T}
+"""
+    WeightFunction{P,F,T}
+
+XXX
+"""
+struct WeightFunction{P, F, T <: Number} <: OrthogonalPolynomial{T}
     pis::P
     W::F
     coeffs::Vector{T}
@@ -10,37 +15,37 @@ struct ContinuousWeight{P, F, T <: Number} <: OrthogonalPolynomial{T}
     # no inner constructor here
 end
 
-ContinuousWeight(pis::Type{<:OrthogonalPolynomial}, W, coeffs::Vector{T}) where {T} = ContinuousWeight(pis, W, coeffs, :x)
+WeightFunction(pis::Type{<:AbstractOrthogonalPolynomial}, W, coeffs::Vector{T}) where {T} = WeightFunction(pis, W, coeffs, :x)
 
-export ContinuousWeight
+export WeightFunction
 
 ## conversion functions ....
 
-basis_symbol(::Type{<:ContinuousWeight}) = "W"
+basis_symbol(::Type{<:WeightFunction}) = "W"
 
-Polynomials.domain(::Type{<:ContinuousWeight}) = throw(ArgumentError("Must pass instance, not type"))
-Polynomials.domain(w::ContinuousWeight) = domain(w.pis)
-weight_function(::Type{<:ContinuousWeight}) = throw(ArgumentError("Must pass instance, not type"))
-weight_function(w::ContinuousWeight) = w.W
+Polynomials.domain(::Type{<:WeightFunction}) = throw(ArgumentError("Must pass instance, not type"))
+Polynomials.domain(w::WeightFunction) = domain(w.pis)
+weight_function(::Type{<:WeightFunction}) = throw(ArgumentError("Must pass instance, not type"))
+weight_function(w::WeightFunction) = w.W
 
 
-(ch::ContinuousWeight)(x::S) where {S} = orthogonal_polyval(ch, x)
+(ch::WeightFunction)(x::S) where {S} = orthogonal_polyval(ch, x)
 
 
 ## An,Bn,Cn for the orthogonal polynomials for the given weight function
-An(w::ContinuousWeight, n) = 1.0
-Bn(w::ContinuousWeight, k) = - alpha(w, k)
-Cn(w::ContinuousWeight, k) = - beta(w, k)
+An(w::WeightFunction, n) = 1.0
+Bn(w::WeightFunction, k) = - alpha(w, k)
+Cn(w::WeightFunction, k) = - beta(w, k)
 
 ## methods to work with instances, not types
-P0(p::P, x) where {P <: ContinuousWeight} = one(x)
-P1(p::P, x) where {P <: ContinuousWeight} = An(p,0)*x + Bn(p,0)
+P0(p::P, x) where {P <: WeightFunction} = one(x)
+P1(p::P, x) where {P <: WeightFunction} = An(p,0)*x + Bn(p,0)
 
-function jacobi_matrix(p::P, n) where {P <: ContinuousWeight}
+function jacobi_matrix(p::P, n) where {P <: WeightFunction}
     LinearAlgebra.SymTridiagonal([alpha(p,i) for i in 0:n-1], [sqrt(beta(p,i)) for i in 1:n-1])
 end
 
-function gauss_nodes_weights(p::P, n) where {P <: ContinuousWeight}
+function gauss_nodes_weights(p::P, n) where {P <: WeightFunction}
     J = jacobi_matrix(p, n)
     eig = eigen(J, domain(p)...)
     # Is this necessary?
@@ -49,28 +54,31 @@ function gauss_nodes_weights(p::P, n) where {P <: ContinuousWeight}
     (ee.values,  wts)
 end
 
-function Base.extrema(p::P) where {P <: ContinuousWeight}
+function Base.extrema(p::P) where {P <: WeightFunction}
     dom = domain(p)
     first(dom), last(dom)
 end
 
+function innerproduct(p::WeightFunction, f, g)
+    dom = domain(p)
+    fn = x -> f(x) * g(x) * weight_function(p)(x)
+    _quadgk(fn, first(dom)+eps(), last(dom)-eps())
+end
 
 
 ## Compute the modified moment
 ## v_j =  ∫ π_j W(x) dx
 ## (The moment is ∫ x^j W(x) dx)
 ## This can  be overridden when an exact calculuation is known, e.g.:
-## q0 = ContinuousWeight(P,f,[1],:x)
+## q0 = WeightFunction(P,f,[1],:x)
 ## WW = typeof(q0)
 ## SpecialPolynomials.modified_moment(w::W, j) where {W <: WW} = v(j)
-@memoize function modified_moment(w::ContinuousWeight,  j)
+@memoize function modified_moment(w::WeightFunction,  j)
 
     π_j = convert(Polynomial, Polynomials.basis(w.pis, j))
     π_j /= π_j[end]
-    W = weight_function(w)
 
-    _quadgk(x -> π_j(x) * W(x), extrema(w.pis)...)
-
+    return innerproduct(w, π_j, one)
 end
 
 
@@ -86,7 +94,7 @@ end
 #
 ## σ(k,l) = <p_k, π_l>, where π is the reference set of Orthogonal polynomials, and p_k are the
 ## orthogonal polynomials for w being generated
-@memoize function sigma(w::W, k, l) where {W <: ContinuousWeight}
+@memoize function sigma(w::W, k, l) where {W <: WeightFunction}
     P = w.pis
 
     if k == -1
@@ -99,18 +107,17 @@ end
 
         # get basis poly p_l
         zs = zeros(Int, k+1); zs[end]=1
-        p_k = ContinuousWeight(w.pis, w.W, zs, w.var)
+        p_k = WeightFunction(w.pis, w.W, zs, w.var)
 
         fn = x -> p_k(x) * π_l * weight_function(w.pis)(x)
-
-        return  _quadgk(fn, extrema(w.pis)...)
+        return innerproduct(w.pis, p_k, π_l)
     end
     # l+1 or l-1?
     sigma(w, k-1, l+1) - (alpha(w, k-1) - alpha(P, l)) * sigma(w, k-1, l) - (beta(w, k-1))*sigma(w, k-2, l) + beta(P,l)*sigma(w, k-1, l-1)
 end
 
 ## Compute the α, β functions for the 3-point recurrence for the orthogonal polynomials relative to the weight function
-@memoize function alpha(w::ContinuousWeight, k)
+@memoize function alpha(w::WeightFunction, k)
     P = w.pis
     if k == 0
         v0, v1 =  modified_moment(w, 0), modified_moment(w, 1)
@@ -120,7 +127,7 @@ end
     end
 end
 
-@memoize function beta(w::ContinuousWeight, k)
+@memoize function beta(w::WeightFunction, k)
     iszero(k) && return 0/1
     (sigma(w, k, k)/sigma(w, k-1, k-1))
 end

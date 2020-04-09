@@ -1,8 +1,26 @@
 """
     ChebyshevU{T}
 
-Implements the [Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_polynomials) polynomials of the second kind.
+Implements the
+[Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
+polynomials of the second kind. These have weight function 
+`w(x) = sqrt(1-x^2)` over the domain `[-1,1]`.
 
+```jldoctest
+julia> p = ChebyshevU([1,2,3])
+ChebyshevU(1⋅U_0(x) + 2⋅U_1(x) + 3⋅U_2(x))
+
+julia> convert(Polynomial, p)
+Polynomial(-2 + 4*x + 12*x^2)
+
+julia> derivative(p)
+ChebyshevU(4.0⋅U_0(x) + 12.0⋅U_1(x))
+
+julia> roots(p)
+2-element Array{Float64,1}:
+ -0.6076252185107651
+  0.27429188517743175
+```
 """
 struct ChebyshevU{T <: Number} <: OrthogonalPolynomial{T}
     coeffs::Vector{T}
@@ -21,7 +39,7 @@ Polynomials.@register ChebyshevU
 
 basis_symbol(::Type{<:ChebyshevU}) = "U"
 
-weight_function(::Type{ChebyshevU{T}}) where {T} = x -> sqrt(one(T) - x^2)
+weight_function(::Type{<:ChebyshevU})  = x -> sqrt(one(x) - x^2)
 generating_function(::Type{<: ChebyshevU}) = (t, x) -> 1 /  (1 - 2t*x + t^2)
 
 Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)

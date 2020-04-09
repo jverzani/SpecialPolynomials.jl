@@ -20,7 +20,12 @@ include("Orthogonal/Jacobi.jl")
 include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Legendre.jl")
 include("Orthogonal/ShiftedLegendre.jl")
-include("Orthogonal/ContinuousWeight.jl")
+
+include("Orthogonal/Discrete/discrete-orthogonal.jl")
+include("Orthogonal/Discrete/DiscreteChebyshev.jl")
+include("Orthogonal/Discrete/Krawtchouk.jl")
+
+include("Orthogonal/WeightFunction.jl")
 
 
 include("Interpolating/interpolating.jl")

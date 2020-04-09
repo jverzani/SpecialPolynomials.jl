@@ -19,47 +19,37 @@ struct GeneralizedLaguerre{α, T <: Number} <: OrthogonalPolynomial{T}
     coeffs::Vector{T}
     var::Symbol
     function GeneralizedLaguerre{α, T}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
+        α <= -1 && throw(ArgumentError("α > -1 is necessary"))
         length(coeffs) == 0 && return new{α, T}(zeros(T, 1), var)
         last_nz = findlast(!iszero, coeffs)
         last = max(1, last_nz === nothing ? 0 : last_nz)
         return new{α, T}(coeffs[1:last], var)
     end
-    function GeneralizedLaguerre{α}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
-        GeneralizedLaguerre{α, T}(coeffs, var)
-    end
 end
 
 export GeneralizedLaguerre
 
-## Boilerplate code reproduced here, as there are two type parameters
-Base.convert(::Type{P}, p::P) where {P <: GeneralizedLaguerre} =  p
-Base.promote_rule(::Type{GeneralizedLaguerre{α, T}}, ::Type{GeneralizedLaguerre{α, S}}) where {α, T, S} = GeneralizedLaguerre{α, promote_type(T,S)}
-Base.promote_rule(::Type{GeneralizedLaguerre{α, T}}, ::Type{S}) where {α, T, S <: Number} = GeneralizedLaguerre{α, promote_type(T,S)}
-GeneralizedLaguerre{α}(n::Number, var=:x) where  {α}= GeneralizedLaguerre{α}([n], var)
-GeneralizedLaguerre{α, T}(n::S, var=:x) where {α, T, S <: Number} = GeneralizedLaguerre{α, T}(T[n], var)
-GeneralizedLaguerre{α, T}(xs::AbstractVector{S}, var=:x) where {α, T, S <: Number} = GeneralizedLaguerre{α, T}(T.(xs), var)
+@register1 GeneralizedLaguerre
 
 
-basis_symbol(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = "L^($α)"
+basis_symbol(::Type{<:GeneralizedLaguerre{α}}) where {α} = "L^($α)"
 
 Polynomials.domain(::Type{<:GeneralizedLaguerre}) = Polynomials.Interval(0, Inf)
-Polynomials.variable(::Type{GeneralizedLaguerre{α, T}}, var::Polynomials.SymbolLike=:x) where {α, T} =
-    GeneralizedLaguerre{α, T}([(1+α), -1])
 
 
 
-weight_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = x  -> x^α * exp(-x)
-generating_function(::Type{GeneralizedLaguerre{α, T}}) where {α, T} = (t,x) -> begin
+weight_function(::Type{<:GeneralizedLaguerre{α}}) where {α} = x  -> x^α * exp(-x)
+generating_function(::Type{<:GeneralizedLaguerre{α}}) where {α} = (t,x) -> begin
     exp(-t*x/(1-t))/(1-t)^(α-1)
 end
 
 
-An(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -1/(n+1)
-Bn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = (2n + 1 +  α)/(n+1)
-Cn(::Type{GeneralizedLaguerre{α, T}}, n) where {α, T} = -(n + α)/(n+1)
+An(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = -one(α)/(n+1)
+Bn(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = (2n + 1 +  α)/(n+1)
+Cn(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = -(n + α)/(n+1)
 
 # compute <Jn, Jn>
-function norm2(::Type{GeneralizedLaguerre{α, T}}, n) where{α, T}
+function norm2(::Type{<:GeneralizedLaguerre{α}}, n) where{α}
     gamma(n + α + 1) / gamma(n+1)
 end
 

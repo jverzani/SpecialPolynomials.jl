@@ -41,9 +41,9 @@ end
 Polynomials.@register ChebyshevTT
 
 basis_symbol(::Type{<:ChebyshevTT}) = "T"
-Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1)
-weight_function(::Type{ChebyshevTT{T}}) where {T} = x -> 1/sqrt(1 - x^2)
-generating_function(::Type{ChebyshevTT{T}}) where {T} =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
+Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1, false, false)
+weight_function(::Type{<: ChebyshevTT}) = x -> one(x)/sqrt(one(x) - x^2)
+generating_function(::Type{<: ChebyshevTT}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)
 
@@ -104,8 +104,9 @@ julia> c.(-1:0.5:1)
 
 function Base.:*(p1::ChebyshevTT{T}, p2::ChebyshevTT{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
-    z1 = _c_to_z(p1.coeffs)
-    z2 = _c_to_z(p2.coeffs)
+    R = promote_type(T,S)
+    z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
+    z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
     prod = Polynomials.fastconv(z1, z2)
     ret = ChebyshevTT(_z_to_c(prod), p1.var)
     return truncate!(ret)

@@ -60,7 +60,7 @@ newton_tableau(f, xs::Vector{S}) where {S} = newton_tableau(xs, f.(xs)/one(S))
 function newton_tableau(xs::Vector{S}, ys::Vector{T}) where {S,T}
     xs = sort(unique(xs))
     n = length(xs)
-    M = diagm(0=>ys)
+    M = diagm(0=>ys/one(S))
     for i in 2:n
         for j in 1:n-i+1
             k = i + j -1
@@ -220,7 +220,10 @@ function Polynomials.fit(P::Type{<:Newton},
                          xs::AbstractVector{S},
                          ys::AbstractVector{T};
                          var = :x,) where {S, T}
-    Newton(xs, ys, var)
+    ind = sortperm(xs)
+    nt = newton_tableau(xs[ind], ys[ind])
+
+    Newton(xs, nt, var)
 end
 
 
