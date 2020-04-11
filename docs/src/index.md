@@ -38,6 +38,7 @@ ChebyshevU
 Gegenbauer
 GeneralizedLaguerre
 Hermite
+ChebyshevHermite
 Jacobi
 Laguerre
 Legendre
@@ -46,10 +47,12 @@ ShiftedLegendre
 
 ```@docs
 DiscreteChebyshev
+Krawtchouk
 ```
 
 ```@docs
 WeightFunction
+DiscreteWeightFunction
 ```
 
 Some  non-exported methods define each:

@@ -42,10 +42,17 @@ basis_symbol(::Type{<:Newton}) = "p"
 
 ## Boilerplate code reproduced here, as there are two type parameters
 Base.convert(::Type{P}, p::P) where {P <: Newton} =  p
+Base.convert(::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} = Newton{N,S,T}(p.xs, p.tableau, p.var)
 Base.promote_rule(::Type{Newton{N, S, T}}, ::Type{U}) where {N, S, T, U <: Number} = Newton{N, S, promote_type(T,U)}
 
 Polynomials.domain(::Type{<:Newton}) = Polynomials.Interval(-Inf, Inf)
-Polynomials.variable(p::Newton{S, T}, var::Polynomials.SymbolLike=:x) where {S, T} = fit(Newton, p.xs, x -> x, var=var)
+Polynomials.variable(p::Newton{N, S, T}, var::Polynomials.SymbolLike=:x) where {N,S, T} = fit(Newton, p.xs, x -> x, var=var)
+Polynomials.zero(p::Newton{N, S, T}) where {N,S,T} = 0*p
+function Polynomials.one(p::Newton)
+    xs = sort(p.xs)
+    nt = newton_tableau(one, xs)
+    Newton(xs, nt, p.var)
+end
 
 """
     newton_tableau(f, xs::Vector)
@@ -56,8 +63,8 @@ Construct the
 form of Newton's divided differences. This assumes the xs are unique. 
 
 """
-newton_tableau(f, xs::Vector{S}) where {S} = newton_tableau(xs, f.(xs)/one(S))
-function newton_tableau(xs::Vector{S}, ys::Vector{T}) where {S,T}
+newton_tableau(f, xs::AbstractVector{S}) where {S} = newton_tableau(xs, f.(xs)/one(S))
+function newton_tableau(xs::AbstractVector{S}, ys::Vector{T}) where {S,T}
     xs = sort(unique(xs))
     n = length(xs)
     M = diagm(0=>ys/one(S))
@@ -217,17 +224,19 @@ end
 
 
 function Polynomials.fit(P::Type{<:Newton},
-                         xs::AbstractVector{S},
+                         xs::Vector{S},
                          ys::AbstractVector{T};
                          var = :x,) where {S, T}
     ind = sortperm(xs)
-    nt = newton_tableau(xs[ind], ys[ind])
+    xs = xs[ind]
+    ys = ys[ind]
+    nt = newton_tableau(xs, ys)
 
     Newton(xs, nt, var)
 end
 
 
-function Polynomials.fit(P::Type{<:Newton}, xs::AbstractVector{S}, f; var=:x) where {S}
+function Polynomials.fit(P::Type{<:Newton}, xs::Vector{S}, f; var=:x) where {S}
     xs = sort(xs)
     nt = newton_tableau(f, xs)
     Newton(xs, nt, var)

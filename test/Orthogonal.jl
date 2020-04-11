@@ -5,21 +5,20 @@ Ps = (ChebyshevTT{T},
       ChebyshevU{T},
       Laguerre{T},
       Hermite{T},
+      ChebyshevHermite{T},
       Jacobi{1/2, 1/2, T},
       Jacobi{0,0,T},
       Jacobi{0,1,T},
       Legendre{T},
       Gegenbauer{1/2,T},
-      GeneralizedLaguerre{1/2, T}#,
-      DiscreteChebyshev{12,T},
-      Krawtchouk{12, 5/2, T}
+      GeneralizedLaguerre{1/2, T}
+#      ,DiscreteChebyshev{12,T}
+#      ,Krawtchouk{12, 5/2, T}
       )
-
 
 @testset "Construction" begin
 
     for P in Ps
-
         # basic recurrence
         pNULL = P([0])
         p0 = P([1])
@@ -33,12 +32,14 @@ Ps = (ChebyshevTT{T},
         # basic relation
         x = variable(p0)
         ps =  (p0, p1, p2, p3, p4, p5, p6)
+
         for n in 3:6
             @test ps[n+1] ≈ (SP.An(P,n-1) * x + SP.Bn(P,n-1)) * ps[n] + SP.Cn(P,n-1)* ps[n-1]
         end
 
+        p = P([1,2,3,4,5,6])
         for x in range(max(-1,first(domain(P))), stop=min(1, last(domain(P))), length=10)
-            @test P([1,2,3,4,5,6])(x) ≈ 1p0(x) + 2p1(x) + 3p2(x) + 4p3(x) + 5p4(x) + 6p5(x)
+            @test p(x) ≈ 1p0(x) + 2p1(x) + 3p2(x) + 4p3(x) + 5p4(x) + 6p5(x)
         end
 
 
@@ -56,7 +57,7 @@ Ps = (ChebyshevTT{T},
         @test P()(1) == 1
         @test variable(P, :y) == P(:y)
 
-        
+
     end
 
 
@@ -80,7 +81,6 @@ end
 
     end
 end
-
 
 
 @testset "Arithmetic" begin
@@ -128,17 +128,19 @@ end
 
 end
 
-@testset "Orthogonality" begin
-    n = 5
-    for P in Ps
-        for i in 2:n
-            for j in i+1:n
-                val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P,j))
-                @test abs(val)  <= 1e-4
-            end
-        end
-    end
-end
+# too slow
+# @testset "Orthogonality" begin
+#     n = 5
+#     for P in Ps
+#         @show P
+#         @time for i in 2:n
+#             for j in i+1:n
+#                 val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P,j))
+#                 @test abs(val)  <= 1e-4
+#             end
+#         end
+#     end
+# end
 
 @testset "divrem" begin
 
@@ -164,7 +166,7 @@ end
 
         p = P([1.0, 2, 3, 4, 3, 2, 1])
         q = convert(Polynomial, p)
-        @test maximum(abs, integrate(p, a, a+1/2) - integrate(q, a, a+1/2) for a in range(0, stop=1/2, length=10)) <= sqrt(eps())
+        @test maximum(abs, [integrate(p, a, a+1/2) - integrate(q, a, a+1/2) for a in range(0, stop=1/2, length=10)]) <= sqrt(eps())
 
         for _ in 1:10
             ps = rand(1:10, 5)
@@ -204,7 +206,7 @@ end
         dom = domain(P)
         (isinf(first(dom)) || isinf(last(dom))) && continue
         q = fit(P, f, 10)
-        @test all(isapprox(q(x), f(x), atol=0.1) for x in range(0, stop=1/2, length=10))
+        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-1
     end
 
 end

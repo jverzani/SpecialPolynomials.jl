@@ -21,28 +21,28 @@ Polynomial(3*x^2 - 3*x^3)
 """
 struct Bernstein{N, T<:Number} <: AbstractBernstein{T}
 coeffs::Vector{T}
-var::Symbol
-    function Bernstein{N, T}(x::Number, var::Symbol=:x) where  {N, T <: Number}
-        convert(Bernstein{N,T}, Polynomial{T}(x))
-    end
-    function Bernstein{N, T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {N, T <: Number, S <: Number}
+    var::Symbol
+    function Bernstein{N, T}(coeffs::AbstractVector{T}, var::Symbol=:x)  where {N, T <: Number}
         M = length(coeffs)
-        R = promote_type(T, S)
-        @assert M == N + 1
-        new{N, R}(R.(coeffs), var)
-    end
-    function Bernstein{T}(coeffs::AbstractVector{S}, var::Symbol=:x)  where {T <: Number, S <: Number}
-        N =  length(coeffs) - 1
-        R =  promote_type(T,S)
-        new{N, R}(R.(coeffs), var)
-    end
-    function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x) where {T <: Number}
-        N = length(coeffs) - 1
-        new{N,T}(coeffs, var)
+        M > max(0,N)+1 && throw(ArgumentError("Only degree $N or less polynomials can be specified"))
+        new{N, T}(T.(coeffs), var)
     end
 end
 
 export Bernstein
+@register1 Bernstein
+
+Bernstein(x::Number, var=:x) = convert(Bernstein, x)
+
+# add default case with no N specified
+function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x)  where {T <: Number}
+    n = findlast(!iszero,coeffs)
+    if n == nothing
+        zero(Bernstein{0, T})
+    else
+        Bernstein{n-1, T}(coeffs[1:n], var)
+    end
+end
 
 function Polynomials.showterm(io::IO, ::Type{Bernstein{N, T}}, pj::T, var, j, first::Bool, mimetype) where {N, T}
     iszero(pj) && return false
@@ -52,19 +52,15 @@ function Polynomials.showterm(io::IO, ::Type{Bernstein{N, T}}, pj::T, var, j, fi
     return true
 end
 
-# Can't use this here, the automatic definitions have the wrong type signature
-#Polynomials.@register Bernstein
 
-function Base.promote_rule(::Type{Bernstein{N,T}}, ::Type{Bernstein{M,S}}) where {N, T, M, S}
-    NN = max(N, M)
-    R = promote_type(T,S)
-    Bernstein{NN, R}
+function (ch::AbstractBernstein{T})(x::S) where {T,S}
+    # XXX make more efficient
+    x ∉ domain(ch) && error("$x outside of domain")
+    R = promote_type(T, S)
+    length(ch) == 0 && return zero(R)
+    convert(Polynomial{T}, ch)(x)
 end
 
-function Base.promote_rule(::Type{Bernstein{N,T}}, ::Type{S}) where {N, T, S <: Number}
-    R = promote_type(T,S)
-    Bernstein{N,R}
-end
 
 
 function Base.convert(P::Type{<:Polynomial}, ch::Bernstein{N,T}) where {N, T}
@@ -123,8 +119,9 @@ end
 Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
 Polynomials.degree(p::Bernstein{N,T}) where {N, T} = degree(convert(Polynomial{T}, p))
 Polynomials.variable(P::Type{<:Bernstein{N,T}}) where {N, T} = convert(P, Polynomial{T}([0,1]))
-Base.one(P::Type{<:Bernstein{N, T}}) where {N, T} = convert(P, 1)
-Base.zero(P::Type{<:Bernstein{N, T}}) where {N, T} = P(zeros(T, N+1))
+Base.one(P::Type{Bernstein{N,T}}) where {N,T} = Bernstein{N,T}(ones(T, N+1))
+Base.one(P::Type{<:Bernstein{N}}) where {N} = Bernstein{N,Int}(ones(Int, N+1))
+Base.one(P::Type{<:Bernstein})  = Bernstein{0,Int}([1])
 
 
 
@@ -136,7 +133,7 @@ function Base.:+(p1::Bernstein{N,T}, p2::Bernstein{M,S}) where {N, T, M, S}
     R = promote_type(T, S)
 
     if M == N
-        return Bernstein{N, R}(coeffs(p1) + coeffs(p2), p1.var)
+        return Bernstein{N, R}([p1[i] + p2[i] for i in 0:N], p1.var)
     else
         NN = max(M, N)
         q1 = convert(Polynomial{R}, p1)
@@ -163,18 +160,9 @@ function Base.:*(p1::Bernstein{N,T}, p2::Bernstein{M,S}) where {N,T, M,S}
         end
     end
 
-    Bernstein{N+M,R}(c, p1.var)
+    Bernstein(c, p1.var)
 
 end
-
-function (ch::AbstractBernstein{T})(x::S) where {T,S}
-    # XXX make more efficient
-    x ∉ domain(ch) && error("$x outside of domain")
-    R = promote_type(T, S)
-    length(ch) == 0 && return zero(R)
-    convert(Polynomial{T}, ch)(x)
-end
-
 
 
 function Polynomials.derivative(p::Bernstein{N, T}, order::Integer = 1) where {N, T}

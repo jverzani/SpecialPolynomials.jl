@@ -4,8 +4,7 @@
 
 A family of discrete orthogonal polynomials for each N. 
 
-We follow the parameterization  of  [Coleman](https://arxiv.org/pdf/1101.1798.pdf), notably with a parameter `s > 2`, not a parameter `0 < p  < 1`.
-
+We follow the parameterization  of  [Coleman](https://arxiv.org/pdf/1101.1798.pdf), notably with a parameter `s > 2`, not a parameter `0 < p  < 1`. With this  parameterization, the nodes are `xs=0,1,...,N` and the weight function is  `w_k=binomial(N,k)⋅(s-1)^k`.
 
 """
 struct Krawtchouk{N, s, T<:Number} <: DiscreteOrthogonalPolynomial{T}
@@ -52,16 +51,6 @@ function Base.:+(p1::Krawtchouk{N,s, T}, p2::Krawtchouk{M,s,S}) where {N,s,T,M,S
         return P(coeffs(pp), p1.var)
     end
 end
-
-
-# function Base.:+(p1::Krawtchouk{N,s,T}, p2::Krawtchouk{M,s,S}) where {N,T,M,S, s}
-#     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
-#     p, q = N >= M ? (p1, p2) : (p2, p1)
-#     P = typeof(p)
-#     qq = convert(P, convert(Polynomial, q))
-#     cs = [p[i] + qq[i] for i = 0:N]
-#     return P(cs, p1.var)
-# end
 
 function Base.:*(p1::Krawtchouk{N,s,T}, p2::Krawtchouk{M,s,S}) where {N,T,M,S,s}
     R = promote_type(T,S)

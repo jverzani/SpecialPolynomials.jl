@@ -55,6 +55,24 @@ end
 
 end
 
+@testset "ChebyshevHermite" begin
+
+    p0 = ChebyshevHermite([1])  # 1
+    p1 = ChebyshevHermite([0,1]) # x
+    p2 = ChebyshevHermite([0,0,1]) #
+    p3 = ChebyshevHermite([0,0,0,1]) #
+    p4 = ChebyshevHermite([0,0,0,0,1]) #
+
+    for x in range(-1, 1, length=5)
+        @test p0(x) ≈ 1
+        @test p1(x) ≈ x
+        @test p2(x) ≈ x^2 - 1
+        @test p3(x) ≈ x^3 - 3x
+        @test p4(x) ≈ x^4 - 6x^2 + 3
+    end
+
+end
+
 @testset "Legendre" begin
 
     p0 = Legendre([1])  # 1

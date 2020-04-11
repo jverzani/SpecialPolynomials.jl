@@ -13,6 +13,9 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 julia = "1"
+Polynomials = "0.6, 0.7, 1.0"
+QuadGK = "2.3"
+Memoize = "0.4"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

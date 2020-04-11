@@ -17,10 +17,9 @@
 end
 
 @testset "Other Construction" begin
-    # Leading 0s are not trimmed
+    # Leading 0s are  trimmed
     p = Bernstein([1, 2, 0, 0])
-    @test p.coeffs == [1, 2, 0, 0]
-    @test length(p) == 4
+    @test p.coeffs == [1, 2]
 
     # Different type
     p = Bernstein{3, Float64}(ones(Int32, 4))
@@ -30,15 +29,15 @@ end
     @test p.coeffs == [30, 30]
 
     p = zero(Bernstein{1, Int})
-    @test p.coeffs == [0, 0]
+    @test p.coeffs == [0]
 
     p = zero(Bernstein{5, Int})
-    @test p.coeffs == zeros(Int, 6)
+    @test all(iszero,p.coeffs)
 
     p = one(Bernstein{1, Int})
     @test p.coeffs == ones(Int,  2)
 
-    @test_throws AssertionError Bernstein{2, Int}(Int[])
+    @test iszero(Bernstein{2, Int}(Int[]))
 
     p0 = Bernstein([0])
     @test iszero(p0)

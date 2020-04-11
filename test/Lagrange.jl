@@ -17,6 +17,14 @@
     us = rand(5)
     @test all(p.(us) .≈ q.(us))
 
+    # test one, zero, variable
+    x = variable()
+    q = fit(Lagrange, [1,2,3],[2,3,1])
+    @test iszero(zero(q))
+    @test convert(Polynomial, one(q)) == one(x)
+    @test convert(Polynomial, variable(q)) == x
+
+
 end
 
 @testset "Conversion" begin

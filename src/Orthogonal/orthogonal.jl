@@ -120,7 +120,7 @@ alpha(p::P, n) where {P <: AbstractOrthogonalPolynomial} = alpha(P, n)
 cf. [`An()`](@ref)
 """
 function beta(P::Type{<:AbstractOrthogonalPolynomial}, n)
-    iszero(n) &&  return _quadgk(weight_function(P), extrema(P)...)
+    iszero(n) &&  return innerproduct(P, one, one)
     -Cn(P,n)/An(P,n)/An(P, n-1)
 end
 beta(p::P, n) where {P <: AbstractOrthogonalPolynomial} = beta(P, n)
@@ -379,4 +379,5 @@ end
 
 ## Some utilities
 _quadgk(f, a, b) = quadgk(f, a+eps(), b-eps())[1]
+const ∫ = _quadgk
 _monic(p::AbstractOrthogonalPolynomial) = p/convert(Polynomial,p)[end]

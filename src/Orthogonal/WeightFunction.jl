@@ -2,12 +2,38 @@
 ## Wheeler algorithm, https://authors.library.caltech.edu/86868/1/1.4822929.pdf
 ## algorithm not considered, just text
 
+abstract type AbstractWeightFunction{T} <: AbstractOrthogonalPolynomial{T} end
+
 """
     WeightFunction{P,F,T}
 
-XXX
+A type for orthogonal polynomials relative to some weight
+function. The Wheeler or modified Chebyshev algorithm
+([Gautschi](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf)) is used
+to generate the tree-term recurrence relation.  This uses a known
+family of orthogonal polynomials over the domain of the weight
+function.  These are specified through `pis`.
+
+#  Example. 
+
+Elliptic orthogonal polynomials on  `[-1,1]`. Demo 2 of Gautschi.
+
+```jldoctest
+julia> using  SpecialPolynomials
+julia> N,  ω² = 40, 0.999
+julia> w(t) = ((1-ω²*t^2)*(1-t^2))^(-1/2)
+julia> πs = ChebyshevTT{Float64}
+julia> p = WeightFunction(πs, w, [0,0,1], :x)
+julia> SpecialPolynomials.alpha.(p, 0:5) # α_0, α_1, ..., α_5
+julia> SpecialPolynomials.beta.(p, 0:5)  # β_0, β_1, ..., β_5
+```
+
+The integrals in the mixed moment, `σ_{kl} = ∫ p_k⋅π_l dw`,
+computation are done through recursion and are slow to compute.
+
+
 """
-struct WeightFunction{P, F, T <: Number} <: OrthogonalPolynomial{T}
+struct WeightFunction{P, F, T <: Number} <: AbstractWeightFunction{T}
     pis::P
     W::F
     coeffs::Vector{T}
@@ -21,7 +47,7 @@ export WeightFunction
 
 ## conversion functions ....
 
-basis_symbol(::Type{<:WeightFunction}) = "W"
+basis_symbol(::Type{<:AbstractWeightFunction}) = "W"
 
 Polynomials.domain(::Type{<:WeightFunction}) = throw(ArgumentError("Must pass instance, not type"))
 Polynomials.domain(w::WeightFunction) = domain(w.pis)
@@ -33,25 +59,25 @@ weight_function(w::WeightFunction) = w.W
 
 
 ## An,Bn,Cn for the orthogonal polynomials for the given weight function
-An(w::WeightFunction, n) = 1.0
-Bn(w::WeightFunction, k) = - alpha(w, k)
-Cn(w::WeightFunction, k) = - beta(w, k)
+An(w::AbstractWeightFunction, n) = 1.0
+Bn(w::AbstractWeightFunction, k) = - alpha(w, k)
+Cn(w::AbstractWeightFunction, k) = - beta(w, k)
 
 ## methods to work with instances, not types
-P0(p::P, x) where {P <: WeightFunction} = one(x)
-P1(p::P, x) where {P <: WeightFunction} = An(p,0)*x + Bn(p,0)
+P0(p::P, x) where {P <: AbstractWeightFunction} = one(x)
+P1(p::P, x) where {P <: AbstractWeightFunction} = An(p,0)*x + Bn(p,0)
 
-function jacobi_matrix(p::P, n) where {P <: WeightFunction}
+function jacobi_matrix(p::P, n) where {P <: AbstractWeightFunction}
     LinearAlgebra.SymTridiagonal([alpha(p,i) for i in 0:n-1], [sqrt(beta(p,i)) for i in 1:n-1])
 end
 
-function gauss_nodes_weights(p::P, n) where {P <: WeightFunction}
+function gauss_nodes_weights(p::P, n) where {P <: AbstractWeightFunction}
     J = jacobi_matrix(p, n)
-    eig = eigen(J, domain(p)...)
+    eig = eigen(J, extrema(p)...)
     # Is this necessary?
     nm  = 1 # diag(eig.vectors * eig.vectors')
     wts =  beta(p,0) * eig.vectors[1,:] / nm
-    (ee.values,  wts)
+    (eig.values,  wts)
 end
 
 function Base.extrema(p::P) where {P <: WeightFunction}
@@ -62,7 +88,7 @@ end
 function innerproduct(p::WeightFunction, f, g)
     dom = domain(p)
     fn = x -> f(x) * g(x) * weight_function(p)(x)
-    _quadgk(fn, first(dom)+eps(), last(dom)-eps())
+    ∫(fn, first(dom)+eps(), last(dom)-eps())
 end
 
 
@@ -128,6 +154,6 @@ end
 end
 
 @memoize function beta(w::WeightFunction, k)
-    iszero(k) && return 0/1
+    iszero(k) && return innerproduct(w, one, one)
     (sigma(w, k, k)/sigma(w, k-1, k-1))
 end

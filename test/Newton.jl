@@ -2,13 +2,19 @@
 
     # basic constructor
     xs = [1,2,3]
-    p(x) = x^2
-    q = fit(Newton, xs, p)
-    @test all(p.(xs) .≈ q.(xs)) 
+    f(x) = x^2
+    q = fit(Newton, xs, f)
+    @test all(f.(xs) .≈ q.(xs)) 
     
     # test tableau
     @test all(q.tableau .≈   [1 3 1; 0 4 5; 0 0 9])
 
+    # test one, zero, variable
+    x = variable()
+    @test one(q)(x) == one(x)
+    @test iszero(zero(q))
+    @test variable(q)(x) == x
+    
 end
 
 @testset "Conversion" begin

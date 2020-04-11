@@ -85,14 +85,25 @@ export Lagrange
 
 basis_symbol(::Type{Lagrange{N,S,R,T}}) where {N,S,R,T} = "ℓ^$(N-1)"
 
-## Boilerplate code reproduced here, as there are two type parameters
+## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P <: Lagrange} =  p
+Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange) where {N,S,R,T} = Lagrange{N,S,R,T}(p.xs, p.ws, coeffs(p), p.var)
+Base.promote_rule(::Type{Lagrange{N, S, R, T}}, ::Type{Lagrange{N, S, R, Q}}) where {N, S, R, T, Q <: Number} = Lagrange{N, S, R, promote_type(T,Q)}
 Base.promote_rule(::Type{Lagrange{N, S, R, T}}, ::Type{Q}) where {N, S, R, T, Q <: Number} = Lagrange{N, S, R, promote_type(T,Q)}
+
+
+
+
+
 
 Polynomials.domain(::Type{<:Lagrange}) = Polynomials.Interval(-Inf, Inf)
 function Polynomials.variable(p::Lagrange{S, R, T}, var::Polynomials.SymbolLike=:x) where {S, R, T}
     _fit(Lagrange, p.xs, p.ws, p.xs, var)
 end
+function Polynomials.one(p::Lagrange)
+    _fit(Lagrange, p.xs, p.ws, ones(eltype(p.xs),length(p.xs)), p.var)
+end
+Polynomials.zero(p::Lagrange{N, S, R, T}) where {N,S,R,T} = 0*p
 
 ##  Evaluation
 ##  From https://people.maths.ox.ac.uk/trefethen/barycentric.pdf

@@ -32,7 +32,7 @@ julia> p3 = Legendre([0,0,0,1])
 Legendre(1⋅L_3(x))
 ```
 
-The coefficients, e.g., `[0,0,0,1]` inidicate a polynomial `0⋅p0 +
+The coefficients, e.g., `[0,0,0,1]` indicate a polynomial `0⋅p0 +
 0⋅p1 + 0⋅p2 + 1⋅p3`. The `show` method expresses these polynomials
 relative to their bases. More familiar expressions are seen by
 conversion to the standard basis. For example:
@@ -133,6 +133,12 @@ julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
 (0.0, 0.0)
 ```
 
+The unexport `innerproduct` will compute this as well without specifiying the domain or weight function, which can be gleaned from the type.
+
+```jldoctest example
+julia> SpecialPolynomials.innerproduct(P, p4, p5)
+```
+
 
 
 ## Polynomial methods
@@ -164,7 +170,6 @@ julia> p*q
 ChebyshevU(9⋅U_0(x) + 8⋅U_1(x) + 10⋅U_2(x) + 6⋅U_3(x) + 15⋅U_4(x) + 10⋅U_5(x) + 8⋅U_6(x))
 
 julia> p^2
-
 ChebyshevU(30⋅U_0(x) + 40⋅U_1(x) + 51⋅U_2(x) + 44⋅U_3(x) + 41⋅U_4(x) + 24⋅U_5(x) + 16⋅U_6(x))
 ```
 
@@ -180,8 +185,6 @@ julia> p,q = P([1,2]), P([-2,1])
 julia> p * q
 Jacobi(- 1.5⋅J^(α, β)_0(x) - 2.0⋅J^(α, β)_1(x) + 1.3333333333333333⋅J^(α, β)_2(x))
 ```
-
-(Using `P = Jacobi{1//2, 1//2}` will use exact arithmetic here.)
 
 ### Derivatives and integrals
 
@@ -210,7 +213,7 @@ Jacobi{1//2,-1//2,T} where T<:Number
 julia> p,q = P([1,2]), P([-2,1])
 (Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x)), Jacobi(- 2⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x)))
 
-julia> p * q
+julia> p * q # as above, only with rationals for paramters
 Jacobi(- 3//2⋅J^(α, β)_0(x) - 2//1⋅J^(α, β)_1(x) + 4//3⋅J^(α, β)_2(x))
 
 julia> P = Jacobi{1//2, -1//2}
@@ -251,11 +254,21 @@ julia> p.(rts)
  0.0
 ```
  
- The roots are found from the eigenvalues of the companion matrix,
- which may be directly produced  by `companion`; the default is  to find  it after
- conversion to the standard basis.
  
- For orthogonal polynomials, the roots of the basis vectors are important for quadrature. For larger values of `n`, the eigenvalues of the unexported `jacobi_matrix` also identify these roots, but the algorithm is more stable.
+Here we see `fromroots` and `roots` are related, provided a monic polynomial is used:
+ 
+```jldoctest example
+julia> P = Jacobi{1/2,-1/2}
+julia> p = P([1,2,2,1])
+julia> q = p / (convert(Polynomial,p)[end])   # monic
+julia> fromroots(P, roots(p)) - p |> u -> round(u, digits=15)
+```
+ 
+The roots are found from the eigenvalues of the companion matrix,
+which may be directly produced  by `companion`; the default is  to find  it after
+conversion to the standard basis.
+ 
+For orthogonal polynomials, the roots of the basis vectors are important for quadrature. For larger values of `n`, the eigenvalues of the unexported `jacobi_matrix` also identify these roots, but the algorithm is more stable.
  
 ```jldoctest example
 julia> using LinearAlgebra
@@ -289,6 +302,16 @@ julia> p50 = Polynomials.basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> sum
 50
 ```
+
+
+The `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an ``O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+
+```jldoctest example
+julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
+```
+
+!!! note
+    For a broader and faster implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for more families. 
 
 ## Fitting
 
@@ -361,6 +384,7 @@ true
 
 Fitting with `xs = collect(range(-1, 1, length=50))` will have a maximum, as computed above, of `≈ 1e-4`.
 
+
 ### Polynomial approximation
 
 If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won't  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Adding a value for the degree, illustrates:
@@ -398,9 +422,9 @@ This wavy example is from Trefethen:
 julia> f(x) = sin(6x) + sin(60*exp(x))
 f (generic function with 1 method)
 
-julia> p = fit(ChebyshevTT{Float64}, f, 50);
+julia> p50 = fit(ChebyshevTT{Float64}, f, 50);
 
-julia> maximum(norm(p(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps()) # ≈ 16
+julia> maximum(norm(p50(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps()) # cf. graph below
 false
 ```
 
@@ -409,11 +433,31 @@ false
 However, with more points we have a good fit:
 
 ```jldoctest example
-julia> p = fit(ChebyshevTT{Float64}, f, 196);
+julia> p196 = fit(ChebyshevTT{Float64}, f, 196);
 
-julia> maximum(norm(p(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps())  # ≈ 1e-13
+julia> maximum(norm(p196(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps())  # ≈ 1e-13
 true
 ```
+
+```@example
+using Plots, Polynomials, SpecialPolynomials
+f(x) = sin(6x) + sin(60*exp(x))
+p50 = fit(ChebyshevTT{Float64}, f, 50);
+p196 = fit(ChebyshevTT{Float64}, f, 196);
+plot(f, -1, 1, legend=false, color=:black)
+xs = range(-1, stop=1, length=500) # more points than recipe
+plot!(xs, p50.(xs), color=:blue)
+plot!(xs, p196.(xs), color=:red)
+savefig("wavy.svg"); nothing # hide
+```
+
+![](wavy.svg)
+
+
+!!! note
+    The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial families. The choice of order and methods for most of Julia's built-in functions is conveniently provided.
+
+
 
 ## Plotting
 

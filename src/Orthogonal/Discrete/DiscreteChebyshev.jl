@@ -1,6 +1,9 @@
 """
-    DiscreteChebyshve{N,T}
-XXX
+    DiscreteChebyshev{N,T}
+
+For each `N`, a family of discrete `N+1` orthogonal polynomials with `xs=0,1,...,N-1` and weight function `w_k=1`. 
+
+
 """
 struct DiscreteChebyshev{N, T<:Number} <: DiscreteOrthogonalPolynomial{T}
 coeffs::Vector{T}

@@ -31,8 +31,8 @@ macro register1(name)
         $poly{α}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike = :x) where {α,T} =
             $poly{α,T}(coeffs, Symbol(var))
         $poly{α,T}(x::AbstractVector{S}, var = :x) where {α,T,S<:Number} = $poly{α}(T.(x), var)
-        $poly{α,T}(n::Number, var = :x) where {α,T} = $poly{α}(T[n], var)        
-        $poly{α}(n::Number, var = :x) where {α} = $poly{α}([n], var)
+        $poly{α,T}(n::Number, var = :x) where {α,T} = n*one($poly{α,T}, var)
+        $poly{α}(n::Number, var = :x) where {α} = n*one($poly{α}, var)
         $poly{α,T}(var=:x) where {α, T} = variable($poly{α,T}, var)
         $poly{α}(var=:x) where {α} = variable($poly{α}, var)
     end
@@ -50,9 +50,9 @@ macro register2(name)
             $poly{α,β,promote_type(T, S)}
         $poly{α,β}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike = :x) where {α,β,T} =
             $poly{α,β,T}(coeffs, Symbol(var))
-        $poly{α,β,T}(x::AbstractVector{S}, var = :x) where {α,β,T,S<:Number} = $poly{α,β}(T.(x), var)
-        $poly{α,β,T}(n::Number, var = :x) where {α,β,T} = $poly{α}(T(n), var)
-        $poly{α,β}(n::Number, var = :x) where {α,β} = $poly{α,β}([n], var)
+        $poly{α,β,T}(x::AbstractVector{S}, var = :x) where {α,β,T,S<:Number} = $poly{α,β}(promote_type(T,S).(x), var)
+        $poly{α,β,T}(n::Number, var = :x) where {α,β,T} = n*one($poly{α,β,T}, var)
+        $poly{α,β}(n::Number, var = :x) where {α,β} = n*one($poly{α,β}, var)
         $poly{α,β,T}(var=:x) where {α,β, T} = variable($poly{α,β,T}, var)
         $poly{α,β}(var=:x) where {α,β} = variable($poly{α,β}, var)
     end
