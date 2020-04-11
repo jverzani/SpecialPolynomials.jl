@@ -6,6 +6,8 @@ The Gegenbauer family of orthogonal polynomials has weight function
 specified in the constructor.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p =  Gegenbauer{1/2}([1,2,3])
 Gegenbauer(1⋅C^(0.5)_0(x) + 2⋅C^(0.5)_1(x) + 3⋅C^(0.5)_2(x))
 

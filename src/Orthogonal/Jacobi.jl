@@ -4,6 +4,8 @@
 Implements the [Jacobi](https://en.wikipedia.org/wiki/Jacobi_polynomials) polynomials. These have weight function `w(x) = (1-x)^α ⋅ (1+x)^β` over the domain `[-1,1]`. Many orthogonal families are special cases. The parameters are  specified to the constructors:
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = Jacobi{-1/2, -1/2}([0,0,1])
 Jacobi(1⋅J^(α, β)_2(x))
 
@@ -11,6 +13,7 @@ julia> convert(Polynomial, p)
 Polynomial(-0.375 + 0.75*x^2)
 
 julia> monic(p::Polynomial) = p/p[end];
+
 
 julia> (monic ∘ convert).(Polynomial, (p, Polynomials.basis(ChebyshevTT, 2))) # scaled version of each other
 (Polynomial(-0.5 + 1.0*x^2), Polynomial(-0.5 + 1.0*x^2))

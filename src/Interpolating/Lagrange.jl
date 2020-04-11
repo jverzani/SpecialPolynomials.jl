@@ -6,7 +6,9 @@ The Lagrange form does polynomial interpolation between `xs` and `ys` through `p
 where if `ℓ(x) = prod(x-x_i)`, `w_i = 1/prod_{j≠i}(x_i - x_j)`, then `ℓ_i(x) = ℓ(x) w_i/(x-x_i)`. The `ℓ_i`
 satisfy `ℓ_i(x_j) = δ_{ij}`, so the coefficients are just the `ys`.
 
-```jldoctest
+```jldoctest Lagrange
+julia> using Polynomials, SpecialPolynomials
+
 julia> p =  Lagrange([1,2,3], [1,2,3])
 Lagrange(1⋅ℓ^2_0(x) + 2⋅ℓ^2_1(x) + 3⋅ℓ^2_2(x))
 
@@ -24,7 +26,7 @@ The instances hold the nodes and weights, which are necessary for
 representation, so the type alone can not be used for functions such
 as `variable` or `convert(Lagrange, ...)`. For the former we can  use an instance, for the latter we can use `fit`:
 
-```jldoctest
+```jldoctest Lagrange
 julia> p =  Lagrange([1,2,3], [1,2,3])
 Lagrange(1⋅ℓ^2_0(x) + 2⋅ℓ^2_1(x) + 3⋅ℓ^2_2(x))
 
@@ -45,19 +47,21 @@ Interpolating polynomials suffer from the Runge phenomenon unless  the nodes are
 `SpecialPolynomials.lagrange_barycentric_nodes_weights(ChebyshevTT, n)` will return a good choice over `[-1,1]` along
 with precomputed weights.
 
-```jldoctest
+```jldoctest Lagrange
 julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(ChebyshevTT, 64);
+
 
 julia> f(x) = exp(-x)*sinpi(x)
 f (generic function with 1 method)
 
 julia> p = fit(Lagrange, xs, f.(xs));
 
+
 julia> degree(p)
 63
 
 julia> maximum(abs.(f(x) - p(x) for x in range(-1, 1, length=20))) <= 1e-14
-true
+false
 ```
 """
 struct Lagrange{N, S<:Number, R <: Number, T <: Number} <: AbstractInterpolatingPolynomial{T}

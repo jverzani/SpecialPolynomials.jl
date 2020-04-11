@@ -7,6 +7,8 @@ polynomials of the second kind. These have weight function
 `w(x) = sqrt(1-x^2)` over the domain `[-1,1]`.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = ChebyshevU([1,2,3])
 ChebyshevU(1⋅U_0(x) + 2⋅U_1(x) + 3⋅U_2(x))
 

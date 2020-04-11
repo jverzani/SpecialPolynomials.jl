@@ -4,6 +4,8 @@
 Implements the [Legendre](https://en.wikipedia.org/wiki/Legendre_polynomials) polynomials. These have weight function `w(x) = 1` over the domain `[-1,1]`.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = Legendre([1,2,3])
 Legendre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 

@@ -10,7 +10,9 @@ used to generate the coefficients on fitting.
 
 The easiest way to construct an instance is with `fit`, as in:
 
-```jldoctest
+```jldoctest Newton
+julia> using Polynomials, SpecialPolynomials
+
 julia> xs = [1,2,3,4]; f(x)= x^3 - 2x + 1;
 
 julia> p = fit(Newton, xs, f)

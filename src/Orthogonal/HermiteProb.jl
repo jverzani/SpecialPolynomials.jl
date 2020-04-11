@@ -11,8 +11,10 @@ are orthogonal with respect to weight function `w(x) = exp(-x^2/2)`
 over the real line.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = ChebyshevHermite([1,2,3])
-ChebyshevHermite(1⋅e_0(x) + 2⋅He_1(x) + 3⋅He_2(x))
+ChebyshevHermite(1⋅He_0(x) + 2⋅He_1(x) + 3⋅He_2(x))
 
 julia> convert(Polynomial, p)
 Polynomial(-2 + 2*x + 3*x^2)

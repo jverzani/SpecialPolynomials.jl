@@ -4,6 +4,8 @@
 Implements the [Laguerre](https://en.wikipedia.org/wiki/Laguerre_polynomials) polynomials. These have weight function `w(x) = exp(-x)` over the domain `[0,oo)`.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = Laguerre([1,2,3])
 Laguerre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 

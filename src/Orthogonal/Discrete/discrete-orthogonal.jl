@@ -1,8 +1,8 @@
 """
     DiscreteWeightFunction
 
-For a discrete measure `dλ = ∑ wᵢ δ(x - xᵢ)` specified through two
-vectors `xs` and `ws` a family of monic orthogonal polynomials is
+For a discrete measure, `dλ = ∑ wᵢ δ(x - xᵢ)`, specified through two
+vectors, `xs` and `ws`, a family of monic orthogonal polynomials is
 produced through Darboux's formula for `α_n` and `β_n` using the
 3-term recurrence defined by `π_{n+1} = (x-α_n)⋅π_n - β_n⋅π_{n-1}`
 and the discrete Stieltjes method.
@@ -12,13 +12,30 @@ and the discrete Stieltjes method.
 Discrete Chebyshev by its weight function
 
 ```jldoctest
-julia> using SpecialPolynomials
-julia> SP = SpecialPolynomials
+julia> using Polynomials, SpecialPolynomials
+
+julia> const SP = SpecialPolynomials
+SpecialPolynomials
+
 julia> N = 9
-julia> xs = collect(0:N-1)
-julia> ws = ones(N)
+9
+
+julia> xs, ws = collect(0:N-1), ones(N);
+
 julia> p = DiscreteWeightFunction(xs, ws, [0,0,1], :x)
+DiscreteWeightFunction(1⋅e_2(x))
+
 julia> [SP.beta.(p, 0:N-1) SP.beta.(DiscreteChebyshev{N,Float64}, 0:N-1)]
+9×2 Array{Real,2}:
+ 9.0      9
+ 6.66667  6.66667
+ 5.13333  5.13333
+ 4.62857  4.62857
+ 4.12698  4.12698
+ 3.53535  3.53535
+ 2.83217  2.83217
+ 2.01026  2.01026
+ 1.06667  1.06667
 ```
 
 

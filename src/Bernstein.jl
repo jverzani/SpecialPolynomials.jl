@@ -10,7 +10,9 @@ Bernstein basic polynomials. For each degree, `n`, this is a set of `n+1` degree
 
 The  `Bernstein{N,T}` type represents a polynomial of degree `N` or with a linear combination of the basis vectors using coefficients  of  type `T`.
 
-```jldoctest
+```jldoctest Bernstein
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = Bernstein{3,Int}([0,0,1,0])
 Bernstein(1⋅β(3, 2)(x))
 

@@ -94,7 +94,7 @@ julia> h0,h1,h2,h3 = Polynomials.basis.(Hermite, 0:3);
 julia> x = variable();
 
 julia> h3(x)
-Polynomial(-3*x + x^3)
+Polynomial(-12*x + 8*x^3)
 ```
 
 If the coefficients are known, they can be directly passed to the constructor:
@@ -133,10 +133,11 @@ julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
 (0.0, 0.0)
 ```
 
-The unexport `innerproduct` will compute this as well without specifiying the domain or weight function, which can be gleaned from the type.
+The unexported `innerproduct` will compute this as well, without the need to specifiy the domain or weight function, which can be gleaned from the type.
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
+6.096184133406375e-16
 ```
 
 
@@ -148,7 +149,7 @@ For each polynomial family, this package implements as many of the methods for p
 
 ### Arithemtic
 
-For  example basic arithmetic:
+For example, basic arithmetic:
 
 ```
 julia> P = ChebyshevU
@@ -259,9 +260,17 @@ Here we see `fromroots` and `roots` are related, provided a monic polynomial is 
  
 ```jldoctest example
 julia> P = Jacobi{1/2,-1/2}
-julia> p = P([1,2,2,1])
+Jacobi{0.5,-0.5,T} where T<:Number
+
+
+julia> p = P([1,1,2,3])
+Jacobi(1⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x) + 2⋅J^(α, β)_2(x) + 3⋅J^(α, β)_3(x))
+
 julia> q = p / (convert(Polynomial,p)[end])   # monic
-julia> fromroots(P, roots(p)) - p |> u -> round(u, digits=15)
+Jacobi(0.13333333333333333⋅J^(α, β)_0(x) + 0.13333333333333333⋅J^(α, β)_1(x) + 0.26666666666666666⋅J^(α, β)_2(x) + 0.4⋅J^(α, β)_3(x))
+
+julia> fromroots(P, roots(q)) - q |> u -> round(u, digits=14)
+Jacobi(0.0)
 ```
  
 The roots are found from the eigenvalues of the companion matrix,
@@ -304,10 +313,11 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> s
 ```
 
 
-The `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an ``O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an ``O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
 
 ```jldoctest example
 julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
+([-0.9739065285171701, -0.8650633666889836, -0.6794095682990245, -0.43339539412924644, -0.14887433898163127, 0.14887433898163216, 0.43339539412924777, 0.6794095682990245, 0.8650633666889843, 0.9739065285171717], [0.0666713443086869, 0.149451349150583, 0.2190863625159837, 0.26926671930999535, 0.2955242247147498, 0.29552422471475265, 0.26926671930999535, 0.21908636251598357, 0.14945134915058111, 0.06667134430868783])
 ```
 
 !!! note
@@ -325,7 +335,7 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
 julia> p1 = fit(Polynomial,  xs, ys)
-Polynomial(1.0 + 8.666666666666666*x - 24.0*x^2 + 21.333333333333332*x^3)
+Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
 
 julia> p2 = fit(Lagrange, xs, ys)
 Lagrange(1⋅ℓ^3_0(x) + 2⋅ℓ^3_1(x) + 2⋅ℓ^3_2(x) + 3⋅ℓ^3_3(x))
@@ -341,10 +351,10 @@ same interpolating polynomial:
 ```jldoctest example
 julia> [p1.(xs)-ys  p2.(xs)-ys p3.(xs)-ys]
 4×3 Array{Float64,2}:
-  0.0          0.0  0.0
- -2.22045e-16  0.0  0.0
- -4.44089e-16  0.0  0.0
- -4.44089e-16  0.0  0.0
+  2.22045e-16  0.0  0.0
+  1.33227e-15  0.0  0.0
+ -3.33067e-15  0.0  0.0
+ -8.88178e-15  0.0  0.0
 ```
 
 
@@ -394,13 +404,13 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomial(1.5 + 0.4000000000000001*x)
+Polynomial(1.5 + 0.4*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomial(4.000000000000013 - 2.1000000000000107*x + 0.500000000000002*x^2)
+Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
-Polynomial(-10.000000000000002 + 20.166666666666668*x - 9.5*x^2 + 1.3333333333333333*x^3)
+Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)
 ```
 
 For the orthogonal families, fitting a polynomial to a function using least squares can be solved using the polynomial

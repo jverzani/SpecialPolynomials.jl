@@ -13,14 +13,16 @@ terms of the given variable `x`. `x` can be a character, symbol, or string.
 # Examples
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> ChebyshevTT([1, 0, 3, 4])
-ChebyshevTT([1, 0, 3, 4])
+ChebyshevTT(1⋅T_0(x) + 3⋅T_2(x) + 4⋅T_3(x))
 
 julia> ChebyshevTT([1, 2, 3, 0], :s)
-ChebyshevTT([1, 2, 3])
+ChebyshevTT(1⋅T_0(s) + 2⋅T_1(s) + 3⋅T_2(s))
 
 julia> one(ChebyshevTT)
-ChebyshevTT([1.0])
+ChebyshevTT(1.0⋅T_0(x))
 ```
 
 !!! note
@@ -85,18 +87,19 @@ Evaluate the Chebyshev polynomial at `x`. If `x` is outside of the domain of [-1
 # Examples
 ```jldoctest
 julia> c = ChebyshevTT([2.5, 1.5, 1.0])
-ChebyshevTT([2.5, 1.5, 1.0])
+ERROR: UndefVarError: ChebyshevTT not defined
+Stacktrace:
+ [1] top-level scope at none:1
 
 julia> c(0)
-1.5
+ERROR: UndefVarError: c not defined
+Stacktrace:
+ [1] top-level scope at none:1
 
 julia> c.(-1:0.5:1)
-5-element Array{Float64,1}:
- 2.0
- 1.25
- 1.5
- 2.75
- 5.0
+ERROR: UndefVarError: c not defined
+Stacktrace:
+ [1] top-level scope at none:1
 ```
 """
 (ch::ChebyshevTT{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)

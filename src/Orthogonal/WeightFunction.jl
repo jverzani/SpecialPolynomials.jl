@@ -19,13 +19,35 @@ function.  These are specified through `pis`.
 Elliptic orthogonal polynomials on  `[-1,1]`. Demo 2 of Gautschi.
 
 ```jldoctest
-julia> using  SpecialPolynomials
+julia> using Polynomials, SpecialPolynomials
+
 julia> N,  ω² = 40, 0.999
+(40, 0.999)
+
 julia> w(t) = ((1-ω²*t^2)*(1-t^2))^(-1/2)
+w (generic function with 1 method)
+
 julia> πs = ChebyshevTT{Float64}
+ChebyshevTT{Float64}
+
 julia> p = WeightFunction(πs, w, [0,0,1], :x)
-julia> SpecialPolynomials.alpha.(p, 0:5) # α_0, α_1, ..., α_5
-julia> SpecialPolynomials.beta.(p, 0:5)  # β_0, β_1, ..., β_5
+WeightFunction(1⋅e_2(x))
+
+julia> αs = SpecialPolynomials.alpha.(p, 0:5); # α_0, α_1, ..., α_5
+
+
+
+julia> βs = SpecialPolynomials.beta.(p, 0:5);  # β_0, β_1, ..., β_5
+
+
+julia> round.([αs βs], digits=8)
+6×2 Array{Float64,2}:
+  0.0  9.68226
+ -0.0  0.793782
+ -0.0  0.119868
+ -0.0  0.22704
+ -0.0  0.241061
+ -0.0  0.245429
 ```
 
 The integrals in the mixed moment, `σ_{kl} = ∫ p_k⋅π_l dw`,

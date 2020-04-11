@@ -6,6 +6,8 @@ The shifted [Legendre](https://en.wikipedia.org/wiki/Legendre_polynomials#Shifte
 cf. [`Legendre`](@ref)
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = ShiftedLegendre([1,2,3])
 ShiftedLegendre(1⋅L̃_0(x) + 2⋅L̃_1(x) + 3⋅L̃_2(x))
 

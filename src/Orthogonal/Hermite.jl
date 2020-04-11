@@ -9,11 +9,13 @@ Implements the (physicists) [Hermite](https://en.wikipedia.org/wiki/Hermite_poly
 The relation between the two is `H_n(x) = 2^(n/2)*H_{e_n}(sqrt(2)*x)`, with `H_{e_n}` being the probabilists Hermite polynomials.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = Hermite([1,2,3])
 Hermite(1⋅H_0(x) + 2⋅H_1(x) + 3⋅H_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-2 + 2*x + 3*x^2)
+Polynomial(-5 + 4*x + 12*x^2)
 ```
 
 """

@@ -4,11 +4,12 @@
 The generalized Laguerre family have weight function `x^α * exp(-x)` over the domain `[0, oo)`. The parameter `α` is specified through the constructor.
 
 ```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
 julia> p = GeneralizedLaguerre{1/2}([1,2,3])
 GeneralizedLaguerre(1⋅L^(0.5)_0(x) + 2⋅L^(0.5)_1(x) + 3⋅L^(0.5)_2(x))
 
 julia> convert(Polynomial, p)
-
 Polynomial(9.625 - 9.5*x + 1.5*x^2)
 ```
 
