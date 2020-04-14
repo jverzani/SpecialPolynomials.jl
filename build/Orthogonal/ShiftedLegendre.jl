@@ -21,7 +21,7 @@ julia> p(1/4) == q(2*(1/4) - 1)
 true
 ```
 """
-struct ShiftedLegendre{T <: Number} <: AbstractLegendre{T}
+struct ShiftedLegendre{T <: Number} <: OrthogonalPolynomial{T}
     coeffs::Vector{T}
     var::Symbol
     function ShiftedLegendre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}

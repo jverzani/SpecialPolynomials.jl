@@ -22,12 +22,12 @@ Polynomial(3*x^2 - 3*x^3)
 
 """
 struct Bernstein{N, T} <: AbstractBernstein{T}
-    coeffs::Vector{T}
+coeffs::Vector{T}
     var::Symbol
     function Bernstein{N, T}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x)  where {N, T}
         M = length(coeffs)
         M > max(0,N)+1 && throw(ArgumentError("Only degree $N or less polynomials can be specified"))
-        new{N,T}(coeffs, Symbol(var))
+        new{N,T}(coeffs, var)
     end
 end
 
@@ -36,8 +36,12 @@ export Bernstein
 
 # add default case with no N specified
 function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x)  where {T}
-    N = length(coeffs)-1
-    Bernstein{N, T}(coeffs, var)
+    n = findlast(!iszero,coeffs)
+    if n == nothing
+        zero(Bernstein{0, T})
+    else
+        Bernstein{n-1, T}(coeffs[1:n], var)
+    end
 end
 
 function Polynomials.basis(P::Type{<:Bernstein{N,T}},i::Int,var=:x) where {N,T}
@@ -46,19 +50,22 @@ function Polynomials.basis(P::Type{<:Bernstein{N,T}},i::Int,var=:x) where {N,T}
     P(cs,var)
 end
 Polynomials.basis(P::Type{<:Bernstein{N}},i::Int,var=:x) where {N} = Polynomials.basis(Bernstein{N,Int},i,var)
-
-function Base.getindex(p::Bernstein{N,T}, i::Int) where {N, T}
-    i < 0 && throw(ArgumentError(""))
-    i > N && return zero(eltype(T))
-    coeffs(p)[i+1]
-end
-
+    
 function Polynomials.showterm(io::IO, ::Type{Bernstein{N, T}}, pj::T, var, j, first::Bool, mimetype) where {N, T}
     iszero(pj) && return false
     !first &&  print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs.(pj))⋅β($N, $j)($var)")
+    print(io, "$(abs(pj))⋅β($N, $j)($var)")
     return true
+end
+
+
+function (ch::AbstractBernstein{T})(x::S) where {T,S}
+    # XXX make more efficient
+    x ∉ domain(ch) && error("$x outside of domain")
+    R = promote_type(T, S)
+    length(ch) == 0 && return zero(R)
+    convert(Polynomial{T}, ch)(x)
 end
 
 
@@ -118,103 +125,14 @@ end
 
 Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
 Polynomials.degree(p::Bernstein{N,T}) where {N, T} = degree(convert(Polynomial{T}, p))
-Polynomials.variable(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N} = Bernstein([1 - i/N for i in N:-1:0], var)
-
-## need to do zero and one differently,as coefficients have length N+1
-Base.one(P::Type{Bernstein{N,T}}, var=:x) where {N,T} = Bernstein{N,T}(ones(T, N+1))
-Base.one(P::Type{<:Bernstein{N}}, var=:x) where {N} = one(Bernstein{N,Int},var)
-Base.one(P::Type{<:Bernstein}, var=:x)  = one(Bernstein{0,Int}, var)
-Base.one(p::P) where {P <: Bernstein} = one(P,p.var)
-
-Base.zero(::Type{<:Bernstein{N,T}}, var=:x) where {N,T} = Bernstein{N,T}(zeros(T, N+1), var)
-Base.zero(::Type{<:Bernstein{N}}, var=:x) where {N} = zero(Bernstein{N,Int}, var)
-Base.zero(::Type{<:Bernstein}, var=:x)  = zero(Bernstein{0,Int}, var)
-Base.zero(p::P) where {P <: Bernstein} = zero(P,p.var)
-
-# we use the compensated one below for increased accuracy, but is it really necessary?
-function simple_deCasteljau_polyval(p::Bernstein{N,T}, t) where {N,T}
-    bs = coeffs(p).*one(t)
-    r = 1-t
-    for j in 1:N
-        for i = 0:N-j
-            ii = i + 1
-            bs[ii] = bs[ii]*r + bs[ii+1]*t
-        end
-    end
-    bs[1]
-end
-
-## Evaluation https://doi.org/10.1016/j.camwa.2010.05.021
-## Accurate evaluation of a polynomial and its derivative in Bernstein form☆
-## Hao Jiang, Shengguo Li, Lizhi Cheng, and Fang Su
-function deCasteljau_polyval(p::Bernstein{N,T}, t) where {N, T}
-    b̂ = coeffs(p) .* one(t)
-    errb̂ = 0 .* b̂ #zeros(eltype(b̂), N+1) 
-    r̂,ρ = twoSum(1, -t)
-    for j in 1:N
-        for ii in 0:(N-j)
-            i = ii+1
-            s, π̂ = twoProd(b̂[i], r̂)
-            v, σ̂ = twoProd(b̂[i+1], t)
-            b̂[i],β̂ = twoSum(s, v)
-            ŵ = π̂ .+ σ̂ .+ β̂ .+ (b̂[i] .* ρ)
-            errb̂[i] = errb̂[i] * r̂ + (errb̂[i+1] * t + ŵ)
-        end
-    end
-    b̂[1]+ errb̂[1]
-
-end
+Polynomials.variable(P::Type{<:Bernstein{N,T}}) where {N, T} = convert(P, Polynomial{T}([0,1]))
+Base.one(P::Type{Bernstein{N,T}}) where {N,T} = Bernstein{N,T}(ones(T, N+1))
+Base.one(P::Type{<:Bernstein{N}}) where {N} = Bernstein{N,Int}(ones(Int, N+1))
+Base.one(P::Type{<:Bernstein})  = Bernstein{0,Int}([1])
 
 
 
-# compensated form to  find p'(t)
-function deCasteljau_derivative_val(p::Bernstein{N,T}, t) where {N,T}
-    R = eltype(one(T)*one(eltype(t)))
-    r̂,ρ  = twoSum(one(R), -t)
-    Δb = zeros(R, N).*one(t)
-    errΔb = similar(Δb) #zeros(R, N).*one(t)
-    for ii=0:N-1
-        i = ii+1
-        Δb[i], errΔb[i] = twoSum(p[ii+1], -p[ii])
-    end
-    for j in 1:N-1
-        for ii in 0:N-1-j
-            i = ii+1
-            s, π̂ = twoProd(Δb[i], r̂)
-            v, σ̂ = twoProd(Δb[i+1], t)
-            Δb[i], β̂ = twoSum(s, v)
-            ŵ = π̂ + σ̂ + β̂ + (Δb[i] * ρ)
-            errΔb[i] = errΔb[i] * r̂ + (errΔb[i+1] * t + ŵ)
-        end
-    end
-    (Δb[1] + errΔb[1]) * N
-end
 
-# Moller-Knuth from Exact computations with approximate arithmetic
-# http://perso.ens-lyon.fr/jean-michel.muller/
-function twoSum(a::Number, b::Number)
-    s = a + b
-    â = s - b
-    b̂ = s - â
-    δ_a = a - â
-    δ_b = b - b̂
-    s, δ_a + δ_b
-end
-twoSum(x, y) = (x + y, zero(x)+zero(y))
-
-function twoProd(a::Number, b::Number)
-    ab = a * b
-    ab, fma(a,b,-ab)
-end
-twoProd(x, y)  = x*y, 0
-
-
-# poly evaluation
-(p::AbstractBernstein{T})(x::S) where {T,S} = deCasteljau_polyval(p, x)
-
-
-
-#
 function Base.:+(p1::Bernstein{N,T}, p2::Bernstein{M,S}) where {N, T, M, S}
 
     p1.var == p2.var || throw(ArgumentError("p1 and p2 must have the same symbol"))
@@ -241,7 +159,7 @@ function Base.:*(p1::Bernstein{N,T}, p2::Bernstein{M,S}) where {N,T, M,S}
     R = typeof(one(R1)/one(R1))
 
     c = zeros(R, N + M + 1)
-    bnmi = 1 / (binomial(N+M,M))
+    bnmi = 1 // (binomial(N+M,M))
     for i in 0:N
         for j in 0:M
             aij = binomial(N+M-(i+j),N-i) * binomial(i+j,i) * bnmi
@@ -259,11 +177,16 @@ function Polynomials.derivative(p::Bernstein{N, T}, order::Integer = 1) where {N
     cs = coeffs(p)
     NN < 0 &&  return p
     order ==  0 && return p
-
-    #  use p'(t) = n ∑ (b_{i+1} - b_i) B_i,n-1
-    dp =  Bernstein{NN, T}(N*diff(cs), p.var)
-    
-    order > 1 ? derivative(dp, order-1) : dp
+    csp = zeros(eltype(cs), NN+1)
+    # nu = 0
+    for (i,a_nu) in enumerate(cs)
+        nu = i - 1
+        nu > 0  && (csp[nu] += a_nu *  (NN+1))
+        nu <= NN && (csp[nu+1] -= a_nu *  (NN+1))
+    end
+    csp
+    pp = Bernstein{NN, T}(csp, p.var)
+    derivative(pp, order-1)
 end
 
 

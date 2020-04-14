@@ -17,9 +17,9 @@
 end
 
 @testset "Other Construction" begin
-    # Leading 0s are  trimmed
+    # Leading 0s are *not* trimmed
     p = Bernstein([1, 2, 0, 0])
-    @test p.coeffs == [1, 2]
+    @test p.coeffs == [1, 2,0,0]
 
     # Different type
     p = Bernstein{3, Float64}(ones(Int32, 4))
@@ -29,7 +29,7 @@ end
     @test p.coeffs == [30, 30]
 
     p = zero(Bernstein{1, Int})
-    @test p.coeffs == [0]
+    @test p.coeffs == zeros(Int,1+1)
 
     p = zero(Bernstein{5, Int})
     @test all(iszero,p.coeffs)
@@ -146,7 +146,7 @@ end
         cint = integrate(cheb, i)
         res = convert(Polynomial, cint)
         @test res ≈ pint
-        @test derivative(cint) == cheb
+        @test derivative(cint) ≈ cheb
     end
 
 

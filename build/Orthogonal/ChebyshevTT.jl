@@ -55,26 +55,13 @@ Cn(::Type{<:ChebyshevTT}, n) = -1
 P0(::Type{<:ChebyshevTT}, x) = one(x)
 P1(::Type{<:ChebyshevTT}, x) = x
 
-alpha(::Type{<:ChebyshevTT}, n) = 0.0
-beta(::Type{<:ChebyshevTT}, n) = n <= 1 ? 1/2 : 1/4
-
 norm2(P::ChebyshevTT{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
 
-# nodes for fitting a polynomial
 function lagrange_barycentric_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
     xs = [cos((2j+1)*pi/(2n+2)) for j in 0:n-1]
-
     ws = [(-1)^j*sin((2j+1)*pi/(2n+2)) for j in 0:n-1]  # XX one loop
     xs, ws
 end
-
-# noded for integrating against the weight function
-function gauss_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
-    xs = cos.(pi/2n * (2*(1:n).-1))
-    ws = pi/n * ones(n)
-    xs, ws
-end
-has_fast_gauss_nodes_weights(::Type{<: ChebyshevTT}) = true
 
 ## used discrete cosine  transformation to compute the ck:
 ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf

@@ -28,10 +28,6 @@ macro register1(name)
             $poly{α,promote_type(T, S)}
         Base.promote_rule(::Type{$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
             $poly{α,promote_type(T, S)}
-        function $poly{α,T}(x::AbstractVector{S}, var::Polynomials.SymbolLike = :x) where {α,T,S}
-            R = promote_type(T,S)
-            $poly{α,R}(R.(x), Symbol(var))
-        end
         $poly{α}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {α,T} =
             $poly{α,T}(coeffs, Symbol(var))
         $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = n*one($poly{α,T}, Symbol(var))
@@ -40,7 +36,6 @@ macro register1(name)
         $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, Symbol(var))
     end
 end
-
 
 # Macro to register POLY{α, β, T}
 macro register2(name)
@@ -64,8 +59,6 @@ end
 
 
 # set up some defaults
-basis =  Polynomials.basis
-export basis
 
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {P <: AbstractSpecialPolynomial, T}
     iszero(pj) && return false

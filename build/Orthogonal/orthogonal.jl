@@ -130,7 +130,7 @@ P0(::Type{P}, x) where {P <: AbstractOrthogonalPolynomial} = one(x)
 P0(p::P, x) where {P <: AbstractOrthogonalPolynomial} = P0(P,x)
 P1(::Type{P}, x) where {P <: AbstractOrthogonalPolynomial} = An(P,0)*x .+ Bn(P,0)
 P1(p::P, x) where {P <: AbstractOrthogonalPolynomial} = P1(P,x)
-dP0(::Type{P},  x) where {P <: AbstractOrthogonalPolynomial} = zero(x) 
+
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
 Polynomials.variable(p::P, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = variable(P)
@@ -189,8 +189,6 @@ function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolyno
 end
 gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
 
-has_fast_gauss_nodes_weights(p::P)  where {P <: AbstractOrthogonalPolynomial} = has_fast_gauss_nodes_weights(P)
-has_fast_gauss_nodes_weights(::Type{P})  where {P <: AbstractOrthogonalPolynomial} = false
 
 
 
@@ -210,34 +208,18 @@ function orthogonal_polyval(ch::P, x::S) where {P <: AbstractOrthogonalPolynomia
     c0 = ch[end - 1]
     c1 = ch[end]
     @inbounds for i in degree(ch):-1:2
-        c0, c1 = ch[i - 2] + c1 * Cn(ch, i-1), c0 + c1 * muladd(x, An(ch,i-1),Bn(ch,i-1))
+        c0, c1 = ch[i - 2] + c1 * Cn(ch, i-1), c0 + c1 * muladd(An(ch,i-1),x,Bn(ch,i-1))
     end
     # Now have c0 P_0(x) + c1 P_1 = c0 + c1*x
     return c0 * P0(ch, x) + c1 * P1(ch, x)
 end
 
-function monic_orthogonal_basis_polyval(P::Type{<:OrthogonalPolynomial}, j,  x::S) where {S}
-
-    j == 0 && return one(S)
-    j == 1 && return x - alpha(P,0)
-
-    oS = one(S)
-    c0 = zero(S)
-    c1 = oS
-    β = α = alpha(P,0)
-    p0 = oS
-    p1 = (x - α)*p0
-    @inbounds for i in j:-1:2
-        α, β = alpha(P,i-1), beta(P, i-1)
-        c0, c1 = c1 * (-β), c0 + c1 * (x - α)
-    end
-    # Now have c0 P_0(x) + c1 P_1 = c0 + c1*x
-    return c0 * p0 + c1 * p1
-end
-
 ## Evaluate an orthogonal polynomial and its  derivative using the three-point recursion representation
-function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
-
+## sn: (x,n) -> ? is used to scale the polyonmials
+## We march forward here, not backwards as is done with Clenshaw recursion
+function orthogonal_polyval_derivative(p::P, x::S,
+                                       scale=(x,n)-> (one(x),one(x),zero(x),zero(x))
+                                       ) where {P <: AbstractOrthogonalPolynomial, S}
     T = eltype(p)
     oS = one(x)
     R = eltype(one(T) * oS)
@@ -245,59 +227,28 @@ function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogona
     length(p) == 0 && return (zero(R), zero(R))
     d = length(p) - 1
 
-    # P0,  P_{-1} case
-    pn,  pn_1 = P0(P,x), zero(x)
-    dpn, dpn_1  = dP0(P,x), zero(x)
+    
+    λ1, λ0, dλ1, dλ0 = scale(x, 0)
+    pn_1 = zero(R)  # π_{-1}
+    pn = one(R) * λ0 # π_0
+    dpn_1 = zero(R) # dπ_{-1}
+    dpn = dλ0
 
-    ptot = p[0]*P0(P,x)
-    dptot  = p[0]*dP0(P,x)
-    
-    
+    ptot, dptot =  p[0]*pn,  p[0]*dpn
+
+
     ## we compute  forward here, finding pi, dp_i,  p_{i+1}, dp_{i+1}, ...
     for i in 0:d-1
+        λ1, λ0, dλ1, dλ0 = scale(x, i)
         an, bn, cn=  An(p,i), Bn(p,i), Cn(p,i)
-        dpn_1, dpn = dpn,  an*pn + (an*x + bn)*dpn + cn*dpn_1
-        pn_1,  pn =  pn, (an*x + bn)*pn + cn*pn_1
+        dpn_1, dpn = dpn,  (an*λ1 +  (an*x+bn)*dλ1)*pn  + cn*dλ0*pn_1 + ((an*x+bn)*λ1)*dpn + cn*λ0*dpn_1
+        pn_1,  pn =  pn, (an*x + bn)*λ1*pn + cn*λ0*pn_1
         ptot += p[i+1]*pn
         dptot += p[i+1]*dpn
     end
+
     return (ptot, dptot)
 end
-
-## sn: (x,n) -> ? is used to scale the polyonmials
-## We march forward here, not backwards as is done with Clenshaw recursion
-# function orthogonal_polyval_derivative(p::P, x::S,
-#                                        scale=(x,n)-> (one(x),one(x),zero(x),zero(x))
-#                                        ) where {P <: AbstractOrthogonalPolynomial, S}
-#     T = eltype(p)
-#     oS = one(x)
-#     R = eltype(one(T) * oS)
-    
-#     length(p) == 0 && return (zero(R), zero(R))
-#     d = length(p) - 1
-
-    
-#     λ1, λ0, dλ1, dλ0 = scale(x, 0)
-#     pn_1 = zero(R)  # π_{-1}
-#     pn = one(R) * λ0 # π_0
-#     dpn_1 = zero(R) # dπ_{-1}
-#     dpn = dλ0
-
-#     ptot, dptot =  p[0]*pn,  p[0]*dpn
-
-
-#     ## we compute  forward here, finding pi, dp_i,  p_{i+1}, dp_{i+1}, ...
-#     for i in 0:d-1
-#         λ1, λ0, dλ1, dλ0 = scale(x, i)
-#         an, bn, cn=  An(p,i), Bn(p,i), Cn(p,i)
-#         dpn_1, dpn = dpn,  (an*λ1 +  (an*x+bn)*dλ1)*pn  + cn*dλ0*pn_1 + ((an*x+bn)*λ1)*dpn + cn*λ0*dpn_1
-#         pn_1,  pn =  pn, (an*x + bn)*λ1*pn + cn*λ0*pn_1
-#         ptot += p[i+1]*pn
-#         dptot += p[i+1]*dpn
-#     end
-
-#     return (ptot, dptot)
-# end
 
 
 
@@ -334,7 +285,7 @@ function Base.convert(P::Type{J}, p::Polynomial) where {J <: AbstractOrthogonalP
     pp =  convert(Polynomial{R}, p)
     qs = zeros(R, d+1)
     for i in d:-1:0
-        Pn = convert(Polynomial{R}, basis(P,  i))
+        Pn = convert(Polynomial{R}, Polynomials.basis(P,  i))
         qs[i+1] = lambda =  pp[i]/Pn[i]
         pp = pp - lambda*Pn
     end
@@ -386,7 +337,7 @@ Base.abs2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(p, n)
 ## Compute <p_i, p_i> = \| p \|^2
 ## Slow default; generally should  be directly expressed for each family
 function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
-    p = basis(P,n)
+    p = Polynomials.basis(P,n)
     innerproduct(P, p, p)
 end
 norm2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
@@ -414,7 +365,7 @@ dot(::Type{P}, f, p::P) where {P <: AbstractOrthogonalPolynomial} = innerproduct
 ## Some types (ChebyshevT) have a faster alternative
 function cks(::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
 
-    return [innerproduct(P, f, basis(P, k))/norm2(P,k) for k in 0:n]
+    return [innerproduct(P, f, Polynomials.basis(P, k))/norm2(P,k) for k in 0:n]
 end
 
 
@@ -428,7 +379,6 @@ end
 
 
 ## Some utilities
-
-_quadgk(f, a, b) = quadgk(Wrapper(f), a, b)[1]
+_quadgk(f, a, b) = quadgk(f, a+eps(), b-eps())[1]
 const ∫ = _quadgk
 _monic(p::AbstractOrthogonalPolynomial) = p/convert(Polynomial,p)[end]

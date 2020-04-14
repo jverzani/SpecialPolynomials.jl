@@ -47,7 +47,7 @@ pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 function newton(p::P, x0::S) where  {P <: AbstractOrthogonalPolynomial, S}
     maxsteps = 25
     while maxsteps > 0
-        px, dpx = orthogonal_polyval_derivative(p, x0)
+        px, dpx = orthogonal_polyval_derivative(p, x0, pqr_scale(p))
         Δ = px/dpx
         isnan(Δ) && return (x0, dpx)
         if isinf(Δ)
@@ -55,7 +55,7 @@ function newton(p::P, x0::S) where  {P <: AbstractOrthogonalPolynomial, S}
             continue
         end
         x0 -= Δ
-        abs(px) <= 1e3*eps(S) && return  x0, orthogonal_polyval_derivative(p, x0)[2]
+        abs(px) <= 1e3*eps(S) && return  x0, dpx
         maxsteps -= 1
     end
     @warn "Newton's method did not converge from $x0"
@@ -79,7 +79,7 @@ end
 ## A Fast Algorithm for the Calculation of the Roots of Special Functions
 ## by Glaser, Liu, Rokhlin
 ## DOI: 10.1137/06067016X
-## specialized to the orthogonal polynomial case 
+## specialized to the orthogonal polynomial case
 function glaser_liu_rokhlin_gauss_nodes(π, x0=pqr_start(π,degree(π)); symmetry=pqr_symmetry(π), m=5)
     n = degree(π)
     dom = domain(π)
@@ -116,5 +116,5 @@ function glaser_liu_rokhlin_gauss_nodes(π, x0=pqr_start(π,degree(π)); symmetr
     end
     # get weights 
     weights = pqr_weight.(π, n, rts, dπrts)
-    rts,  weights
+    rts, weights
 end

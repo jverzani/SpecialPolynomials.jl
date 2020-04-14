@@ -86,3 +86,20 @@ Newton
 ```@docs
 Bernstein
 ```
+
+Example of a Bezier curve  (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`:
+
+
+```@example
+using Plots, Polynomials, SpecialPolynomials
+bs =[[220,40], [220,260], [35,200],  [120,160]]
+N = length(bs)-1
+r(t) = sum(b.*B(t) for (b,B) in zip(bs, Polynomials.basis.(Bernstein{N},0:N)))
+ts = range(0, stop=1, length=500); rs=r.(ts)
+plot([r[1] for r in rs], [r[2] for r in rs], legend=false)
+savefig("bezier.svg"); nothing # hide
+```
+
+![](bezier.svg)
+
+

@@ -15,7 +15,7 @@ Polynomial(-0.375 + 0.75*x^2)
 julia> monic(p::Polynomial) = p/p[end];
 
 
-julia> (monic ∘ convert).(Polynomial, (p, basis(ChebyshevTT, 2))) # scaled version of each other
+julia> (monic ∘ convert).(Polynomial, (p, Polynomials.basis(ChebyshevTT, 2))) # scaled version of each other
 (Polynomial(-0.5 + 1.0*x^2), Polynomial(-0.5 + 1.0*x^2))
 ```
 

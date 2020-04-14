@@ -16,7 +16,7 @@ Polynomial(9.625 - 9.5*x + 1.5*x^2)
 
 
 """
-struct GeneralizedLaguerre{α, T <: Number} <: AbstractLaguerre{T}
+struct GeneralizedLaguerre{α, T <: Number} <: OrthogonalPolynomial{T}
     coeffs::Vector{T}
     var::Symbol
     function GeneralizedLaguerre{α, T}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
@@ -33,7 +33,9 @@ export GeneralizedLaguerre
 @register1 GeneralizedLaguerre
 
 
-basis_symbol(::Type{<:GeneralizedLaguerre{α}}) where {α} = basis_symbol(Laguerre)*"^($α)"
+basis_symbol(::Type{<:GeneralizedLaguerre{α}}) where {α} = "L^($α)"
+
+Polynomials.domain(::Type{<:GeneralizedLaguerre}) = Polynomials.Interval(0, Inf)
 
 
 
