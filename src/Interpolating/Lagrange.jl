@@ -44,11 +44,11 @@ Polynomial(1.0*x^2)
 ```
 
 Interpolating polynomials suffer from the Runge phenomenon unless  the nodes are well  chosen. The function
-`SpecialPolynomials.lagrange_barycentric_nodes_weights(ChebyshevTT, n)` will return a good choice over `[-1,1]` along
+`SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, n)` will return a good choice over `[-1,1]` along
 with precomputed weights.
 
 ```jldoctest Lagrange
-julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(ChebyshevTT, 64);
+julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
 
 
 julia> f(x) = exp(-x)*sinpi(x)

@@ -13,7 +13,7 @@ include("abstract.jl")
 include("Orthogonal/orthogonal.jl")
 include("Orthogonal/glaser-liu-rokhlin.jl")
 
-include("Orthogonal/ChebyshevTT.jl")
+include("Orthogonal/ChebyshevT.jl")
 include("Orthogonal/ChebyshevU.jl")
 include("Orthogonal/Hermite.jl")
 include("Orthogonal/HermiteProb.jl")

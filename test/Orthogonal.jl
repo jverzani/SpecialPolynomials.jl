@@ -1,7 +1,7 @@
 ## General test for orthogonal polynomials
 
 T = Float64
-Ps = (ChebyshevTT{T},
+Ps = (Chebyshev{T},
       ChebyshevU{T},
       Laguerre{T},
       Hermite{T},

@@ -3,14 +3,14 @@
 
     for _ in 1:10
         ps = rand(1.0:8, 5)
-        p = ChebyshevTT(ps)
-        @test -1 == degree(convert(ChebyshevTT, convert(ChebyshevU, p)) - p)
+        p = Chebyshev(ps)
+        @test -1 == degree(convert(Chebyshev, convert(ChebyshevU, p)) - p)
     end
 
     for _ in 1:10
         ps = rand(1.0:8, 5)
         p = ChebyshevU(ps)
-        @test -1 == degree(convert(ChebyshevU, convert(ChebyshevTT, p)) - p)
+        @test -1 == degree(convert(ChebyshevU, convert(Chebyshev, p)) - p)
     end
 
 end

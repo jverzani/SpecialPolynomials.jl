@@ -2,11 +2,11 @@
 
 @testset "ChebyshevT" begin
 
-    p0 = ChebyshevTT([1])  # 1
-    p1 = ChebyshevTT([0,1]) # x
-    p2 = ChebyshevTT([0,0,1]) #
-    p3 = ChebyshevTT([0,0,0,1]) #
-    p4 = ChebyshevTT([0,0,0,0,1]) #
+    p0 = Chebyshev([1])  # 1
+    p1 = Chebyshev([0,1]) # x
+    p2 = Chebyshev([0,0,1]) #
+    p3 = Chebyshev([0,0,0,1]) #
+    p4 = Chebyshev([0,0,0,0,1]) #
 
     for x in range(-1, 1, length=5)
         @test p0(x) ≈ 1
@@ -159,7 +159,7 @@ end
     T = Float64
     ps  = [0,0,0,0,0,1]
     # ChebyshevT = J(-1/2, -1/2)
-    for (alpha_beta, P) in  (((-1/2, -1/2), ChebyshevTT{T}),
+    for (alpha_beta, P) in  (((-1/2, -1/2), Chebyshev{T}),
                              ((1/2,1/2), ChebyshevU{T}),
                              ((0,0), Legendre{T})
                              )

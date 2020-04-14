@@ -30,7 +30,7 @@
 
     ## non-known set
     T = Float64
-    P = ChebyshevTT{T}
+    P = Chebyshev{T}
     f(x) = SpecialPolynomials.weight_function(ChebyshevU{T})(x)
     q0 = ContinuousWeight(P, f, [1], :x)
     q1 = ContinuousWeight(P, f, [0,1], :x)

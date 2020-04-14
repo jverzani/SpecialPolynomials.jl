@@ -50,7 +50,7 @@ end
     us = rand(5)
     @test all(abs.(p.(us) - sin.(us)) .<= 1e-3)
 
-    xs, ws = SP.lagrange_barycentric_nodes_weights(ChebyshevTT, 64)
+    xs, ws = SP.lagrange_barycentric_nodes_weights(Chebyshev, 64)
     ys = sin.(xs)
     p = Lagrange(xs, ws, ys)
     us = 0.1 .+ 0.8*rand(5) # avoid edges...

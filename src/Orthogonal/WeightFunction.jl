@@ -27,8 +27,8 @@ julia> N,  ω² = 40, 0.999
 julia> w(t) = ((1-ω²*t^2)*(1-t^2))^(-1/2)
 w (generic function with 1 method)
 
-julia> πs = ChebyshevTT{Float64}
-ChebyshevTT{Float64}
+julia> πs = Chebyshev{Float64}
+Chebyshev{Float64}
 
 julia> p = WeightFunction(πs, w)
 WeightFunction(1⋅e_1(x))

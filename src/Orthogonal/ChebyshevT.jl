@@ -1,9 +1,9 @@
-export ChebyshevTT
+export Chebyshev
 
 ## Contribued by @mileslucas to Polynomials; temporarily renamed while `ChebyshevT` is in `Polynomials`
 
 """
-    ChebyshevTT{<:Number}(coeffs::AbstractVector, var=:x)
+    Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
 
 Chebyshev polynomial of the first kind.
 
@@ -15,24 +15,24 @@ terms of the given variable `x`. `x` can be a character, symbol, or string.
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
 
-julia> ChebyshevTT([1, 0, 3, 4])
-ChebyshevTT(1⋅T_0(x) + 3⋅T_2(x) + 4⋅T_3(x))
+julia> Chebyshev([1, 0, 3, 4])
+Chebyshev(1⋅T_0(x) + 3⋅T_2(x) + 4⋅T_3(x))
 
-julia> ChebyshevTT([1, 2, 3, 0], :s)
-ChebyshevTT(1⋅T_0(s) + 2⋅T_1(s) + 3⋅T_2(s))
+julia> Chebyshev([1, 2, 3, 0], :s)
+Chebyshev(1⋅T_0(s) + 2⋅T_1(s) + 3⋅T_2(s))
 
-julia> one(ChebyshevTT)
-ChebyshevTT(1.0⋅T_0(x))
+julia> one(Chebyshev)
+Chebyshev(1.0⋅T_0(x))
 ```
 
 !!! note
-    The name `ChebyshevTT` will be replaced with `ChebyshevT` once that example is removed from the `Polynomials` package.
+    This is copied from the `ChebyshevT` example from the `Polynomials` package by Miles Lucas.
 
 """
-struct ChebyshevTT{T <: Number} <: OrthogonalPolynomial{T}
+struct Chebyshev{T <: Number} <: OrthogonalPolynomial{T}
     coeffs::Vector{T}
     var::Symbol
-    function ChebyshevTT{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
+    function Chebyshev{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
         length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
         last_nz = findlast(!iszero, coeffs)
         last = max(1, last_nz === nothing ? 0 : last_nz)
@@ -40,28 +40,28 @@ struct ChebyshevTT{T <: Number} <: OrthogonalPolynomial{T}
     end
 end
 
-Polynomials.@register ChebyshevTT
+Polynomials.@register Chebyshev
 
-basis_symbol(::Type{<:ChebyshevTT}) = "T"
-Polynomials.domain(::Type{<:ChebyshevTT}) = Polynomials.Interval(-1, 1, false, false)
-weight_function(::Type{<: ChebyshevTT}) = x -> one(x)/sqrt(one(x) - x^2)
-generating_function(::Type{<: ChebyshevTT}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
+basis_symbol(::Type{<:Chebyshev}) = "T"
+Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval(-1, 1, false, false)
+weight_function(::Type{<: Chebyshev}) = x -> one(x)/sqrt(one(x) - x^2)
+generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: ChebyshevTT} = P([0, 1], var)
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Chebyshev} = P([0, 1], var)
 
-An(::Type{<:ChebyshevTT}, n) = iszero(n) ? 1 : 2
-Bn(::Type{<:ChebyshevTT}, n) = 0
-Cn(::Type{<:ChebyshevTT}, n) = -1
-P0(::Type{<:ChebyshevTT}, x) = one(x)
-P1(::Type{<:ChebyshevTT}, x) = x
+An(::Type{<:Chebyshev}, n) = iszero(n) ? 1 : 2
+Bn(::Type{<:Chebyshev}, n) = 0
+Cn(::Type{<:Chebyshev}, n) = -1
+P0(::Type{<:Chebyshev}, x) = one(x)
+P1(::Type{<:Chebyshev}, x) = x
 
-alpha(::Type{<:ChebyshevTT}, n) = 0.0
-beta(::Type{<:ChebyshevTT}, n) = n <= 1 ? 1/2 : 1/4
+alpha(::Type{<:Chebyshev}, n) = 0.0
+beta(::Type{<:Chebyshev}, n) = n <= 1 ? 1/2 : 1/4
 
-norm2(P::ChebyshevTT{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
+norm2(P::Chebyshev{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
 
 # nodes for fitting a polynomial
-function lagrange_barycentric_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
+function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
     xs = [cos((2j+1)*pi/(2n+2)) for j in 0:n-1]
 
     ws = [(-1)^j*sin((2j+1)*pi/(2n+2)) for j in 0:n-1]  # XX one loop
@@ -69,17 +69,17 @@ function lagrange_barycentric_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
 end
 
 # noded for integrating against the weight function
-function gauss_nodes_weights(::Type{<: ChebyshevTT}, n::Int)
+function gauss_nodes_weights(::Type{<: Chebyshev}, n::Int)
     xs = cos.(pi/2n * (2*(1:n).-1))
     ws = pi/n * ones(n)
     xs, ws
 end
-has_fast_gauss_nodes_weights(::Type{<: ChebyshevTT}) = true
+has_fast_gauss_nodes_weights(::Type{<: Chebyshev}) = true
 
 ## used discrete cosine  transformation to compute the ck:
 ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
-cks(P::Type{ChebyshevTT{T}}, f, n::Int) where  {T} =  [ck(P,f,k,n) for k in 0:n]
-function ck(P::Type{ChebyshevTT{T}}, f, k::Int, n::Int) where  {T}
+cks(P::Type{Chebyshev{T}}, f, n::Int) where  {T} =  [ck(P,f,k,n) for k in 0:n]
+function ck(P::Type{Chebyshev{T}}, f, k::Int, n::Int) where  {T}
     #n =  k
     tot = zero(T)/1
     an   =  pi/(n+1)
@@ -93,14 +93,14 @@ end
 
 
 """
-    (::ChebyshevTT)(x)
+    (::Chebyshev)(x)
 
 Evaluate the Chebyshev polynomial at `x`. If `x` is outside of the domain of [-1, 1], an error will be thrown. The evaluation uses Clenshaw Recursion.
 
 # Examples
 ```jldoctest
-julia> c = ChebyshevTT([2.5, 1.5, 1.0])
-ERROR: UndefVarError: ChebyshevTT not defined
+julia> c = Chebyshev([2.5, 1.5, 1.0])
+ERROR: UndefVarError: Chebyshev not defined
 Stacktrace:
  [1] top-level scope at none:1
 
@@ -115,27 +115,27 @@ Stacktrace:
  [1] top-level scope at none:1
 ```
 """
-(ch::ChebyshevTT{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+(ch::Chebyshev{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 
-function Base.:*(p1::ChebyshevTT{T}, p2::ChebyshevTT{S}) where {T,S}
+function Base.:*(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
     R = promote_type(T,S)
     z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
     z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
     prod = Polynomials.fastconv(z1, z2)
-    ret = ChebyshevTT(_z_to_c(prod), p1.var)
+    ret = Chebyshev(_z_to_c(prod), p1.var)
     return truncate!(ret)
 end
 
-function Polynomials.integrate(p::ChebyshevTT{T}, C::S) where {T,S <: Number}
+function Polynomials.integrate(p::Chebyshev{T}, C::S) where {T,S <: Number}
     R = promote_type(eltype(one(T) / 1), S)
     if hasnan(p) || isnan(C)
-        return ChebyshevTT([NaN])
+        return Chebyshev([NaN])
     end
     n = length(p)
     if n == 1
-        return ChebyshevTT{R}([C, p[0]])
+        return Chebyshev{R}([C, p[0]])
     end
     a2 = Vector{R}(undef, n + 1)
     a2[1] = zero(R)
@@ -145,20 +145,20 @@ function Polynomials.integrate(p::ChebyshevTT{T}, C::S) where {T,S <: Number}
         a2[i + 2] = p[i] / (2 * (i + 1))
         a2[i] -= p[i] / (2 * (i - 1))
     end
-    a2[1] += R(C) - ChebyshevTT(a2)(0)
-    return ChebyshevTT(a2, p.var)
+    a2[1] += R(C) - Chebyshev(a2)(0)
+    return Chebyshev(a2, p.var)
 end
 
 
-function Polynomials.derivative(p::ChebyshevTT{T}, order::Integer = 1) where {T}
+function Polynomials.derivative(p::Chebyshev{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     R  = eltype(one(T)/1)
-    order == 0 && return convert(ChebyshevTT{R}, p)
-    hasnan(p) && return ChebyshevTT(R[NaN], p.var)
-    order > length(p) && return zero(ChebyshevTT{R})
+    order == 0 && return convert(Chebyshev{R}, p)
+    hasnan(p) && return Chebyshev(R[NaN], p.var)
+    order > length(p) && return zero(Chebyshev{R})
 
 
-    q =  convert(ChebyshevTT{R}, copy(p))
+    q =  convert(Chebyshev{R}, copy(p))
     n = length(p)
     der = Vector{R}(undef, n)
 
@@ -171,12 +171,12 @@ function Polynomials.derivative(p::ChebyshevTT{T}, order::Integer = 1) where {T}
     end
     der[1] = q[1]
 
-    pp = ChebyshevTT(der, p.var)
+    pp = Chebyshev(der, p.var)
     return order > 1 ?  derivative(pp, order - 1) : pp
 
 end
 
-function Polynomials.companion(p::ChebyshevTT{T}) where T
+function Polynomials.companion(p::Chebyshev{T}) where T
     d = length(p) - 1
     d < 1 && throw(ArgumentError("Series must have degree greater than 1"))
     d == 1 && return diagm(0 => [-p[0] / p[1]])
@@ -192,13 +192,13 @@ function Polynomials.companion(p::ChebyshevTT{T}) where T
     return R.(comp)
 end
 
-function Base.divrem(num::ChebyshevTT{T}, den::ChebyshevTT{S}) where {T,S}
+function Base.divrem(num::Chebyshev{T}, den::Chebyshev{S}) where {T,S}
     num.var != den.var && throw(ArgumentError("Polynomials must have same variable"))
     n = length(num) - 1
     m = length(den) - 1
 
     R = typeof(one(T) / one(S))
-    P = ChebyshevTT{R}
+    P = Chebyshev{R}
 
     if n < m
         return zero(P), convert(P, num)
