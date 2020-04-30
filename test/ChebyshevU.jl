@@ -1,16 +1,13 @@
 
 @testset "Conversion" begin
 
-    for _ in 1:10
-        ps = rand(1.0:8, 5)
-        p = Chebyshev(ps)
-        @test -1 == degree(convert(Chebyshev, convert(ChebyshevU, p)) - p)
-    end
+    P,Q = Chebyshev, ChebyshevU
+    x = variable()
 
     for _ in 1:10
-        ps = rand(1.0:8, 5)
-        p = ChebyshevU(ps)
-        @test -1 == degree(convert(ChebyshevU, convert(Chebyshev, p)) - p)
+        p = P(rand(1:5,5)); q=P(rand(1:5,5))
+        @test convert(P, convert(Q, p))(x) ≈ p(x)
+        @test convert(Q, convert(P,q))(x) ≈ q(x)
     end
 
 end

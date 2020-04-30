@@ -9,7 +9,9 @@ abstract type AbstractWeightFunction{T} <: AbstractOrthogonalPolynomial{T} end
 
 A type for orthogonal polynomials relative to some weight
 function. The Wheeler or modified Chebyshev algorithm
-([Gautschi](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf)) is used
+([Gautschi](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf),
+[Press and Teukolsky](https://doi.org/10.1063/1.4822929))
+is used
 to generate the three-term recurrence relation.  This uses a known
 family of orthogonal polynomials over the domain of the weight
 function.  These are specified through `pis`.
@@ -18,7 +20,7 @@ function.  These are specified through `pis`.
 
 Elliptic orthogonal polynomials on  `[-1,1]`. Demo 2 of Gautschi.
 
-```jldoctest
+```jldoctest WeightFunction
 julia> using Polynomials, SpecialPolynomials
 
 julia> N,  ω² = 40, 0.999
@@ -47,9 +49,44 @@ julia> round.([αs βs], digits=8)
  -0.0  0.245429
 ```
 
+
 The main computation involved in this is the modified moment `ν_l = ∫
 π_l dw`. If πs has a fast gauss nodes available, then those are used,
-otherwise `QuadGK.quadgk` is.
+otherwise `QuadGK.quadgk` is. For  some examples, this  can be overridden. This one is from  Press and Teukolsky, where the modified moments are given through  the  function  `v(j)` defined below.
+
+```jldoctest
+julia> using Polynomials, SpecialPolynomials, SpecialFunctions
+
+julia> πs = ShiftedLegendre
+ShiftedLegendre
+
+julia> w(t) = -log(t)
+w (generic function with 1 method)
+
+julia> p = WeightFunction(πs, w)
+WeightFunction(1⋅e_1(x))
+
+julia> v(j) = iszero(j) ? 1 : (-1)^j*gamma(j+1)^2/(j*(j+1)*gamma(2j+1))
+v (generic function with 1 method)
+
+julia> WW = typeof(w)
+typeof(w)
+
+julia> SpecialPolynomials.modified_moment(w::W, j) where {W <: WW} = v(j)
+
+julia> αs = SpecialPolynomials.alpha.(p, 0:5);
+
+julia> βs = SpecialPolynomials.beta.(p, 0:5);
+
+julia> [αs βs]
+6×2 Array{Float64,2}:
+ 0.25      1.0
+ 0.464286  0.0486111
+ 0.485482  0.0586848
+ 0.492103  0.0607286
+ 0.495028  0.061482
+ 0.49658   0.0618408
+```
 
 """
 struct WeightFunction{P, F, T <: Number} <: AbstractWeightFunction{T}
@@ -162,7 +199,7 @@ end
 
 function  _modified_moment(use_gauss::Val{false}, w, P, j; n=0, kwargs...)
     π_jdw = x -> monic_orthogonal_basis_polyval(P, j, x)*w.W(x)
-    return ∫dw(π_jdw, P; kwargs...)
+    return ∫(π_jdw, P; kwargs...)
 end
 
 

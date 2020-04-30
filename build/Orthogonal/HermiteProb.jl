@@ -21,7 +21,7 @@ Polynomial(-2 + 2*x + 3*x^2)
 ```
 
 """
-struct ChebyshevHermite{T <: Number} <: OrthogonalPolynomial{T}
+struct ChebyshevHermite{T <: Number} <: AbstractHermite{T}
     coeffs::Vector{T}
     var::Symbol
     function ChebyshevHermite{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
@@ -37,8 +37,6 @@ export ChebyshevHermite
 Polynomials.@register ChebyshevHermite
 
 basis_symbol(::Type{<:ChebyshevHermite}) = "He"
-
-Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
 
 weight_function(::Type{ChebyshevHermite{T}}) where {T} = x -> exp(-x^2/2)
 generating_function(::Type{<:ChebyshevHermite}) = (t, x)  -> exp(t*x - t^2/2)

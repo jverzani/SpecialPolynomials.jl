@@ -52,21 +52,15 @@ norm2(::Type{<:ChebyshevHermite}, n) = sqrt(2pi) * gamma(n+1)
 
 (ch::ChebyshevHermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
+linearization_λ(::Type{<:ChebyshevHermite}, l, m, n) = 1    
 
 
-## https://arxiv.org/pdf/1901.01648.pdf
-##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
-function Base.convert(P::Type{<:ChebyshevHermite}, p::Polynomial)
-    d = degree(p)
-    R = eltype(one(eltype(p))/1)
-    qs = zeros(R, d+1)
-    for i in 0:d
-        qs[i+1] = sum(p[jj] * _hermite_lambda_e(jj, j-1) for (j, jj) in enumerate(i:2:d))
-    end
-    ChebyshevHermite(qs, p.var)
-end
-
-function _hermite_lambda_e(n,j)
+# compute α(n,j) for the ChebyshevHermite inversion
+# See https://arxiv.org/pdf/1901.01648.pdf equations (13) and (14)
+# connection defined in Hermite.jl
+function connection_α(::Type{<:ChebyshevHermite},
+                      ::Type{<:Polynomials.StandardBasisPolynomial},
+                      n,j)
     tot = 1/1
     for i in 1:j
         tot  /=  2

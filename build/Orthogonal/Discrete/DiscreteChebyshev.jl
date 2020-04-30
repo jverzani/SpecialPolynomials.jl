@@ -42,7 +42,7 @@ end
 
 
 export DiscreteChebyshev
-@register1 DiscreteChebyshev
+Polynomials.@register1 DiscreteChebyshev
 
 (ch::DiscreteChebyshev)(x::S) where {S} = orthogonal_polyval(ch, x)
 

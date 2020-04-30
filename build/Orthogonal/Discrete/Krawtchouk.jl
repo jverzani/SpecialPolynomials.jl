@@ -62,7 +62,7 @@ var::Symbol
     end
 end
 
-@register2 Krawtchouk
+Polynomials.@register2 Krawtchouk
 
 export Krawtchouk
 

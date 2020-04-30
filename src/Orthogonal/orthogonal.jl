@@ -132,6 +132,29 @@ P1(::Type{P}, x) where {P <: AbstractOrthogonalPolynomial} = An(P,0)*x .+ Bn(P,0
 P1(p::P, x) where {P <: AbstractOrthogonalPolynomial} = P1(P,x)
 dP0(::Type{P},  x) where {P <: AbstractOrthogonalPolynomial} = zero(x) 
 
+"""
+    leading_term(::Type{P},n)
+
+Return leading term of `basis(P,n)`. By default this is generated through the three-point recursion.
+"""
+function leading_term(::Type{P},n::Int) where {P <: AbstractOrthogonalPolynomial}
+    n < 0 && throw(ArgumentError("n must be a non-negative integer"))
+    n == 0 && return P0(P,0)
+    prod(An(P,i) for i in n-1:-1:0)
+end
+
+"""
+    monic(p::AbstractOrthogonalPolynomial)
+
+Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zeror polynomial if the degree of `p` is `-1`. 
+"""
+function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
+    n = degree(p)
+    n == -1 && return ⟒(P)(0/one(eltype(p)))
+    p / leading_term(P, n)
+end
+    
+
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
 Polynomials.variable(p::P, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = variable(P)
 
@@ -143,63 +166,21 @@ end
 Base.extrema(p::P) where {P <: AbstractOrthogonalPolynomial} = extrema(P)
 
 
-# Jacobi matrix
-# roots(basis(P,n)) = eigvals(jacobi_matrix(P,n)), but this is more stable
-# https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
-"""
-    jacobi_matrix(::Type{P}, n)
-    jacobi_matrix(p::P, n)
-
-The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alpha_i` values, the off diagonal entries,
-the square root of the  `beta_i` values. This matrix has the properties that
-
-* the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of qa symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
-* the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
-
-See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster implementations.
-
-"""
-function jacobi_matrix(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
-    LinearAlgebra.SymTridiagonal([alpha(P,i) for i in 0:n-1], [sqrt(beta(P,i)) for i in 1:n-1])
-end
-jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix(P,n)
-
-##  Compute weights and nodes for quadrature
-"""
-    gauss_nodes_weights(::Type{P}, n)
-    gauss_nodes_weights(p::P, n)
-
-Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal family.
-
-For some families, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
-
-For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
-
-!!! note
-    See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster, vastly more engineered implementations.
-
-"""
-function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
-    J = jacobi_matrix(P, n)
-    eig = eigen(J, extrema(P)...)
-    # Is this necessary?
-    nm  = 1 #diag(eig.vectors * eig.vectors')
-    wts =  beta(P,0) * (eig.vectors[1,:] ./ nm).^2
-    eig.values,  wts
-end
-gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
-
-has_fast_gauss_nodes_weights(p::P)  where {P <: AbstractOrthogonalPolynomial} = has_fast_gauss_nodes_weights(P)
-has_fast_gauss_nodes_weights(::Type{P})  where {P <: AbstractOrthogonalPolynomial} = false
-
-
+##
+## Evaluation
+##
+## We have three evaluations:
+## * p(x) (Clenshaw recurrence  using  An, Bn, Cn)
+## * π(x) (Clenshshaw  recurrence  using alpha and beta)
+## * (p(x), p'(x)) using recurrence
+##
 
 ## Evaluate an orthogonal polynomial using the three-point recursion representation and
 ## Clenshaw recurrence.
 ## For each type define (ch::Type)(x) = orthogonal_polyval(ch, x)
 ## as we can't call methods defined for an abstract type
 function orthogonal_polyval(ch::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
-    S <: Number && !(first(domain(ch)) <= x <= last(domain(ch))) && throw(ArgumentError("$x outside of domain"))
+    S <: Real && !(first(domain(ch)) <= x <= last(domain(ch))) && throw(ArgumentError("$x outside of domain"))
     T = eltype(ch)
     oS = one(x)
     R = typeof(one(T) * oS)
@@ -264,85 +245,348 @@ function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogona
     return (ptot, dptot)
 end
 
-## sn: (x,n) -> ? is used to scale the polyonmials
-## We march forward here, not backwards as is done with Clenshaw recursion
-# function orthogonal_polyval_derivative(p::P, x::S,
-#                                        scale=(x,n)-> (one(x),one(x),zero(x),zero(x))
-#                                        ) where {P <: AbstractOrthogonalPolynomial, S}
-#     T = eltype(p)
-#     oS = one(x)
-#     R = eltype(one(T) * oS)
-    
-#     length(p) == 0 && return (zero(R), zero(R))
-#     d = length(p) - 1
-
-    
-#     λ1, λ0, dλ1, dλ0 = scale(x, 0)
-#     pn_1 = zero(R)  # π_{-1}
-#     pn = one(R) * λ0 # π_0
-#     dpn_1 = zero(R) # dπ_{-1}
-#     dpn = dλ0
-
-#     ptot, dptot =  p[0]*pn,  p[0]*dpn
+        
 
 
-#     ## we compute  forward here, finding pi, dp_i,  p_{i+1}, dp_{i+1}, ...
-#     for i in 0:d-1
-#         λ1, λ0, dλ1, dλ0 = scale(x, i)
-#         an, bn, cn=  An(p,i), Bn(p,i), Cn(p,i)
-#         dpn_1, dpn = dpn,  (an*λ1 +  (an*x+bn)*dλ1)*pn  + cn*dλ0*pn_1 + ((an*x+bn)*λ1)*dpn + cn*λ0*dpn_1
-#         pn_1,  pn =  pn, (an*x + bn)*λ1*pn + cn*λ0*pn_1
-#         ptot += p[i+1]*pn
-#         dptot += p[i+1]*dpn
+##
+## conversion and multiplication
+##
+
+## conversion of a polynomial `p = ∑ aᵢϕᵢ` of type P into `q=∑ bᵢψᵢ`
+##  of type `Q` can be done through polynomial evaluation
+## using the scheme: `x = variable(Q); p(x)`.
+##
+## *However* this requires being able to pass `x` through the
+## polynomial `p` and in particular, be able to multiply elements in
+## `Q`. So conversion from Q to P is possible if multiplication in Q
+## is defined.  Multiplication can be defined if a "linearization"
+## formula is available of the form
+##
+## ψᵢψⱼ = ∑_k α(k,i,j) ψ_k
+##
+## Alternatively, conversion from `Q` to `P` can be directly done
+## should there be a "connection"
+##
+## ψᵢ = ∑ α_{i,j} ϕ_j
+##
+## If `Q=Polynomial`, then conversion can be used to define
+## multiplication through `x = variable(Q); convert(P, p(x)*q(x))`
+## that is, multiplication is done in the standard basis.
+
+## Implementations
+##             Linearization   Inversion   Connection{αs}
+## Legendre         ✓              ✓          NA
+## Hermite          ✓              ✓          NA
+## Hermite_e        ✓              ✓          NA
+## ChebyshevT       ✓              ✓          T <-> U
+## ChebyshevU       ✓              ✓          T <-> U
+## Laguerre        p29             ✓          ✓
+## Jacobi          p29             ✓          ✓
+## Gegenbauer       ✓              ✓          ✓
+## Bessel           X             p28          ✓
+
+##
+## Linearization
+##
+
+# Let `P` be a polynomial family with basis `ϕᵢ`. A linearization formula is:
+#
+# ϕ_n * ϕ_m = ∑₀^(m+n) a(l,n,m) ϕ_l
+#
+# Let `p` have degree `n` and `q` have degree `m`, both polynomials in
+# `P`. The linearization formula leads to a product formula `pq=p⋅q`
+# through the following.  The `l`th coefficient, `c`, of the product
+# pq is given formally by
+#
+# c = 0
+# for i = 0:n
+#   for j = 0:m
+#      c += p[i]*q[j]*α(l, i, j)
+#   end
+# end
+#
+# To utilize this formula, define a `linearization_α(), l, n, m)` function.
+#
+# Typically, the matrix (i,j) -> α(d, i,j) is sparse so that the sum
+# over `n⋅m` terms can be greatly reduced.  For this we turn a
+# linearization formula into an iterator over the non-zero terms
+#
+# A full iteration over the entire range of n*m -(l-1)*l/2 values of
+# (p,q) would look like this:
+#
+# function Base.iterate(o::Linearization{P}, state =  nothing) where {P <: PolynomialFamily}
+#
+#     l, m, n = o.l, o.m, o.n
+#     l  > m + n && return nothing
+#    
+#     if state == nothing
+#
+#         k =  0
+#         p = min(l, n)
+#         q = l +  k - p
+#
+#     else
+#
+#         k, p, q, val  = state
+#
+#         if p == 0 ||  q == m
+#             # bump k
+#             k  += 1
+#             l + k > n+m && return nothing  # at end  of k
+#             p = min(l+k, n)
+#             q = l + k - p
+#         else
+#             p -= 1
+#             q += 1
+#         end
+#
 #     end
+#    
+#     val = linearization_α(P, l, p, q)
+#                
+#     return (p,q,val), (k, p, q, val)
+# end
+#
+#
+# For a sparse example, were we to do this for the standard polynomial
+# basis where x^n * x^m = x^(n+m) we would have a(l,m,n) = δ_{l, n+m}
+# and we would have an iterator for `Linearization{Polynomial}(l,n,m)`
+# defined as
+#
+# function Base.iterate(o::Linearization{<:Polynomial}, state=nothing)
+#
+#     if state == nothing
+#         l,m,n = o.l, o.m, o.n
+#         l > m + n && return nothing
+#         p = min(l,n)
+#         q = l-p
+#         return (p,q,1), (p,q,1)
+#     else
+#         l,m,n = o.l, o.m, o.n
+#         p,q,val =  state
+#         p == 0 && return nothing
+#         q == m && return nothing
+#         p -= 1
+#         q += 1
+#         return (p,q,1), (p,q,1)
+#     end
+# end
+#
+# The the double sum could become `sum(p[i]*q[j]*val for (i,j,val) in
+# Linearization{P}(l,n,m))`
+#
+# To visualize, α(2,4,5) might look like this where the iterator would skip the `*` values as the degree is too small
+# and skip the `0` values, as `δ_{l,i,j}=0` is `i+j > l`.
+# *  *  1  0  0
+# *  1  0  0  0
+# 1  0  0  0  0
+# 0  0  0  0  0
+# 0  0  0  0  0
+# 0  0  0  0  0
+#
+# for the legendre polynomials,
+# The  matrix α(2, 4, 5) might look like
+#
+# *  *  x  0  0
+# *  x  0  x  0
+# x  0  x  0  x
+# 0  x  0  x  0
+# 0  0  x  0  x
+# 0  0  0  x  0
+#
+# the striped diagonal terms are a result of the basis polynomials
+# being even or odd. The diagonal terms are not all complete, as α can
+# be 0 for certain values.
+#
+# cf. https://arxiv.org/pdf/1601.06122.pdf
+# 
+# On Connection, Linearization and DuplicationCoefficients of Classical Orthogonal Polynomials, thesis of Daniel Duviol Tcheutia; http://hdl.handle.net/123456789/2014071645714
+#
+struct Linearization{P,V}
+    l::Int
+    n::Int
+    m::Int
+end
+Linearization{P}(l,m,n) where {P} = Linearization{P, Val{:diagonal}}(l,m,n)
 
-#     return (ptot, dptot)
+
+# non-sparse iteration over p,q (n*m steps)
+# to hook into this, define `linearization_α(P, k, n, m)` and an interator along the lines of
+# function Base.iterate(o::Linearization{P, Val{:pq}}, state =  nothing) where {α, P <: AbstractOrthogonalPolynomial}
+#     k = state == nothing ? 1 : state + 1
+#     k > o.n + o.m && return nothing
+#     return (k, linearization_α(P, k, n, m)), k
+# end
+function linearization_product_pq(p::P,  q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
+    p.var == q.var || throw(ArgumentError("bases must match"))
+    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
+    PP = promote_type(P,Q)
+
+    n,m = length(p)-1, length(q)-1 # n,m = degree(p), degree(q)
+    T,S = eltype(p), eltype(q)
+    R = eltype(one(T)*one(S)/1)
+    cs = zeros(R, n+m+1)
+
+    ## pn*pm = ∑ a(l,m,n) H_l
+    for n in eachindex(p)
+        p_n = p[n]
+        iszero(p_n) && continue
+        for m in eachindex(q)
+            c_nm = p_n * q[m]
+            for (k, val) in Linearization{P, Val{:pq}}(0, n,m)
+                cs[1+k] = muladd(c_nm, val, cs[1+k])
+            end
+        end
+    end
+    
+    ⟒(P)(cs, p.var)
+end
+
+# Sparser product, implented by fixing k and finding combinations of (m,n) that produce a
+# non-zero α(k,n,m) for P_k through the linearization formula P_n⋅P_m = ∑ α(k,n,m) P_k
+#
+# compute product using a linearization formula, as implemented in an `iterate` method for the type
+@inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
+    pn.var == pm.var || throw(ArgumentError("bases must match"))
+    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
+    PP = promote_type(P,Q)
+
+    n,m = length(pn)-1, length(pm)-1 # n,m = degree(pn), degree(pm)
+    T,S = eltype(pn), eltype(pm)
+    R = eltype(one(T)*one(S)/1)
+    cs = zeros(R, n+m+1)
+    # pn*pm = ∑ a(l,m,n) H_l
+    # so ∑_l ∑_p ∑_q a(l,p,q) H_l
+    # use iterator to keep as simple sum sum(pn[p] * pm[q] * val for (p,q,val) in Linearization{PP}(l,n,m))
+    for l in 0:n+m
+        for (p,q,val) in Linearization{PP}(l,n,m)
+            cs[1+l] += pn[p] * pm[q] * val
+        end
+    end
+    ⟒(P)(cs, pn.var)
+end
+
+function Base.:*(p1::P, p2::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
+    R = promote_type(P, Q)
+
+    if hasmethod(iterate, (Linearization{R, Val{:diagonal}}, ))
+        linearization_product(p1, p2)
+    elseif hasmethod(iterate, (Linearization{R, Val{:pq}}, ))
+        linearization_product_pq(p1, p2)        
+    else
+        # gives poor error message if ⟒(R) not available
+        convert(⟒(R), convert(Polynomial, p1) * convert(Polynomial, p2))
+    end
+end
+
+## The connection problem relates
+##
+##    ψ_n(x) = ∑_{k=0}^n α_{n,k} ϕ_k(x)
+##
+## That is we convert from basis ψ (Q) into basis family ϕ (P) through
+## (`convert(P, q::Q)`):
+##
+## ∑_{i=0}^n  aᵢ ψᵢ = ∑_{i=0}^n aᵢ ∑_{k=0}^i α_{i,k} ϕ_kⱼ
+##                  = ∑_{k=0}^n (∑_{i=k}^n aᵢ * α_{i,k}) ϕ_k
+##
+## If Q is the standard basis this is the inversion problem.
+##
+## For this implementation, we suppose there is an is an iterator
+## α_{n, k} which iterates
+##
+## (k, α(k,k)), (k+1, α(k+1, k)), ..., (n, α(n, k))
+##
+## defined by iterate(Connection{ϕ, ψ}(n, k)
+##
+## When the ϕ family is `Polynomial`, we can just use evaluation
+## through the Clenshaw recursion using `x =variable(Polynomial)`. For
+## other conversions, we can directly define a `Base.convert` method,
+## or we can define a `Connection` object and have `connection` create
+## the coefficients
+##
+## When ψ_n  = ∑_k^n α_{n,k} ϕ_k
+##
+## the iterator for (n,k) returns
+## (i, val) ∈  { (k, α_{k,k}), (k+1, α_{k+1,k}),  ..., (n, α_{n,k}) }
+##
+## A sample would be to convert polys in Q to polys in P:
+# function Base.iterate(o::Connection{P, Q}, state=nothing) where
+#     {P <: Polynomial, Q <: Polynomial}
+#
+#     n,k = o.n, o.k
+#     if state  == nothing
+#         j = k
+#     else
+#         j = state
+#         j += 1  # likely j += 2 if parity condition
+#     end
+#     j > n && return nothing
+#     val = connection_α(P,Q,j,k)
+#     (j,val), j
 # end
 
+struct Connection{P,Q}
+    n::Int
+    k::Int
+end
 
-
-
+function connection(::Type{P}, q::Q) where {P <: Polynomials.AbstractPolynomial,  Q<:Polynomials.AbstractPolynomial}
+    n = degree(q)
+    T = eltype(one(q)/1)
+    cs = zeros(T, n+1)
+    for k in 0:n 
+        cs[1+k] = sum(q[i] * val for (i,val) in Connection{P,Q}(n, k))
+    end
+    ⟒(P)(cs, q.var)
+end
+                      
 
 
 
 # conversion to Polynomial is simply evaluating
 # the polynomial on `variable(Polynomial)`
-function Base.convert(P::Type{<:Polynomial}, ch::AbstractOrthogonalPolynomial)
-    if length(ch) == 1
-        return P(ch.coeffs, ch.var)
-    end
-    T = eltype(ch)
-    ##
-    ## P_{n+1} = (An x + Bn)P_n + CnP_{n-1}
-    ## so ... c0 P_{n-1} + c1 P_n
-    ## c1 = c0 + (An x+ Bn)
-    ## c0 = p[i-1] + Cn
-    c0 = P(ch[end - 1], ch.var)
-    c1 = P(ch[end], ch.var)
+function Base.convert(P::Type{<:Polynomials.StandardBasisPolynomial}, ch::AbstractOrthogonalPolynomial)
+
     x = variable(P)
-    Q= typeof(ch)
-    @inbounds for i in degree(ch):-1:2
-        c0, c1 = ch[i - 2] + c1 * Cn(ch, i-1), c0 + c1 * (An(ch, i-1) * x + Bn(ch, i-1))
-    end
-    return c0 *  P0(ch,  x) + c1 * P1(ch, x)
+    return ch(x)
+    
 end
 
-# brute force this, by matching up leading terms and subtracting
-function Base.convert(P::Type{J}, p::Polynomial) where {J <: AbstractOrthogonalPolynomial}
-    d = degree(p)
-    R = eltype(one(eltype(p))/1)
-    pp =  convert(Polynomial{R}, p)
-    qs = zeros(R, d+1)
-    for i in d:-1:0
-        Pn = convert(Polynomial{R}, basis(P,  i))
-        qs[i+1] = lambda =  pp[i]/Pn[i]
-        pp = pp - lambda*Pn
+function Base.convert(P::Type{J}, q::Q) where {J <: AbstractOrthogonalPolynomial, Q <: Polynomials.StandardBasisPolynomial}
+    
+    if  hasmethod(iterate, (Connection{P,Q},))
+        return connection(P, q)
+    else
+        # default conversion from the standard basis polynomial into type P
+        # brute force this, by matching up leading terms and subtracting
+        d = degree(q)
+        R = eltype(one(eltype(q))/1)
+        QQ = Polynomials.constructorof(Q){R}
+        qq =  convert(QQ, q)
+        qs = zeros(R, d+1)
+        for i in d:-1:0
+            Pn = convert(QQ, basis(P,  i))
+            qs[i+1] = lambda =  qq[i]/Pn[i]
+            qq -= lambda*Pn
+        end
+        ⟒(P)(qs, q.var)
     end
-    P(qs, p.var)
+end
+
+function Base.convert(::Type{P}, q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractSpecialPolynomial}
+    if hasmethod(iterate, (Connection{P,Q},))
+        connection(P, q)
+    else
+        # else, try conversion through Polynomial
+        # Does not give good error messages though
+        convert(P, convert(Polynomial, q))
+    end
 end
 
 
-
+##
+## Vandermonde matrix can be generated through the 3-point recursion formula
+##
 function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where {P <:  AbstractOrthogonalPolynomial, T <: Number}
     A = Matrix{T}(undef, length(x), n + 1)
     A[:, 1] .= P0(P, one(T))
@@ -354,6 +598,61 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where 
     end
     return A
 end
+
+##
+## Gauss nodes and weights
+##
+
+
+# Jacobi matrix
+# roots(basis(P,n)) = eigvals(jacobi_matrix(P,n)), but this is more stable
+# https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
+"""
+    jacobi_matrix(::Type{P}, n)
+    jacobi_matrix(p::P, n)
+
+The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alpha_i` values, the off diagonal entries,
+the square root of the  `beta_i` values. This matrix has the properties that
+
+* the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of qa symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
+* the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
+
+See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster implementations.
+
+"""
+function jacobi_matrix(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+    LinearAlgebra.SymTridiagonal([alpha(P,i) for i in 0:n-1], [sqrt(beta(P,i)) for i in 1:n-1])
+end
+jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix(P,n)
+
+##  Compute weights and nodes for quadrature
+"""
+    gauss_nodes_weights(::Type{P}, n)
+    gauss_nodes_weights(p::P, n)
+
+Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal family.
+
+For some families, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
+
+For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
+
+!!! note
+    See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster, vastly more engineered implementations.
+
+"""
+function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+    J = jacobi_matrix(P, n)
+    eig = eigen(J, extrema(P)...)
+    # Is this necessary?
+    nm  = 1 #diag(eig.vectors * eig.vectors')
+    wts =  beta(P,0) * (eig.vectors[1,:] ./ nm).^2
+    eig.values,  wts
+end
+gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
+
+# Trait to indicate if computation of nodes and weights is is O(n) or O(n^2)
+has_fast_gauss_nodes_weights(p::P)  where {P <: AbstractOrthogonalPolynomial} = has_fast_gauss_nodes_weights(P)
+has_fast_gauss_nodes_weights(::Type{P})  where {P <: AbstractOrthogonalPolynomial} = false
 
 
 
@@ -409,26 +708,102 @@ end
 dot(::Type{P}, f, i::Int) where {P <: AbstractOrthogonalPolynomial} = innerproduct(P, f, Polynomials.basis(P, i))
 dot(::Type{P}, f, p::P) where {P <: AbstractOrthogonalPolynomial} = innerproduct(P, f, p)
 
+
+##
+## Fitting
+##
+##
+##
+
+"""
+    fit([Val(S)], P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x)
+
+    Find an approximating polynomial of degree `n` or less for a function `f`, that is returns `p(x) = ∑ᵢⁿ cᵢ Pᵢ(x)` for some coefficients `cᵢ`.
+
+Defaults to an interpolating polynomial. To specify others, use one of `Val(:interpolating)`, `Val(:lsq)` (least squares), or `Val(:series)` (trunated series expansion) as the first argument. See [`SpecialPolynomials.cks`](@ref) for some more detail.
+
+"""
+Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
+    fit(Val(:interpolating), P, f, n, var=var)
+
+"""
+    fit(val::Val{:interpolating}, P::Type{<:AbstractOrthogonalPolynomial}, f, deg::Int; var=:x)
+
+Fit `f` with an interpolating polynomial of degree `n` orless using nodes
+`x0,x1, ..., xn`, the  zeros of `P_{n+1} = basis(P, n+1)`. and `p(xᵢ)=f(xᵢ)`.
+"""
+Polynomials.fit(val::Val{:interpolating},
+                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
+                var=:x) =
+                    P(cks(val, P,f,n), var)
+
+"""
+    fit(Val(:lsq), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
+
+Fit `f` with `p(x)=∑ d_i P_i(x)` where `p` had degree `n` or less using least squares.
+"""
+Polynomials.fit(val::Val{:lsq},
+                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
+                var=:x) =
+                    P(cks(val, P,f,n), var)
+
+"""
+    fit(Val(:series), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
+
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncated sum `∑_0^n c̃_k P_k(x)` where `n` ischosen algorithmically and `c̃_k`is chosen using an efficient manner, not necessarily through the orthogonality condition, `<f,p_k>/<p_k,p_k>`.
+
+"""
+Polynomials.fit(val::Val{:series},
+                P::Type{<:AbstractOrthogonalPolynomial}, f;
+                var=:x,kwargs...) = 
+                    P(cks(val, P,f; kwargs...), var)
+
+
+"""
+    cks(::Val{:interpolating}, ::Type{P}, f, n::Int)
+
+Fit `f` with the interpolating polynomial using roots of P_{n+1}.
+
+Let xs,ws be the gauss nodes and weights of P (xs are the zeros of P_{n+1}).
+Then if we interpolate `f` at the `xs` to get `p`, then
+`p(xᵢ) = f(xᵢ)` and `∑ p_n(xᵢ) p_m(xᵢ) wᵢ = K_m δ_{nm}` and
+`p(x) = ∑ᵢ cᵢ Pᵢ(x)`.
+Using this:
+`∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ` `= ∑ᵢ (∑_j c_j P_j(xᵢ)) P_k(xᵢ) wᵢ =`
+`∑_j c_j (K_k δ_{ik}) = c_k K_k`, So 
+`c_k = (1/K_k) ∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ`
+"""
+function cks(::Val{:interpolating}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+    
+    xs, ws = gauss_nodes_weights(P, n)
+    return [sum(f(xⱼ) * basis(P, k)(xⱼ) * wⱼ for (xⱼ,wⱼ) in zip(xs,ws)) / norm2(P,k) for k in 0:n]
+end
+
+
+"""
+    cks(::Val{:lsq}, ::Type{P}, f, n::Int)
+
+Fit `f` with a polynomial `∑ᵢⁿ cᵢ Pᵢ` chosen so `<f-p,f-p>_w` is as small as possible. Using the normal equations, the coefficients are found to be
+`c_k = <f,P_k>_w / <P_k,P_k>_w. For some families an approximation to the inner product, `<f,P_k>_w` may be used.
+
+
+ref: http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION
+"""
+function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
 ## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
-## innerproduct is likely  slow here in default
-## Some types (ChebyshevT) have a faster alternative
-function cks(::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+    [innerproduct(P, f, basis(P,k)) /norm2(P,k) for k in 0:n]
+end
 
-    return [innerproduct(P, f, basis(P, k))/norm2(P,k) for k in 0:n]
+"""
+    cks(::Val{:series}, ::Type{P}, f, n::Int)
+
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this 
+tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients. 
+
+"""
+function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+    throw(MethodError())
 end
 
 
 
-## for an orthogonal family, fit f with a0 p_0 + ... + a_d P_d
-## where a_i = <f, p_i>/<p_i,p_i>
-function Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, deg::Int; var=:x)
-    # use least squares fit of orthogonal polynomial family to f
-    P(cks(P,f,deg), var)
-end
-
-
-## Some utilities
-
-_quadgk(f, a, b) = quadgk(Wrapper(f), a, b)[1]
-const ∫ = _quadgk
-_monic(p::AbstractOrthogonalPolynomial) = p/convert(Polynomial,p)[end]

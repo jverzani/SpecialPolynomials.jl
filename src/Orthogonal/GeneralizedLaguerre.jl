@@ -1,25 +1,51 @@
+abstract type AbstractLaguerre{T} <: OrthogonalPolynomial{T} end
+
+
 """
-   GeneralizedLaguerre{α, T <: Number}
+   Laguerre{α, T <: Number}
 
 The generalized Laguerre family have weight function `x^α * exp(-x)` over the domain `[0, oo)`. The parameter `α` is specified through the constructor.
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
 
-julia> p = GeneralizedLaguerre{1/2}([1,2,3])
-GeneralizedLaguerre(1⋅L^(0.5)_0(x) + 2⋅L^(0.5)_1(x) + 3⋅L^(0.5)_2(x))
+julia> p = Laguerre{1/2}([1,2,3])
+Laguerre(1⋅L^(0.5)_0(x) + 2⋅L^(0.5)_1(x) + 3⋅L^(0.5)_2(x))
 
 julia> convert(Polynomial, p)
 Polynomial(9.625 - 9.5*x + 1.5*x^2)
 ```
 
+The Laguerre polynomials are the case `α=0`.
+
+```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
+julia> p = Laguerre{0}([1,2,3])
+Laguerre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
+
+julia> convert(Polynomial, p)
+Polynomial(6//1 - 8//1*x + 3//2*x^2)
+
+julia> phi(u, i) = derivative(u) -  u # verify Rodrigues' formula for small n; n! L_n = (d/dx-1)^n x^n
+phi (generic function with 1 method)
+
+julia> x = Polynomial(:x)
+Polynomial(x)
+
+julia> n = 7
+7
+
+julia> factorial(n) * basis(Laguerre, n) - foldl(phi, 1:n, init=x^n)
+Polynomial(0.0)
+```
 
 
 """
-struct GeneralizedLaguerre{α, T <: Number} <: AbstractLaguerre{T}
+struct Laguerre{α, T <: Number} <: AbstractLaguerre{T}
     coeffs::Vector{T}
     var::Symbol
-    function GeneralizedLaguerre{α, T}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
+    function Laguerre{α, T}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
         α <= -1 && throw(ArgumentError("α > -1 is necessary"))
         length(coeffs) == 0 && return new{α, T}(zeros(T, 1), var)
         last_nz = findlast(!iszero, coeffs)
@@ -28,54 +54,271 @@ struct GeneralizedLaguerre{α, T <: Number} <: AbstractLaguerre{T}
     end
 end
 
-export GeneralizedLaguerre
+export Laguerre
 
-@register1 GeneralizedLaguerre
+Polynomials.@register1 Laguerre
+constructorof(P::Type{<:Laguerre{α}})  where {α} = Laguerre{α}
+
+basis_symbol(::Type{<:Laguerre{α}}) where {α} = iszero(α)  ? "L" : "L^($(round(α,digits=2)))"
 
 
-basis_symbol(::Type{<:GeneralizedLaguerre{α}}) where {α} = basis_symbol(Laguerre)*"^($α)"
+Polynomials.domain(::Type{<:AbstractLaguerre}) = Polynomials.Interval(0, Inf)
+Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {α, P <: Laguerre{α}} = P([1+α, -1], var)
 
-
-
-weight_function(::Type{<:GeneralizedLaguerre{α}}) where {α} = x  -> x^α * exp(-x)
-generating_function(::Type{<:GeneralizedLaguerre{α}}) where {α} = (t,x) -> begin
+weight_function(::Type{<:Laguerre{α}}) where {α} = x  -> x^α * exp(-x)
+generating_function(::Type{<:Laguerre{α}}) where {α} = (t,x) -> begin
     exp(-t*x/(1-t))/(1-t)^(α-1)
 end
 
 
-An(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = -one(α)/(n+1)
-Bn(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = (2n + 1 +  α)/(n+1)
-Cn(::Type{<:GeneralizedLaguerre{α}}, n) where {α} = -(n + α)/(n+1)
+An(::Type{<:Laguerre{α}}, n) where {α} = -one(α)/(n+1)
+Bn(::Type{<:Laguerre{α}}, n) where {α} = (2n + 1 +  α)/(n+1)
+Cn(::Type{<:Laguerre{α}}, n) where {α} = -(n + α)/(n+1)
 
 # compute <Jn, Jn>
-function norm2(::Type{<:GeneralizedLaguerre{α}}, n) where{α}
+function norm2(::Type{<:Laguerre{α}}, n) where{α}
+    iszero(α) && return one(α)
     gamma(n + α + 1) / gamma(n+1)
 end
-
-(ch::GeneralizedLaguerre)(x::S) where {T,S} = orthogonal_polyval(ch, x)
-
-function Base.convert(P::Type{GeneralizedLaguerre{β, T}}, p::GeneralizedLaguerre{α, S}) where {α, β, T, S}
-    # use L(α,n) = sum(choose(α- β + n-1+1, n-1) L(β,i))
-    d = degree(p)
-    R = eltype(one(S)/1)
-    qs = zeros(R, d+1)
-    for i in 0:d
-        for  j in i:d
-            N = ( α - β + (j - i) - 1 )
-            K = j - i
-            qs[i+1] += p[j] * generalized_binomial(N, K)
-        end
-    end
-    P(qs, p.var)
+classical_σ(::Type{<:Laguerre})  = x -> x
+classical_τ(::Type{<:Laguerre{α}}) where {α} = x -> α + 1 - x
+function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
+    α > -1 || throw(ArgumentError("α > -1 is required"))
+    as = -n
+    bs = α+1
+    Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
 end
+
+# for gauss nodes
+gauss_nodes_weights(P::Type{<:Laguerre{0}}, n) = glaser_liu_rokhlin_gauss_nodes(basis(ScaledLaguerre,n))
+has_fast_gauss_nodes_weights(::Type{<:Laguerre{0}}) = true
+
+(ch::Laguerre)(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+# Connection α -> β
+## We have https://en.wikipedia.org/wiki/Laguerre_polynomials#Generalized_Laguerre_polynomials
+## L^α_n = ∑ a(n,k) L^β_k with
+## α(n,k) = (α - β - 1 + n - k, n - k)
+function Base.iterate(o::Connection{P, Q}, state=nothing) where
+    {β, P <: Laguerre{β},
+     α, Q <: Laguerre{α}}
+
+    k, n = o.k, o.n
+
+    if state == nothing 
+        i = k
+        i > n && return nothing
+    elseif state + 1 > n
+        return nothing
+    else
+        i = state + 1
+    end
+
+    # α(i,k)
+    K = i - k
+    N = α - β - 1 + K
+
+    return (i, generalized_binomial(N,K)), i
+    
+end
+
+## Inversion formula
+# https://arxiv.org/pdf/math/9908148.pdf
+# x^n = n! ∑_{k=0}^n (-1)^k gen_binom(n+α, n-k) L_k^α
+#
+function Base.iterate(o::Connection{P, Q}, state=nothing) where
+    {α, P <: Laguerre{α},
+     Q <: Polynomials.StandardBasisPolynomial}
+
+    n,k = o.n, o.k
+
+    if state  == nothing
+        j = k
+        val = connection_α(P,Q,j,k)
+    else
+        j, val = state
+        j += 1  # likely j += 2 if parity condition
+        #        val = connection_α(P,Q,j,k)
+        λ= j*(j+α)/(j-k)  #  use ratio here
+        val *= λ
+    end
+
+    j > n && return nothing
+    
+    (j,val), (j, val)
+end
+
+# https://arxiv.org/pdf/math/9908148.pdf equation (7)
+function connection_α(::Type{<:Laguerre{α}},
+                      ::Type{<:Polynomials.StandardBasisPolynomial},
+                      n,k) where {α}
+
+    tot = gamma(1+n)
+    tot *= (-1)^k
+    tot *= generalized_binomial(n+α, n-k)
+    return tot
+end
+
+
+# Linearization
+# Base.:*(p1::Laguerre{α}, p2::Laguerre{α}) where {α}  = linearization_product_pq(p1, p2)
+function Base.iterate(o::Linearization{P, Val{:pq}}, state =  nothing) where {α, P <: Laguerre{α}}
+
+    _, m, n = o.l, o.m, o.n
+    if state == nothing
+        k = abs(n-m) #max(n,m) # abs(n-m)
+    else
+        k = state + 1
+    end
+
+    k < m && @show k < m
+    k < n && @show k < n
+    k > n + m && return nothing
+    val = linearization_α(P, k, n, m)
+
+    return (k,val), k
+
+end
+
+
+    
+function Base.iterate(o::Linearization{P}, state =  nothing) where {α, P <: Laguerre{α}}
+
+    l, m, n = o.l, o.m, o.n
+    l  > m + n && return nothing
+
+    if state == nothing
+        
+        k =  0
+        p = min(l, n)
+        q = l - p
+
+    else
+
+        k, p, q, val  = state
+
+        if p == 0 ||  q == m #min(l, m)
+            # bump k
+            k  += 1
+            l + k > n+m && return nothing  # at end  of k
+            p = min(l+k, n)
+            p = min(l, n)
+            q = l + k - p
+           q > l && return nothing
+            
+            
+        else
+            
+            p -= 1
+            q += 1
+
+#            p > l && @show :huh
+            q > l && return nothing #@show :kill
+            # while l < p || l < q 
+            #     @show :b,p,q, l
+            #     p -= 1
+            #     q += 1
+            # end
+            
+        end
+
+    end
+   
+    val = linearization_α(P, l, p, q)
+               
+    return (p,q,val), (k, p, q, val)
+end
+
+
+# p30 attributed to Watson
+function linearization_α(::Type{<:P}, k, n, m) where {α, P <: Laguerre{α}}
+    if k < m || k < n
+        return 0.0 #0.0
+        #     return Inf
+    end
+    if k < abs(n-m)
+        return 1
+   #     return -Inf
+    end
+
+    
+    val = (-2)^(n+m-k)
+    val *= gamma(1+k)
+    val /= gamma(1 + n + m - k) * gamma(1 + k - n) * gamma(1 + k - m)
+
+    as = ((k-m-n)/2, (k - m - n + 1)/2, k + α + 1)
+    bs = (k - n + 1, k - m + 1)
+    z = 1.0
+
+    val *= pFq(as, bs, z)
+
+    val
+end
+
+# function Base.convert(P::Type{GeneralizedLaguerre{β, T}}, p::GeneralizeLaguerre{α, S}) where {α, β, T, S}
+#     # use L(α,n) = sum(choose(α- β + n-1+1, n-1) L(β,i))
+#     d = degree(p)
+#     R = eltype(one(S)/1)
+#     qs = zeros(R, d+1)
+#     for k in 0:d
+#         for  i in k:d
+#             N = ( α - β + (i - k) - 1 )
+#             K = i - k
+#             @show k, i ,p[i], generalized_binomial(N, K)
+#             qs[1+k] += p[i] * generalized_binomial(N, K)
+#         end
+#     end
+#     P(qs, p.var)
+# end
 
 # compute generalized binomial coefficient
-function  generalized_binomial(N,K)
-    tot = 1/1
-    for k in K:-1:1
-        tot /= k
-        tot *= N
-        N -= 1
+# function  generalized_binomial(N,K)
+#     tot = 1/1
+#     for k in K:-1:1
+#         tot /= k
+#         tot *= N
+#         N -= 1
+#     end
+#     tot
+# end
+
+
+
+
+##  ScaledLaguerre
+"""
+    ScaledLaguerre
+
+`L̃n(x) = exp(-x/2) ⋅ Ln(x)`
+
+Not a polynomial, but can still use polynomial evaluation machinery
+"""
+struct ScaledLaguerre{T <: Number} <: AbstractLaguerre{T}
+    coeffs::Vector{T}
+    var::Symbol
+    function ScaledLaguerre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
+        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
+        last_nz = findlast(!iszero, coeffs)
+        last = max(1, last_nz === nothing ? 0 : last_nz)
+        return new{T}(coeffs[1:last], var)
     end
-    tot
 end
+
+Polynomials.@register ScaledLaguerre
+basis_symbol(::Type{<:ScaledLaguerre}) = "L̃"
+
+
+An(::Type{<:ScaledLaguerre}, n) = -1/(n+1)
+Bn(::Type{<:ScaledLaguerre}, n) =  (2n+1)/(n+1)
+Cn(::Type{<:ScaledLaguerre}, n) = -n/(n+1)
+P0(::Type{<:ScaledLaguerre}, x) = exp(-x/2)
+P1(P::Type{<:ScaledLaguerre}, x) = (An(P,0)*x .+ Bn(P,0)) * P0(P,x)
+dP0(P::Type{<:ScaledLaguerre}, x) = -(0.5)*P0(P,x)
+(ch::ScaledLaguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+pqr(p::ScaledLaguerre) = (x,n) -> (p=x^2, q=x, r=-(1/4*x^2-(n+1/2)*x), dp=2x, dq=1, dr=-x/2+(n+1/2))
+pqr_start(p::ScaledLaguerre, n) = 2/(4n+2)
+pqr_symmetry(p::ScaledLaguerre) = false
+pqr_weight(p::ScaledLaguerre, n, x, dπx) = exp(-x)/(x*dπx^2)
+gauss_nodes_weights(P::ScaledLaguerre,  n)  = glaser_liu_rokhlin_gauss_nodes(basis(P,n))
+

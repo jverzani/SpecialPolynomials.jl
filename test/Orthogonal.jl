@@ -3,15 +3,16 @@
 T = Float64
 Ps = (Chebyshev{T},
       ChebyshevU{T},
-      Laguerre{T},
+      Laguerre{0, T},
+      Laguerre{1/2, T},
       Hermite{T},
       ChebyshevHermite{T},
-      Jacobi{1/2, 1/2, T},
-      Jacobi{0,0,T},
-      Jacobi{0,1,T},
+#      Jacobi{1/2, 1/2, T},
+#      Jacobi{0,0,T},
+#      Jacobi{0,1,T},
       Legendre{T},
-      Gegenbauer{1/2,T},
-      GeneralizedLaguerre{1/2, T}
+      Gegenbauer{1/2,T}
+      #,Bessel{T}
 #      ,DiscreteChebyshev{12,T}
 #      ,Krawtchouk{12, 5/2, T}
       )
@@ -27,7 +28,7 @@ Ps = (Chebyshev{T},
         p3 = P([0,0,0,1])
         p4 = P([0,0,0,0,1])
         p5 = P([0,0,0,0,0,1])
-        p6 = Polynomials.basis(P, 6)
+        p6 = basis(P, 6)
 
         # basic relation
         x = variable(p0)
@@ -158,7 +159,7 @@ end
 @testset "Derivatives and integrals" begin
     _truncate(x) = truncate(x, atol=sqrt(eps(T)))
     for P in Ps
-        
+        @show P
         p = P([1.0, 2, 3, 4, 3, 2, 1])
         q = convert(Polynomial, p)
         @test derivative(p) ≈ convert(P, derivative(q))
@@ -187,8 +188,9 @@ end
 @testset "roots" begin
 
     for P in Ps
+        P <: Bessel && continue
         for n in 6:2:12
-            rts = roots(Polynomials.basis(P, n))
+            rts = roots(basis(P, n))
             evals = eigvals(SpecialPolynomials.jacobi_matrix(P, n))
             @test maximum(abs, sort(rts) - sort(evals)) <= 1e-6
         end
@@ -199,14 +201,14 @@ end
 
 @testset "fitting" begin
 
-    f(x) = exp(-2pi*x) * cospi(x)
+    f(x) = exp(-x) * cospi(x)
 
     for P in Ps
         P <: SP.OrthogonalPolynomial || continue
         dom = domain(P)
         (isinf(first(dom)) || isinf(last(dom))) && continue
         q = fit(P, f, 10)
-        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-1
+        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
     end
 
 end
@@ -223,5 +225,38 @@ end
         p = SP.innerproduct(P, f, one)
         @test abs(p - q)  <= sqrt(eps(T))
      end
+
+end
+
+
+@testset "Classical orthogonal" begin
+
+    Ps = Ps = (Jacobi{1/2, 1/4},
+               Gegenbauer{1/3},
+               Hermite,
+               Laguerre{0},
+               Laguerre{1/2}) #,
+    #Bessel{1/2})
+
+    # leading term
+    x = variable(Polynomial{Float64})
+    for P in Ps
+        @test basis(P,5)(x)[end] ≈ SP.leading_term(P,5)
+    end
+
+
+
+    # Test representations via pFq([a],[b],z)
+    for P in Ps; @show P
+        n = 5
+        for x in (1/4, 1/2, 3/4)
+            p = basis(P, 5)(x)
+            q = SP.classical_hypergeometric(P, n, x)
+            @test p ≈ q
+        end
+    end
+
+    
+
 
 end

@@ -6,7 +6,7 @@ abstract type AbstractBernstein{T} <: Polynomials.AbstractPolynomial{T} end
 
 A [Bernstein  polynomial](https://en.wikipedia.org/wiki/Bernstein_polynomial) is a polynomial expressed in terms of
 Bernstein basic polynomials. For each degree, `n`, this is a set of `n+1` degree `n` polynomials of the form:
-`beta_{ν, n} =  (ν choose n) x^ν  (1-x)^{n-ν}`, `0 ≤ x ≤ 1.`
+`β_{ν, n} =  (ν choose n) x^ν  (1-x)^{n-ν}`, `0 ≤ x ≤ 1.`
 
 The  `Bernstein{N,T}` type represents a polynomial of degree `N` or with a linear combination of the basis vectors using coefficients  of  type `T`.
 
@@ -32,7 +32,7 @@ struct Bernstein{N, T} <: AbstractBernstein{T}
 end
 
 export Bernstein
-@register1 Bernstein
+Polynomials.@register1 Bernstein
 
 # add default case with no N specified
 function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x)  where {T}

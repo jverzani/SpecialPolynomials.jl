@@ -29,7 +29,7 @@ end
 
 export Gegenbauer
 
-@register1 Gegenbauer
+Polynomials.@register1 Gegenbauer
 
 
 Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1, 1, α < 1/2, α < 1/2)

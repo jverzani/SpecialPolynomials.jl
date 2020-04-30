@@ -1,3 +1,5 @@
+abstract type AbstractLegendre{T} <: OrthogonalPolynomial{T} end
+
 """
     Legendre{T}
 
@@ -12,7 +14,7 @@ Legendre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 julia> convert(Polynomial, p)
 Polynomial(-1//2 + 2//1*x + 9//2*x^2)
 
-julia> p2m, p2m1 = Polynomials.basis.(Legendre, (8,9)) # evaluation P_{2m+k}(-1) =  (-1)^k
+julia> p2m, p2m1 = basis.(Legendre, (8,9)) # evaluation P_{2m+k}(-1) =  (-1)^k
 (Legendre(1⋅L_8(x)), Legendre(1⋅L_9(x)))
 
 julia> p2m(-1) == 1
@@ -27,10 +29,10 @@ julia> n = 5  # verify  Rodrigues' formula
 julia> x = Polynomial(:x)
 Polynomial(x)
 
-julia> derivative((x^2-1)^n, n) - 2^n *  factorial(n) * Polynomials.basis(Legendre, n)
+julia> derivative((x^2-1)^n, n) - 2^n *  factorial(n) * basis(Legendre, n)
 Polynomial(0.0)
 
-julia> p4, p5  =  Polynomials.basis.(Legendre, (4,5)) # verify  orthogonality  of  L4, L5
+julia> p4, p5  =  basis.(Legendre, (4,5)) # verify  orthogonality  of  L4, L5
 (Legendre(1⋅L_4(x)), Legendre(1⋅L_5(x)))
 
 julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
@@ -40,7 +42,7 @@ julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 
 
 """
-struct Legendre{T <: Number} <: OrthogonalPolynomial{T}
+struct Legendre{T <: Number} <: AbstractLegendre{T}
     coeffs::Vector{T}
     var::Symbol
     function Legendre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
@@ -57,7 +59,7 @@ Polynomials.@register Legendre
 
 basis_symbol(::Type{<:Legendre}) = "L"
 
-Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
+Polynomials.domain(::Type{<:AbstractLegendre}) = Polynomials.Interval(-1, 1)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Legendre} = P([0, 1], var)
 
 weight_function(::Type{<:Legendre})  = x -> one(x)
@@ -76,7 +78,8 @@ norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 pqr(p::Legendre) = (x,n) -> (p=1-x^2, q=-2x, r= n*(n+1), dp=-2x, dq=-2,dr=0)
 pqr_symmetry(p::Legendre) = true
 pqr_weight(p::Legendre, n, x, dπx) = 2/(1-x^2)/dπx^2
-gauss_nodes_weights(p::P, n) where {P <: Legendre} = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
+gauss_nodes_weights(P::Type{<:Legendre}, n)  = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
+has_fast_gauss_nodes_weights(::Type{<: Legendre}) = true
 
 (ch::Legendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
@@ -209,3 +212,4 @@ function _legendre_l(n)
     end
     out
 end
+

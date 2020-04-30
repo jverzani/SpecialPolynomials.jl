@@ -49,6 +49,7 @@ generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Chebyshev} = P([0, 1], var)
 
+## [Numerical Methods for Special Functions" by Amparo Gil, Javier Segura, and Nico Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) is one source, of many  for these.
 An(::Type{<:Chebyshev}, n) = iszero(n) ? 1 : 2
 Bn(::Type{<:Chebyshev}, n) = 0
 Cn(::Type{<:Chebyshev}, n) = -1
@@ -59,37 +60,7 @@ alpha(::Type{<:Chebyshev}, n) = 0.0
 beta(::Type{<:Chebyshev}, n) = n <= 1 ? 1/2 : 1/4
 
 norm2(P::Chebyshev{T}, n)  where {T} = iszero(n) ? pi*one(T)/1 : pi*one(T)/2
-
-# nodes for fitting a polynomial
-function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
-    xs = [cos((2j+1)*pi/(2n+2)) for j in 0:n-1]
-
-    ws = [(-1)^j*sin((2j+1)*pi/(2n+2)) for j in 0:n-1]  # XX one loop
-    xs, ws
-end
-
-# noded for integrating against the weight function
-function gauss_nodes_weights(::Type{<: Chebyshev}, n::Int)
-    xs = cos.(pi/2n * (2*(1:n).-1))
-    ws = pi/n * ones(n)
-    xs, ws
-end
-has_fast_gauss_nodes_weights(::Type{<: Chebyshev}) = true
-
-## used discrete cosine  transformation to compute the ck:
-## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
-cks(P::Type{Chebyshev{T}}, f, n::Int) where  {T} =  [ck(P,f,k,n) for k in 0:n]
-function ck(P::Type{Chebyshev{T}}, f, k::Int, n::Int) where  {T}
-    #n =  k
-    tot = zero(T)/1
-    an   =  pi/(n+1)
-    for j in 0:n
-        thetaj = (j+1/2)*an
-        tot += f(cos(thetaj)) * cos(k * thetaj)
-    end
-    (iszero(k) ? 1 : 2) * tot  / (n+1)
-end
-
+leading_term(::Type{<:Chebyshev},n::Int) = 2^(n-1)
 
 
 """
@@ -99,6 +70,8 @@ Evaluate the Chebyshev polynomial at `x`. If `x` is outside of the domain of [-1
 
 # Examples
 ```jldoctest
+julia> using SpecialPolynomials
+
 julia> c = Chebyshev([2.5, 1.5, 1.0])
 ERROR: UndefVarError: Chebyshev not defined
 Stacktrace:
@@ -115,8 +88,53 @@ Stacktrace:
  [1] top-level scope at none:1
 ```
 """
-(ch::Chebyshev{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+function (ch::Chebyshev{T})(x::S) where {T,S}
+    ## if x ≈ 1 or -1 do something else
+    ## As per: p29 of https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+    if x ≈ 1
+        n = degree(ch)
+        n <= 0 && return ch[0]
+        bn, bn1 = ch[n], zero(T)
+        dn = bn
+        for r = n-1:-1:1
+            dn = 2*(x-1)*bn + dn + ch[r]
+            bn, bn1 = dn + bn, bn
+        end
+        return x*bn - bn1 + ch[0]
+    elseif x ≈ -1
+        n = degree(ch)
+        n <= 0 && return ch[0]
+        bn, bn1 = ch[n], zero(T)
+        dn = bn
+        for r = n-1:-1:1
+            dn = 2*(x+1)*bn - dn + ch[r]
+            bn, bn1 = dn - bn, bn
+        end
+        return x*bn - bn1 + ch[0]
+    end
 
+    orthogonal_polyval(ch, x)
+
+end
+
+
+# TODO:
+# Koepf, Wolfram. (1999). Efficient Computation of Chebyshev
+# Polynomials in Computer Algebra. Computer Algebra Systems: A
+# Practical Guide. 79-99.  Might have some gain asymptotically doing
+# other tricks e.g computing `basis(Chebyshev,n)(x)` for large `n` can
+# be done faster through A^(n-1)*[x,1] with A=[2x -1; 1 0]
+# Or using divide and conquer, which for really large n is very efficient
+#
+function orthogonal_basis_polyval(P::Type{<:Chebyshev}, n, x)
+    # no check x ∈ domain(P)
+    iszero(n) && return one(x)
+    n == 1 && return x
+    a,r = divrem(n,2)
+    r == 0 && return 2 * orthogonal_basis_polyval(P, a, x)^2 - 1
+    2 * orthogonal_basis_polyval(P, a, x) * orthogonal_basis_polyval(P, a+1,x) - x
+end
+    
 
 function Base.:*(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
@@ -214,6 +232,159 @@ function Base.divrem(num::Chebyshev{T}, den::Chebyshev{S}) where {T,S}
     r_coeff = _z_to_c(rem)
     return P(q_coeff, num.var), P(r_coeff, num.var)
 end
+
+#= Fitting =#
+
+# nodes/weights for fitting a polynomial using Lagrange polynomial
+# cf. https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
+function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
+
+    xs = [cospi((j+1/2)/(n+1)) for j in 0:n]
+    ws = [(-1)^j*sinpi((j+1/2)/(n+1)) for j in 0:n]  # XX one loop
+
+    xs, ws
+end
+
+# noded for integrating against the weight function
+
+function gauss_nodes_weights(::Type{<: Chebyshev}, n::Int)
+    xs = cos.(pi/2n * (2*(1:n).-1))
+    ws = pi/n * ones(n)
+    xs, ws
+end
+has_fast_gauss_nodes_weights(::Type{<: Chebyshev}) = true
+
+##
+## fitting coefficients
+cks(val::Val{:interpolating},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:lsq},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:series},::Type{Chebyshev}, f) = cks(val, Chebyshev{Float64}, f)
+
+# march forward to compute ck; c0 needs division by 1/2, as used
+# ck = 2/(n+1) ∑ f(xⱼ) ⋅ T_j(xⱼ)
+# The xs are the same as used by `lagrange_barycentric_nodes_weights`, but
+# those weights refer to a different basis.
+function cks(::Val{:interpolating}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
+    R = float(T)
+    k = R(0):n
+    ks = (k .+ 1/2)/(n+1)
+    xks = cospi.(ks)
+    fs = f.(xks)
+    a = ones(R,n+1)
+    b = copy(xks)
+    cks = zeros(R, n+1)
+    cks[0+1] = dot(a, fs)/2
+    cks[1+1] = dot(b, fs)
+    for r = 2:n
+        for j in 1:n+1
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+        end
+        cks[r+1] = dot(b, fs)
+    end
+    (2/(n+1))*cks
+end
+
+## use discrete cosine  transformation to compute the ck.
+## (slower than rrecursion, though maybe a bit more accurate, as implemented)
+## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# dct(P::Type{Chebyshev{T}}, f, n::Int) where  {T} =  [_dct(T,f,k,n) for k in 0:n]
+# dct(::Type{Chebyshev}, f, n::Int) = dct(Chebyshev{Float64}, f,n)
+# function _dct(T, f, k::Int, n::Int)
+#     tot = zero(float(T))
+#     for j in 0:n
+#         θⱼ = (j+1/2)/(n+1)
+#         tot += f(cospi(θⱼ)) * cospi(k * θⱼ)
+#     end
+#     ck = (2/(n+1)) * tot
+#     ck
+# end
+
+
+# march forward to compute ck
+# https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# ck ≈ 2/n ∑'' f(xⱼ) ⋅ T_k(xⱼ)
+# xⱼ = cos(jπ/n)
+function cks(::Val{:lsq}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
+    R = float(T)
+    ks = (R(0):n)/n
+    xks = cospi.(ks)
+    fs = f.(xks)
+    fs[1],fs[end] = fs[1]/2, fs[end]/2  # handle end point ''s
+  
+    a = ones(R,n+1)
+    b = copy(xks)
+    out = zeros(R, n+1)
+
+    out[0+1] = dot(a, fs)/2
+    out[1+1] = dot(b, fs)
+
+    for r = 2:n
+        for j in 1:n+1
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+        end
+        out[r+1] = dot(b, fs)
+    end
+    (2/n)*out
+end
+
+## Fit to a series
+## use a heuristic to identify `n`
+# ref: https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# Chebyshev interpolation can be interpreted as an approximation to Chebyshev series
+# (or vice versa), provided that the coefficients decay fast and the discretization is accurate. In
+# other words, Chebyshev series can be a good approximation to near minimax approximations
+# (Chebyshev), which in turn are close to minimax approximations.
+function cks(::Val{:series}, P::Type{Chebyshev{T}}, f) where {T}
+
+    n = 3
+    thresh = 2^n * 10 * eps(T)
+    
+    p = fit(Val(:interpolating), P, f, 2^n)
+
+    while n < 10
+        if maximum(abs, coeffs(p)[end-2^(n-1):end]) <= thresh
+            break
+        end
+        p = fit(Val(:interpolating), P, f, 2^n)
+        n += 1
+        thresh *= 2
+    end
+
+    coeffs(chop!(p, atol= thresh))
+
+end
+
+
+# ## Chebyshev interpolation of the second kind
+# ## uses -1, 1 and roots of U_{n-1}, 
+# ## (slower than recursion)
+# ## used discrete cosine  transformation to compute the ck:
+# ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# dct1(P::Type{ChebyshevU{T}}, f, n::Int) where  {T} =  [_dct1(T,f,k,n) for k in 0:n]
+# dct1(::Type{Chebyshev},f, n::Int) = dct1(Chebyshev{Float64}, f, n)
+
+# function _dct1(T, f, k::Int, n::Int)
+
+#     tot = zero(float(T))
+#     # j=0, n separate due to ∑''
+#     j=0
+#     θⱼ = j/n
+#     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
+    
+#     j = n
+#     θⱼ = j/n
+#     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
+    
+#     for j in 1:n-1
+#         θⱼ = j/n
+#         tot += f(cospi(θⱼ)) * cospi(k*θⱼ)
+#     end
+
+#     ck = (2/n) * tot
+#     ck
+    
+# end
+
 
 
 #=

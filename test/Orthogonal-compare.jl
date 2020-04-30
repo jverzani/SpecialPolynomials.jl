@@ -1,5 +1,29 @@
 # Compare with tabulated values
 
+
+
+@testset "Bessel" begin
+
+    T = Float64
+    P = Bessel{0,T}
+
+    p0 = P([1])  # 1
+    p1 = P([0,1]) # x
+    p2 = P([0,0,1]) #
+    p3 = P([0,0,0,1]) #
+    p4 = P([0,0,0,0,1]) #
+
+    for x in range(0, 1, length=5)
+        @test p0(x) ≈ 1
+        @test p1(x) ≈ x + 1
+        @test p2(x) ≈ 3x^2 + 3x + 1
+        @test p3(x) ≈ 15x^3 + 15x^2 + 6x + 1
+        @test p4(x) ≈ 105x^4 + 105x^3 + 45x^2 +  10x +  1
+    end
+
+end
+
+
 @testset "ChebyshevT" begin
 
     p0 = Chebyshev([1])  # 1
@@ -117,11 +141,12 @@ end
 
 @testset "Laguerre" begin
 
-    p0 = Laguerre([1])  # 1
-    p1 = Laguerre([0,1]) # x
-    p2 = Laguerre([0,0,1]) #
-    p3 = Laguerre([0,0,0,1]) #
-    p4 = Laguerre([0,0,0,0,1]) #
+    P = Laguerre{0}
+    p0 = P([1])  # 1
+    p1 = P([0,1]) # x
+    p2 = P([0,0,1]) #
+    p3 = P([0,0,0,1]) #
+    p4 = P([0,0,0,0,1]) #
 
     for x in range(0, 5, length=5)
         @test p0(x) ≈ 1
@@ -166,7 +191,7 @@ end
         for x  in range(-1, 1, length=6)
             p1 = Jacobi{alpha_beta..., T}(ps)
             q1 = P(ps)
-            @test SP._monic(p1)(x) ≈ SP._monic(q1)(x)
+            @test SP.monic(p1)(x) ≈ SP.monic(q1)(x)
         end
     end
 

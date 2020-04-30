@@ -1,3 +1,5 @@
+abstract type AbstractLaguerre{T} <: OrthogonalPolynomial{T} end
+
 """
      Laguerre{T}
 
@@ -21,11 +23,11 @@ Polynomial(x)
 julia> n = 7
 7
 
-julia> factorial(n) * Polynomials.basis(Laguerre, n) - foldl(phi, 1:n, init=x^n)
+julia> factorial(n) * basis(Laguerre, n) - foldl(phi, 1:n, init=x^n)
 Polynomial(0.0)
 ```
 """
-struct Laguerre{T <: Number} <: OrthogonalPolynomial{T}
+struct Laguerre{T <: Number} <: AbstractLaguerre{T}
     coeffs::Vector{T}
     var::Symbol
     function Laguerre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
@@ -41,7 +43,7 @@ Polynomials.@register Laguerre
 
 basis_symbol(::Type{<:Laguerre}) = "L"
 
-Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
+Polynomials.domain(::Type{<:AbstractLaguerre}) = Polynomials.Interval(0, Inf)
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Laguerre} = P([1, -1], var)
 
 weight_function(::Type{<: Laguerre}) = x -> exp(-x)
@@ -62,12 +64,8 @@ norm2(::Type{Laguerre{T}}, n) where {T} =  one(T)
 norm2(::Type{Laguerre},n) =  1
 
 # for gauss nodes
-pqr(p::Laguerre) = (x,n) -> (p=x^2, q=x, r=-(1/4*x^2-(n+1/2)*x), dp=2x, dq=1, dr=-x/2+(n+1/2))
-pqr_scale(p::Laguerre) = (x,n) ->  (one(x),  iszero(n) ? exp(-x/2) :  one(x), zero(x), iszero(n)  ? -1/2*exp(-x/2) : zero(x))
-pqr_start(p::Laguerre, n) = 2/(4n+2)
-pqr_symmetry(p::Laguerre) = false
-pqr_weight(p::Laguerre, n, x, dπx) = 1/(x*dπx^2)
-gauss_nodes_weights(p::P, n) where {P <: Laguerre} = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
+gauss_nodes_weights(P::Type{<:Laguerre}, n) = glaser_liu_rokhlin_gauss_nodes(basis(ScaledLaguerre,n))
+has_fast_gauss_nodes_weights(::Type{<:Laguerre}) = true
 
 (ch::Laguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
@@ -83,3 +81,42 @@ function Base.convert(P::Type{<:Laguerre}, p::Polynomial)
     end
     Laguerre(qs, p.var)
 end
+
+
+##  ScaledLaguerre
+"""
+    ScaledLaguerree
+
+`L̃n(x) = exp(-x/2) ⋅ Ln(x)`
+
+Not a polynomial, but can still use polynomial evaluation machinery
+"""
+struct ScaledLaguerre{T <: Number} <: AbstractLaguerre{T}
+    coeffs::Vector{T}
+    var::Symbol
+    function ScaledLaguerre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
+        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
+        last_nz = findlast(!iszero, coeffs)
+        last = max(1, last_nz === nothing ? 0 : last_nz)
+        return new{T}(coeffs[1:last], var)
+    end
+end
+
+Polynomials.@register ScaledLaguerre
+basis_symbol(::Type{<:ScaledLaguerre}) = "L̃"
+
+
+An(::Type{<:ScaledLaguerre}, n) = -1/(n+1)
+Bn(::Type{<:ScaledLaguerre}, n) =  (2n+1)/(n+1)
+Cn(::Type{<:ScaledLaguerre}, n) = -n/(n+1)
+P0(::Type{<:ScaledLaguerre}, x) = exp(-x/2)
+P1(P::Type{<:ScaledLaguerre}, x) = (An(P,0)*x .+ Bn(P,0)) * P0(P,x)
+dP0(P::Type{<:ScaledLaguerre}, x) = -(0.5)*P0(P,x)
+(ch::ScaledLaguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+pqr(p::ScaledLaguerre) = (x,n) -> (p=x^2, q=x, r=-(1/4*x^2-(n+1/2)*x), dp=2x, dq=1, dr=-x/2+(n+1/2))
+pqr_start(p::ScaledLaguerre, n) = 2/(4n+2)
+pqr_symmetry(p::ScaledLaguerre) = false
+pqr_weight(p::ScaledLaguerre, n, x, dπx) = exp(-x)/(x*dπx^2)
+gauss_nodes_weights(P::ScaledLaguerre,  n)  = glaser_liu_rokhlin_gauss_nodes(basis(P,n))
+

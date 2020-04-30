@@ -43,9 +43,8 @@ julia> convert(Polynomial, qq)
 Polynomial(1.0*x^2)
 ```
 
-Interpolating polynomials suffer from the Runge phenomenon unless  the nodes are well  chosen. The function
-`SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, n)` will return a good choice over `[-1,1]` along
-with precomputed weights.
+Interpolating polynomials suffer from the Runge phenomenon unless  the nodes are well  chosen. For `P=Chebyshvev` and `P=ChebyshevU`, the function
+`SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)` will return a good choice of `n+1` points over `[-1,1]` along with precomputed weights.
 
 ```jldoctest Lagrange
 julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
@@ -164,6 +163,18 @@ function lagrange_barycentric_weights(xs)
     1 ./ ws
 end
 
+# https://people.maths.ox.ac.uk/trefethen/barycentric.pdf (5.1)
+function lagrange_barycentric_weights(xs::Union{AbstractRange{T},AbstractUnitRange{T}}) where {T}
+    n = length(xs)-1
+    ws = zeros(float(T), n+1)
+    o = one(T)
+    for j = 0:n
+        ws[1+j] = o * binomial(n, j)
+        o *= -1
+    end
+    ws
+end
+    
 ##  add a new point
 ## check for  xk ∈ xs?
 """
@@ -184,9 +195,11 @@ end
 """
     lagrange_barycentric_nodes_weights(::Type{<:SpecialPolynomial}, n::Int)
 
-Return a collection of nodes and weights the given family of
-polynomials. Defined for `ChebyshevT` and `ChebyshevU` familes, but
-otherwise, not defined for most families.
+Return a collection of `n+1` nodes and weights the given family of
+polynomials. Defined for `ChebyshevT` and `ChebyshevU` familes, as there
+are `O(n)` algorithms available. Otherwise, `lagrange_barycentric_weights`
+is needed.
+
 
 """
 lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) = throw(MethodError())

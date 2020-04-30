@@ -1,6 +1,8 @@
 # https://arxiv.org/pdf/1901.01648.pdf
 ## We have the Chebyshev-Hermite, or Probabilist's Hermite polynomials
 
+abstract type AbstractHermite{T} <: OrthogonalPolynomial{T} end
+
 """
     Hermite{T}
 
@@ -17,7 +19,7 @@ Hermite(1⋅H_0(x) + 2⋅H_1(x) + 3⋅H_2(x))
 julia> convert(Polynomial, p)
 Polynomial(-5 + 4*x + 12*x^2)
 
-julia> p4, p5 = Polynomials.basis.(Hermite, (4,5)) # verify orthogonality of H4, H5
+julia> p4, p5 = basis.(Hermite, (4,5)) # verify orthogonality of H4, H5
 (Hermite(1⋅H_4(x)), Hermite(1⋅H_5(x)))
 
 julia> SpecialPolynomials.innerproduct(Hermite, p4, p5)
@@ -25,14 +27,14 @@ julia> SpecialPolynomials.innerproduct(Hermite, p4, p5)
 julia> n = 8
 8
 
-julia> Hn, Hn_1  = Polynomials.basis.(Hermite, (n, n-1)) # verify Hn' = 2n H_{n-1}
+julia> Hn, Hn_1  = basis.(Hermite, (n, n-1)) # verify Hn' = 2n H_{n-1}
 (Hermite(1⋅H_8(x)), Hermite(1⋅H_7(x)))
 
 julia> derivative(Hn) - 2n*Hn_1
 Hermite(0)
 ```
 """
-struct Hermite{T <: Number} <: OrthogonalPolynomial{T}
+struct Hermite{T <: Number} <: AbstractHermite{T}
     coeffs::Vector{T}
     var::Symbol
     function Hermite{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
@@ -49,20 +51,13 @@ Polynomials.@register Hermite
 
 basis_symbol(::Type{<:Hermite}) = "H"
 
-Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{<:AbstractHermite}) = Polynomials.Interval(-Inf, Inf)
 
 weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
 generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
 
-pqr(p::Hermite) = (x,n) -> (p=1, q=0, r=(2n+1-x^2), dp=0, dq=0, dr=-2x)
-pqr_scale(p::Hermite) = (x,n) -> (sqrt(1/2(n+1)),
-                                   n == 0 ? exp(-x^2/2)/(pi^(1/4)*sqrt(2)) : sqrt(1/(n*(n+1)))/2,
-                                   0,
-                                  n == 0 ? -x*exp(-x^2/2)/(pi^(1/4)*sqrt(2)) : 0)
-pqr_start(p::Hermite) = 0
-pqr_symmetry(p::Hermite) = true
-pqr_weight(p::Hermite, n, x, dπx) = sqrt(pi)*2^(n+1)*gamma(n+1)/dπx^2
-gauss_nodes_weights(p::P, n) where {P <: Hermite} = glaser_liu_rokhlin_gauss_nodes(Polynomials.basis(P,n))
+gauss_nodes_weights(P::Type{<:Hermite}, n)  = glaser_liu_rokhlin_gauss_nodes(basis(ScaledHermite,n))
+has_fast_gauss_nodes_weights(::Type{<: Hermite}) = true
 
 # https://en.wikipedia.org/wiki/Hermite_polynomials
 # Probabalist's version
@@ -149,3 +144,39 @@ function Polynomials.integrate(p::Hermite{T}, C::Number=0) where {T}
 
     return q
 end
+
+
+##  ScaledHermite
+## not exported, used for quadrature
+"""
+    ScaledHermitee
+
+`H̃n(x) = exp(-x^2/2)/π^(1/4) * 1 / sqrt(2^n n!) Hn(x)`
+"""
+struct ScaledHermite{T <: Number} <: AbstractHermite{T}
+    coeffs::Vector{T}
+    var::Symbol
+    function ScaledHermite{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
+        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
+        last_nz = findlast(!iszero, coeffs)
+        last = max(1, last_nz === nothing ? 0 : last_nz)
+        return new{T}(coeffs[1:last], var)
+    end
+end
+
+Polynomials.@register ScaledHermite
+basis_symbol(::Type{<:ScaledHermite}) = "H̃"
+
+
+An(::Type{<:ScaledHermite}, n) = sqrt(2/(n+1))
+Bn(::Type{<:ScaledHermite}, n) = 0
+Cn(::Type{<:ScaledHermite}, n) = -sqrt(n/(n+1))
+P0(::Type{<:ScaledHermite}, x) = one(x) * exp(-x^2/2)/pi^(1/4)
+P1(P::Type{<:ScaledHermite}, x) = (An(P,0)*x .+ Bn(P,0)) * P0(P,x)
+dP0(P::Type{<:ScaledHermite}, x) = -x*P0(P,x)
+(ch::ScaledHermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
+pqr(p::ScaledHermite) = (x,n) -> (p=1, q=0, r=(2n+1-x^2), dp=0, dq=0, dr=-2x)
+pqr_start(p::ScaledHermite) = 0
+pqr_symmetry(p::ScaledHermite) = true
+pqr_weight(p::ScaledHermite, n, x, dπx) = 2*exp(-x^2)/(dπx*dπx)

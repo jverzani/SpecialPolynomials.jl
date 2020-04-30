@@ -62,7 +62,8 @@ var::Symbol
     end
 end
 
-@register2 Krawtchouk
+Polynomials.@register2 Krawtchouk
+⟒(P::Type{<:Krawtchouk{N,s}})  where {N,s} = Jacobi{N,s}
 
 export Krawtchouk
 

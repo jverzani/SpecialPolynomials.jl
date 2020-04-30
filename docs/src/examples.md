@@ -36,7 +36,7 @@ The coefficients, e.g., `[0,0,0,1]` indicate a polynomial `0⋅p0 +
 0⋅p1 + 0⋅p2 + 1⋅p3`. The `show` method expresses these polynomials
 relative to their bases. More familiar expressions are seen by
 conversion to the standard basis. For example:
-
+j
 
 
 ```jldoctest example
@@ -86,10 +86,10 @@ will work.
 
 
 
-For the basis functions, the unexported `Polynomials.basis` function can be used:
+For the basis functions, the `basis` function can be used:
 
 ```jldoctest example
-julia> h0,h1,h2,h3 = Polynomials.basis.(Hermite, 0:3);
+julia> h0,h1,h2,h3 = basis.(Hermite, 0:3);
 
 julia> x = variable();
 
@@ -122,7 +122,7 @@ julia> using QuadGK
 julia> P = Legendre
 Legendre
 
-julia> p4,p5 = Polynomials.basis.(P, [4,5])
+julia> p4,p5 = basis.(P, [4,5])
 2-element Array{Legendre{Int64},1}:
  Legendre(1⋅L_4(x))
  Legendre(1⋅L_5(x))
@@ -137,7 +137,7 @@ The unexported `innerproduct` will compute this as well, without the need to spe
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
-6.096184133406375e-16
+0.0
 ```
 
 
@@ -282,7 +282,7 @@ For orthogonal polynomials, the roots of the basis vectors are important for qua
 ```jldoctest example
 julia> using LinearAlgebra
 
-julia> p5 = Polynomials.basis(Legendre, 5)
+julia> p5 = basis(Legendre, 5)
 Legendre(1⋅L_5(x))
 
 julia> roots(p5)
@@ -305,7 +305,7 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
 For higher degree, the difference comes out:
 
 ```jldoctest example
-julia> p50 = Polynomials.basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
+julia> p50 = basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
 38
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> sum
@@ -313,15 +313,15 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> s
 ```
 
 
-The unexported `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an ``O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
 
 ```jldoctest example
 julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
-([-0.9739065285171701, -0.8650633666889836, -0.6794095682990245, -0.43339539412924644, -0.14887433898163127, 0.14887433898163216, 0.43339539412924777, 0.6794095682990245, 0.8650633666889843, 0.9739065285171717], [0.0666713443086869, 0.149451349150583, 0.2190863625159837, 0.26926671930999535, 0.2955242247147498, 0.29552422471475265, 0.26926671930999535, 0.21908636251598357, 0.14945134915058111, 0.06667134430868783])
+([-0.9739065285171717, -0.8650633666889844, -0.6794095682990244, -0.4333953941292472, -0.14887433898163122, 0.14887433898163122, 0.4333953941292472, 0.6794095682990244, 0.8650633666889844, 0.9739065285171717], [0.06667134430868799, 0.14945134915058073, 0.21908636251598215, 0.2692667193099964, 0.2955242247147529, 0.2955242247147529, 0.2692667193099964, 0.21908636251598215, 0.14945134915058073, 0.06667134430868799])
 ```
 
 !!! note
-    For a broader and faster implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for more families. 
+    For a broader and more robust implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for many families. 
 
 ## Fitting
 
@@ -371,31 +371,45 @@ Polynomial(1.0*x^2)
 Polynomial interpolation can demonstrate the Runge phenomenon if the
 nodes are evenly spaced. For higher degree fitting, the choice of
 nodes can greatly effect the approximation of the interpolating
-polynomial to the function generating the `y` values. Over the
-interval `[-1,1]`, the zeros of the Chebyshev polynomial of the first
-kind (`ChebyshevTT`) are well chosen nodes. They have move values near
-the edge of the interval (they are the `x` values of points evenly
-spaced on the upper half circle). These nodes are related to the zeros
-of a trignoometric function, so can readily be generated without need
-to call a root finding algorithm. The unexported `lagrange_barycentric_nodes_weights` method
-will pass back these nodes (and corresponding weights used for quadrature):
+polynomial to the function generating the `y` values.
 
-```jldoctest example
-julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(ChebyshevTT, 50);
+For a family of orthogonal polynomials, the zeros of the basis
+polynomial `p_{n+1}`, labeled `x_0, x_1, ..., x_n` are often used as
+nodes, especially for the Chebyshev nodes (of the first kind).  
+[Gil, Segura, and Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) say
+"Interpolation with Chebyshev nodes is not as good as the best
+approximation ..., but usually it is the best practical possibility
+for interpolation and certainly much better than equispaced
+interpolation"
 
-julia> f(x) = exp(-x)*sinpi(x)
-f (generic function with 1 method)
+For the orthogonal polynomial families, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in this graphic:
 
-julia> p = fit(Lagrange, xs, f);
-
-julia> maximum(norm(p(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps())  # ≈ 1e-14
-true
+```example
+f(x) = exp(-x)*sinpi(x)
+plot(f, -1, 1, legend=false, color=:black, linewidth=3)
+p=fit(Val(:interpolating), Chebyshev, f, 3);  plot!(p, color=:blue)
+p=fit(Val(:interpolating), ChebyshevU, f, 3); plot!(p, color=:red)
+fit(Val(:interpolating), Legendre, f, 3);     plot!(p, color=:green)
+xs = [-0.5, 0.0, 0.5]
+p=fit(Newton, xs, f);
+ts = range(-1, 1, length=100);                plot!(ts, p.(ts), color=:brown)
+savefig("fitting.svg"); nothing # hide
 ```
 
-Fitting with `xs = collect(range(-1, 1, length=50))` will have a maximum, as computed above, of `≈ 1e-4`.
+![](fitting.svg)
+
+
 
 
 ### Polynomial approximation
+
+There are other criteria for fitting that can be used.
+
+least squares...
+series...
+
+XXXX
+
 
 If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won't  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Adding a value for the degree, illustrates:
 
@@ -420,11 +434,15 @@ For the orthogonal families, fitting a polynomial to a function using least squa
 julia> f(x) = exp(-x) * sinpi(x)
 f (generic function with 1 method)
 
-julia> p = fit(ChebyshevTT{Float64}, f, 50);
+julia> p = fit(Val(:lsq), Chebyshev{Float64}, f, 50);
 
 julia> maximum(norm(p(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps())
 true
 ```
+
+
+
+
 
 This wavy example is from Trefethen:
 
@@ -432,7 +450,7 @@ This wavy example is from Trefethen:
 julia> f(x) = sin(6x) + sin(60*exp(x))
 f (generic function with 1 method)
 
-julia> p50 = fit(ChebyshevTT{Float64}, f, 50);
+julia> p50 = fit(Val(:lsq), Chebyshev{Float64}, f, 50);
 
 julia> maximum(norm(p50(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps()) # cf. graph below
 false
@@ -443,7 +461,7 @@ false
 However, with more points we have a good fit:
 
 ```jldoctest example
-julia> p196 = fit(ChebyshevTT{Float64}, f, 196);
+julia> p196 = fit(Chebyshev{Float64}, f, 196);
 
 julia> maximum(norm(p196(x)-f(x) for x in range(-1,1,length=500))) <= sqrt(eps())  # ≈ 1e-13
 true
@@ -452,8 +470,8 @@ true
 ```@example
 using Plots, Polynomials, SpecialPolynomials
 f(x) = sin(6x) + sin(60*exp(x))
-p50 = fit(ChebyshevTT{Float64}, f, 50);
-p196 = fit(ChebyshevTT{Float64}, f, 196);
+p50 = fit(Chebyshev{Float64}, f, 50);
+p196 = fit(Chebyshev{Float64}, f, 196);
 plot(f, -1, 1, legend=false, color=:black)
 xs = range(-1, stop=1, length=500) # more points than recipe
 plot!(xs, p50.(xs), color=:blue)
@@ -465,7 +483,7 @@ savefig("wavy.svg"); nothing # hide
 
 
 !!! note
-    The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial families. The choice of order and methods for most of Julia's built-in functions is conveniently provided.
+    The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial families. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
 
 
 

@@ -17,55 +17,16 @@ depend on conversion to the base `Polynomial` type (which uses the standard poly
 """
 abstract type AbstractSpecialPolynomial{T} <: Polynomials.AbstractPolynomial{T} end
 
-# Macros to register POLY{α, T} and POLY{α, β, T}
-# modified from `Polynomials.jl`
-macro register1(name)
-    poly = esc(name)
-    quote
-        Base.convert(::Type{P}, p::P) where {P<:$poly} = p
-        Base.convert(P::Type{<:$poly}, p::$poly) where {T} = P(coeffs(p), p.var)
-        Base.promote_rule(::Type{$poly{α,T}}, ::Type{$poly{α,S}}) where {α,T,S} =
-            $poly{α,promote_type(T, S)}
-        Base.promote_rule(::Type{$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
-            $poly{α,promote_type(T, S)}
-        function $poly{α,T}(x::AbstractVector{S}, var::Polynomials.SymbolLike = :x) where {α,T,S}
-            R = promote_type(T,S)
-            $poly{α,R}(R.(x), Symbol(var))
-        end
-        $poly{α}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {α,T} =
-            $poly{α,T}(coeffs, Symbol(var))
-        $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = n*one($poly{α,T}, Symbol(var))
-        $poly{α}(n::Number, var::Polynomials.SymbolLike = :x) where {α} = n*one($poly{α}, Symbol(var))
-        $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, Symbol(var))
-        $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, Symbol(var))
-    end
-end
 
-
-# Macro to register POLY{α, β, T}
-macro register2(name)
-    poly = esc(name)
-    quote
-        Base.convert(::Type{P}, p::P) where {P<:$poly} = p
-        Base.convert(P::Type{<:$poly}, p::$poly) where {T} = P(coeffs(p), p.var)
-        Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{$poly{α,β,S}}) where {α,β,T,S} =
-            $poly{α,β,promote_type(T, S)}
-        Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{S}) where {α,β,T,S<:Number} =
-            $poly{α,β,promote_type(T, S)}
-        $poly{α,β}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike = :x) where {α,β,T} =
-            $poly{α,β,T}(coeffs, Symbol(var))
-        $poly{α,β,T}(x::AbstractVector{S}, var = :x) where {α,β,T,S<:Number} = $poly{α,β}(promote_type(T,S).(x), var)
-        $poly{α,β,T}(n::Number, var = :x) where {α,β,T} = n*one($poly{α,β,T}, var)
-        $poly{α,β}(n::Number, var = :x) where {α,β} = n*one($poly{α,β}, var)
-        $poly{α,β,T}(var=:x) where {α,β, T} = variable($poly{α,β,T}, var)
-        $poly{α,β}(var=:x) where {α,β} = variable($poly{α,β}, var)
-    end
-end
-
-
-# set up some defaults
+# some shortcuts
 basis =  Polynomials.basis
 export basis
+
+@generated function constructorof(::Type{T}) where T
+    getfield(parentmodule(T), nameof(T))
+end
+⟒(P::Type{<:AbstractSpecialPolynomial}) = constructorof(P) # to strip off type parameters. See Polynomials.constructorof
+# set up some defaults
 
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {P <: AbstractSpecialPolynomial, T}
     iszero(pj) && return false
@@ -75,16 +36,15 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
     return true
 end
 
-## One of these next two *must* be defined for the polynomial type
-## otherwise they will loop (e.g. x^2 needs convert, which needs x^2...)
-function Base.convert(C::Type{P}, p::Polynomial) where {P <: AbstractSpecialPolynomial}
-    x = variable(C)
-    p(x)
-end
+# Conversion is *possible* when multiplication  in `P` is defined
+# but otherwise,  it must be handled specially
+# function Base.convert(::Type{P}, q::Q) where {P <: AbstractSpecialPolynomial, Q <: AbstractSpecialPolynomial}
+#     convert(P, convert(Polynomial, q))
+# end
 
 function Base.:*(p1::P, p2::Q) where {P <: AbstractSpecialPolynomial, Q <: AbstractSpecialPolynomial}
     R = promote_type(P, Q)
-    convert(R, convert(Polynomial, p1) * convert(Polynomial, p2))
+    convert(⟒(R), convert(Polynomial, p1) * convert(Polynomial, p2))
 end
 
 
@@ -99,13 +59,13 @@ end
 
 function Polynomials.derivative(p::P, order::Integer = 1) where {P <: AbstractSpecialPolynomial}
     q = convert(Polynomial, p)
-    convert(P, derivative(q, order))
+    convert(⟒(P), derivative(q, order))
 end
 
 
 function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractSpecialPolynomial}
     q = convert(Polynomial, p)
-    convert(P, integrate(q, C))
+    convert(⟒(P), integrate(q, C))
 end
 
 function Polynomials.integrate(p::P, a::Number, b::Number) where {P <: AbstractSpecialPolynomial}

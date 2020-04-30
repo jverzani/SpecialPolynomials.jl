@@ -36,6 +36,7 @@ struct Laguerre{T <: Number} <: AbstractLaguerre{T}
         last = max(1, last_nz === nothing ? 0 : last_nz)
         return new{T}(coeffs[1:last], var)
     end
+    b
 end
 
 export Laguerre
@@ -48,6 +49,7 @@ Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: Lagu
 
 weight_function(::Type{<: Laguerre}) = x -> exp(-x)
 generating_function(::Type{<:Laguerre}) = (t, x)  -> exp(-t*x/(1-t)) / (1-t)
+leading_coefficient(::Type{<:AbstractLaguerre}, n)  = (-1)^n/factorial(n)
 
 # (k+1) L_{k+1} = (2k+1 - x) L_k  - k L_{k-1}
 # An  = -1/(n+1)
@@ -62,6 +64,9 @@ Cn(::Type{<:Laguerre}, n) = -n/(n+1)
 
 norm2(::Type{Laguerre{T}}, n) where {T} =  one(T)
 norm2(::Type{Laguerre},n) =  1
+classical_σ(::Type{<:Laguerre}) = x -> x
+classical_τ(::Type{<:Laguerre}) = x -> 2-x
+
 
 # for gauss nodes
 gauss_nodes_weights(P::Type{<:Laguerre}, n) = glaser_liu_rokhlin_gauss_nodes(basis(ScaledLaguerre,n))
@@ -83,40 +88,4 @@ function Base.convert(P::Type{<:Laguerre}, p::Polynomial)
 end
 
 
-##  ScaledLaguerre
-"""
-    ScaledLaguerree
-
-`L̃n(x) = exp(-x/2) ⋅ Ln(x)`
-
-Not a polynomial, but can still use polynomial evaluation machinery
-"""
-struct ScaledLaguerre{T <: Number} <: AbstractLaguerre{T}
-    coeffs::Vector{T}
-    var::Symbol
-    function ScaledLaguerre{T}(coeffs::AbstractVector{T}, var::Symbol) where {T <: Number}
-        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
-        last_nz = findlast(!iszero, coeffs)
-        last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{T}(coeffs[1:last], var)
-    end
-end
-
-Polynomials.@register ScaledLaguerre
-basis_symbol(::Type{<:ScaledLaguerre}) = "L̃"
-
-
-An(::Type{<:ScaledLaguerre}, n) = -1/(n+1)
-Bn(::Type{<:ScaledLaguerre}, n) =  (2n+1)/(n+1)
-Cn(::Type{<:ScaledLaguerre}, n) = -n/(n+1)
-P0(::Type{<:ScaledLaguerre}, x) = exp(-x/2)
-P1(P::Type{<:ScaledLaguerre}, x) = (An(P,0)*x .+ Bn(P,0)) * P0(P,x)
-dP0(P::Type{<:ScaledLaguerre}, x) = -(0.5)*P0(P,x)
-(ch::ScaledLaguerre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
-
-pqr(p::ScaledLaguerre) = (x,n) -> (p=x^2, q=x, r=-(1/4*x^2-(n+1/2)*x), dp=2x, dq=1, dr=-x/2+(n+1/2))
-pqr_start(p::ScaledLaguerre, n) = 2/(4n+2)
-pqr_symmetry(p::ScaledLaguerre) = false
-pqr_weight(p::ScaledLaguerre, n, x, dπx) = exp(-x)/(x*dπx^2)
-gauss_nodes_weights(P::ScaledLaguerre,  n)  = glaser_liu_rokhlin_gauss_nodes(basis(P,n))
 

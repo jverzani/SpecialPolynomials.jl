@@ -55,6 +55,7 @@ Polynomials.domain(::Type{<:AbstractHermite}) = Polynomials.Interval(-Inf, Inf)
 
 weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
 generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
+leading_coefficient(::Type{<:Hermite}) = 2^n
 
 gauss_nodes_weights(P::Type{<:Hermite}, n)  = glaser_liu_rokhlin_gauss_nodes(basis(ScaledHermite,n))
 has_fast_gauss_nodes_weights(::Type{<: Hermite}) = true
@@ -71,27 +72,104 @@ An(::Type{<:Hermite}, n)  = 2
 Bn(::Type{<:Hermite}, n) = 0
 Cn(::Type{<:Hermite}, n) = -2n
 norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
-
+classical_σ(::Type{<:Hermite}) = x -> 1
+classical_τ(::Type{<:Hermite}) = x -> -2x
+function classical_hypergeometric(::Type{<:Hermite}, n, x)
+    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
+    bs = ()
+    (2x)^n * pFq(as, bs, -1/x^2)
+end
 
 (ch::Hermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
+## Linearization
+## leverage that of ChebyshevHermite
+# Function for multiplication using linearization defined below
+function Base.iterate(o::Linearization{P}, state =  nothing) where {P <: AbstractHermite}
 
+    l, m, n = o.l, o.m, o.n
+    l  > m + n && return nothing
+    
+    if state == nothing
 
-## https://arxiv.org/pdf/1901.01648.pdf
-##  (2x)^n  = n! sum(H_{n-2j}/ ((n-2j)!j!) j = 0:floor(n/2))
-function Base.convert(P::Type{<:Hermite}, p::Polynomial)
-    d = degree(p)
-    R = eltype(one(eltype(p))/1)
-    qs = zeros(R, d+1)
-    for i in 0:d
-        qs[i+1] = sum(p[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
+        #k =  0
+        j = 0
+        p = min(l, n)
+        q = l - p
+        val = linearization_α(P, j, l, p, q) 
+
+    else
+        # we work with l + 2j as there is a parity consideration
+        j, p, q, val  = state
+        s = l + j # l +2j + p + q = l +2j + l = 2l + 2j, so s=l+j
+        if p == 0 ||  q == m || q  > s
+            j += 1
+            l + 2j > n+m && return nothing #  l + 2j  is too  big now
+            p = min(l + j, n)  # p <= s
+            q = l + 2j - p
+            q > s + 1 && return nothing
+            val = linearization_α(P, j, l, p, q)
+        else
+            p -= 1
+            q += 1
+
+            λ = q/(p+1)*(s-(q-1))/(s-p)            
+            val *= λ
+        end
+
     end
-    Hermite(qs, p.var)
+                
+    return (p,q,val), (j, p, q, val)
+end
+
+
+#  https://arxiv.org/pdf/1901.01648.pdf equation (74)
+function linearization_α(P::Type{<:AbstractHermite}, j, l, n, m)
+    s = l + j # pass in j to avoid s = divrem(l + m + n,  2) call
+    val = gamma(1+m)*gamma(1+n)/gamma(1+s-m)/gamma(1+s-n)/gamma(1+s-l)
+    val *= linearization_λ(P, l, m,n)
+end
+linearization_λ(::Type{<:Hermite}, l, m, n) = 2.0^((m+n-l)/2)
+
+
+# A connection α(n,k) returns (k, α(k,k)), (k+1, α(k+1, k)), ..., (n, α(n,k))
+#
+# https://arxiv.org/pdf/1901.01648.pdf  Exercise 4
+# shows formulas (13) and (14) with x^n = ∑ α(n, j) H_{n-2j}
+# where α(n,j) depends on Hermite or ChebyshevHermite
+# Here we push that difference into `connection_α(P,Q, i,j)`
+#
+# x^n = ∑_{j=0^n/2} n!/2^n 1/(n-2j)! 1/j! H_(n-2j) 
+# let i = n - 2j j = (n-i)/2
+# x^n = \sum_{n,n-2,... rem(n,2)} n!/2^n 1/i! 1/((n-i)/2)!  H_i
+# 
+# x^i = ∑ α(i,k) H_k with α(i,k) = i!/2^i * 1/(i! (i-k)/2)
+# n = k  + 2j 
+function Base.iterate(o::Connection{P, Q}, state=nothing) where
+    {P <: AbstractHermite,
+     Q <: Polynomials.StandardBasisPolynomial}
+
+    k, n = o.k, o.n
+
+    if state == nothing
+        j  = 0
+    else
+        j = state + 1
+    end
+
+    i = k + 2j
+    i > n && return nothing
+
+    α = connection_α(P, Q, i, j)
+    return(i, α), j
+    
 end
 
 # compute
 # n!/(2^n ⋅ (n-2j)! ⋅ j!)
-function _hermite_lambda(n,j)
+function connection_α(::Type{<:Hermite},
+                      ::Type{<:Polynomials.StandardBasisPolynomial},
+                      n,j)
     tot = 1/1
     nn = 1
     for jj in 1:j
@@ -108,7 +186,9 @@ function _hermite_lambda(n,j)
     return tot
 end
 
-
+##
+## ----
+##
 
 function Polynomials.derivative(p::Hermite{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
@@ -148,6 +228,7 @@ end
 
 ##  ScaledHermite
 ## not exported, used for quadrature
+## not even a polynomial, but satisfies 3-point recursion
 """
     ScaledHermitee
 
@@ -180,3 +261,6 @@ pqr(p::ScaledHermite) = (x,n) -> (p=1, q=0, r=(2n+1-x^2), dp=0, dq=0, dr=-2x)
 pqr_start(p::ScaledHermite) = 0
 pqr_symmetry(p::ScaledHermite) = true
 pqr_weight(p::ScaledHermite, n, x, dπx) = 2*exp(-x^2)/(dπx*dπx)
+
+linearization_λ(::Type{<:ScaledHermite}, l, m, n) = throw(MethodError())
+connection_α(::Type{<:ScaledHermite}, n,j) = throw(MethodError())

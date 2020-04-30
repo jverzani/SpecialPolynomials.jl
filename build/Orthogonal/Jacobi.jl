@@ -14,9 +14,10 @@ Polynomial(-0.375 + 0.75*x^2)
 
 julia> monic(p::Polynomial) = p/p[end];
 
-
-julia> (monic ∘ convert).(Polynomial, (p, Polynomials.basis(ChebyshevTT, 2))) # scaled version of each other
-(Polynomial(-0.5 + 1.0*x^2), Polynomial(-0.5 + 1.0*x^2))
+julia> (monic ∘ convert).(Polynomial, (p, basis(Chebyshev, 2))) # scaled version of each other
+ERROR: UndefVarError: ChebyshevTT not defined
+Stacktrace:
+ [1] top-level scope at none:1
 ```
 
 """
@@ -35,7 +36,7 @@ end
 
 export Jacobi
 
-@register2 Jacobi
+Polynomials.@register2 Jacobi
 
 basis_symbol(::Type{<: Jacobi{α, β}}) where {α, β} = "J^(α, β)"
 

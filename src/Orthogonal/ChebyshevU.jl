@@ -53,19 +53,6 @@ Cn(::Type{<:ChebyshevU}, n) = -1
 
 norm2(::Type{ChebyshevU{T}}, n) where {T} = pi/2 * one(T)
 
-## return xs ws
-function lagrange_barycentric_nodes_weights(::Type{<:ChebyshevU}, n::Int)
-    xs = cos.((0:n-1)*pi/n)
-    ws = ones(n)
-    ws[1] = ws[end] = 1/2
-    for i in  2:2:n
-        ws[i] *= -1
-    end
-    xs, ws
-end
-
-
-
 (ch::ChebyshevU{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 # could do directly
@@ -74,47 +61,88 @@ function Base.convert(P::Type{<:ChebyshevU}, p::Polynomial)
     convert(ChebyshevU, q )
 end
 
+# convert Chebyshev (Q) ->  ChebyshevU (P)
+# T_n = 1/2(U_n - U_n-2)
+function Base.iterate(o::Connection{P, Q}, state=nothing) where {P <: ChebyshevU, Q <: Chebyshev}
 
-# direct conversions between U and T types
-function Base.convert(P::Type{<:Chebyshev}, p::ChebyshevU{T}) where {T}
-    # Use
-    # Un = 2sum(Tj, j in 1:2:n), n odd
-    #    = 2sum(Tj, j in 0:n) - T_0  = 2sum(Tj j in 2:n) + T0, n even
-    d = degree(p)
-    d == -1 && return Chebysev(zeros(T, 1), p.var)
-    ts = zeros(T, d + 1)
-    q = Chebyshev(ts, p.var)
-    q[0] = sum(p[i] for i in 0:2:d)
-    tot = zero(T)
-    for i in d:-2:1
-        tot += 2p[i]
-        q[i] = tot
+    k, n = o.k, o.n
+
+    if state == nothing
+        i = k
+        i > n && return nothing
+        α = k == 0 ? 1 : 1/2
+    elseif state  >= k + 2 # terminate
+        return nothing
+    else
+        i = state
+        i += 2
+        α = -1/2
     end
-    tot = zero(T)
-    for i in (d-1):-2:1
-        tot += 2p[i]
-        q[i] = tot
-    end
-    return q
+    return(i, α), i
 end
 
-function Base.convert(P::Type{<:ChebyshevU}, p::Chebyshev{T}) where {T <: Number}
-    # use  a_i T_i = a_i/2 (U_i - U_i-2)
-    d = degree(p)
-    R = typeof(one(T)/2)
-    d == -1 && return ChebysevU(zeros(R, 1), p.var)
-    d == 0 && return ChebyshevU(p[0:0]/1, p.var)
-    ts = zeros(R, d + 1)
-    q = ChebyshevU(ts, p.var)
-    q[d] = p[d]/2
-    q[d-1] = p[d-1]/2
-    for i in (d-2):-1:1
-        q[i] = (p[i]-p[i+2])/2  # uses: a_i T_i = a_i/2 (U_i - U_i-2)
-    end
-    q[0] = p[0] - p[2]/2        # uses a_0 T_0 = a_0 U_0
+# convert ChebyshevU (Q) into Chebyshev (P)
+# α(n,k) = k=0?-1:2
+function Base.iterate(o::Connection{P, Q}, state=nothing) where {P <: Chebyshev, Q <: ChebyshevU}
 
-    return q
+    k, n = o.k, o.n
+
+    if state == nothing
+        i = k 
+        i > n && return nothing
+    elseif state + 1 > n # terminate
+        return nothing
+    else
+        i = state
+        i += 2
+    end
+
+    α = k == 0 ? 1 : 2
+    return(i, α), i
 end
+
+
+
+# # direct conversions between U and T types
+# function Base.convert(P::Type{<:Chebyshev}, p::ChebyshevU{T}) where {T}
+#     # Use
+#     # Un = 2sum(Tj, j in 1:2:n), n odd
+#     #    = 2sum(Tj, j in 0:n) - T_0  = 2sum(Tj j in 2:n) + T0, n even
+#     d = degree(p)
+#     d == -1 && return Chebysev(zeros(T, 1), p.var)
+#     ts = zeros(T, d + 1)
+#     q = Chebyshev(ts, p.var)
+#     q[0] = sum(p[i] for i in 0:2:d)
+#     tot = zero(T)
+#     for i in d:-2:1
+#         tot += 2p[i]
+#         q[i] = tot
+#     end
+#     tot = zero(T)
+#     for i in (d-1):-2:1
+#         tot += 2p[i]
+#         q[i] = tot
+#     end
+#     return q
+# end
+
+# function Base.convert(P::Type{<:ChebyshevU}, p::Chebyshev{T}) where {T <: Number}
+#     # use  a_i T_i = a_i/2 (U_i - U_i-2)
+#     d = degree(p)
+#     R = typeof(one(T)/2)
+#     d == -1 && return ChebysevU(zeros(R, 1), p.var)
+#     d == 0 && return ChebyshevU(p[0:0]/1, p.var)
+#     ts = zeros(R, d + 1)
+#     q = ChebyshevU(ts, p.var)
+#     q[d] = p[d]/2
+#     q[d-1] = p[d-1]/2
+#     for i in (d-2):-1:1
+#         q[i] = (p[i]-p[i+2])/2  # uses: a_i T_i = a_i/2 (U_i - U_i-2)
+#     end
+#     q[0] = p[0] - p[2]/2        # uses a_0 T_0 = a_0 U_0
+
+#     return q
+# end
 
 
 function Base.:*(p1::ChebyshevU{T}, p2::ChebyshevU{S}) where {T,S}
@@ -162,4 +190,17 @@ function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
     q = q - q(0) + R(C)
 
     return convert(ChebyshevU, q)
+end
+
+#fitting
+
+## return xs ws
+function lagrange_barycentric_nodes_weights(::Type{<:ChebyshevU}, n::Int)
+    xs = cospi.((0:n)/n)
+    ws = ones(n)
+    ws[1] = ws[end] = 1/2
+    for i in  2:2:n+1
+        ws[i] *= -1
+    end
+    xs, ws
 end

@@ -49,7 +49,8 @@ struct Legendre{T <: Number} <: AbstractLegendre{T}
         length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
         last_nz = findlast(!iszero, coeffs)
         last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{T}(coeffs[1:last], var)
+        #return new{T}(coeffs[1:last], var)
+        new{T}(resize!(coeffs,last), var)
     end
 end
 
@@ -75,6 +76,7 @@ Cn(::Type{<:Legendre}, n) = -n/(n+1)
 
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 
+
 pqr(p::Legendre) = (x,n) -> (p=1-x^2, q=-2x, r= n*(n+1), dp=-2x, dq=-2,dr=0)
 pqr_symmetry(p::Legendre) = true
 pqr_weight(p::Legendre, n, x, dπx) = 2/(1-x^2)/dπx^2
@@ -84,19 +86,58 @@ has_fast_gauss_nodes_weights(::Type{<: Legendre}) = true
 (ch::Legendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
 
-
-function Base.convert(P::Type{<:Legendre}, p::Polynomial)
-    d = degree(p)
-    R = eltype(one(eltype(p))/1)
-    qs = zeros(R, d+1)
-    m = div(d, 2)
-    for i in 0:d
-        qs[i+1] = sum(p[j] * _legendre_lambda(j, i) for j in i:2:d)
+# from https://mathworld.wolfram.com/LegendrePolynomial.html
+# we have xⁱ = \sum_l λ(i,l) L_l
+# with
+# l = n - 2k ; k = (n-l)/2
+# compute (2l+1)n! / (2^(n-1)/2 * [1/2(n-l)]! * (l + n + 1)!!)
+#      =  (2n+1-4k)n! / (2^k k! (2n+1-2k)!!)
+function _legendre_lambda(n, l)
+    k = div((n-l),2)
+    N = n
+    tot = 1/1
+    tot *= (2n+1-4k)/1
+    for i in 1:k
+        tot *= N/(2i)  # n!/(2^k k!)
+        N -= 1
     end
-    Legendre(qs, p.var)
+
+    for i in (2n+1-2k):-2:2
+        tot *= N/i     # n!/(2n+1 - 2k)!!
+        N -= 1
+    end
+    tot
+end
+
+# A connection α(n,k) returns (k, α(k,k)), (k+1, α(k+1, k)), ..., (n, α(n,k))
+function Base.iterate(o::Connection{P, Q}, state=nothing) where {P <: Legendre, Q <: Polynomials.StandardBasisPolynomial}
+
+    k, n = o.k, o.n
+
+    if state == nothing
+        i = k
+        i > n && return nothing
+    elseif state + 2 > n # terminate
+        return nothing
+    else
+        i = state
+        i += 2
+    end
+
+    return(i, _legendre_lambda(i, k)), i
 end
 
 
+@inline function legendre_A(k, p, q)
+    λs = legendre_lambda.((k, p-k, q-k, p+q-k))
+    (2p + 2q - 4k +1)/(2p + 2q - 2k + 1) * λs[1] * λs[2] * λs[3] /  λs[4]
+end
+    
+@inline legendre_lambda(n) = n <= 1 ? 1/1 : prod((2*i-1)/i for i in 2:n)
+@inline legendre_phi(n) = n <= 0 ? 1 : (2n+1)/(n+1)
+const _λ=legendre_lambda
+
+    
 
 function Base.:*(p1::Legendre{T}, p2::Legendre{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
@@ -129,8 +170,55 @@ function Base.:*(p1::Legendre{T}, p2::Legendre{S}) where {T,S}
     end
     Legendre(out, p1.var)
 end
-legendre_phi(n) = n <= 0 ? 1 : (2n+1)/(n+1)
-legendre_lambda(n) = n <= 1 ? 1/1 : prod((2*i-1)/i for i in 2:n)
+
+
+# in https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S2040618500035590
+# we get linearization formula for Pn*Pm = ∑ Ak P_{n+m-2k};
+# this allows use of linearization_product. However, it is slower than the direct approach above
+# why does this allocate so much?
+function Base.iterate(o::Linearization{<:Legendre}, state =  nothing)#
+
+    l,m,n = o.l, o.m, o.n
+    
+    if state == nothing
+        # k = 0
+    
+        l > m + n && return nothing
+        
+        p = min(l, n)
+        q = l - p
+        #val = (2p + 2q - 4k +1)/(2p + 2q - 2k + 1) * _λ(k) * _λ(p-k) * _λ(q-k) /  _λ(p+q-k)
+        val = legendre_A(0, p, q)
+
+        return (p,q,val), (0,p,q,val)
+
+    else
+        
+        k, p,q,val =  state
+
+        if p == 0 || q == m || p <= k 
+            # bump k
+            k += 1
+            l + 2k > n+m && return  nothing
+            p = min(l+k, n) # not l+2k, as then q < k and val=0
+            q = l + 2k - p # p+q = l + 2k
+            val = legendre_A(k, p, q)
+
+            return (p,q,val), (k,p,q,val)
+
+        else
+
+            p -= 1
+            q += 1
+
+            λ = (p-k+1) / (q-k) * (2*(q-k)-1) / (2*(p-k)+1)
+            val *= λ
+
+            return (p,q,val), (k,p,q,val)
+        end
+    end
+end
+
 
 function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
@@ -178,26 +266,6 @@ end
 
 ## utils
 
-# l = n - 2k ; k = (n-l)/2
-# https://mathworld.wolfram.com/LegendrePolynomial.html
-# compute (2l+1)n! / (2^(n-1)/2 * [1/2(n-l)]! * (l + n + 1)!!)
-#      =  (2n+1-4k)n! / (2^k k! (2n+1-2k)!!)
-function _legendre_lambda(n, l)
-    k = div((n-l),2)
-    N = n
-    tot = 1/1
-    tot *= (2n+1-4k)/1
-    for i in 1:k
-        tot *= N/(2i)  # n!/(2^k k!)
-        N -= 1
-    end
-
-    for i in (2n+1-2k):-2:2
-        tot *= N/i     # n!/(2n+1 - 2k)!!
-        N -= 1
-    end
-    tot
-end
 
 function _legendre_A(p,q,twok)
     k = div(twok, 2)

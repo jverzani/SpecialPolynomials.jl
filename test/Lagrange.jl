@@ -66,8 +66,8 @@ end
 
     us = rand(5)
 
-    @test all(p.(us) + q.(us) .≈ (p + q).(us))
-    @test p.(us) .* q.(us) ≈ (p * q).(us)  # this  can  be way  off for even moderate sized polynomials.
+    @test maximum(abs, p.(us) + q.(us) - (p + q).(us)) <= 1e-5
+    @test maximum(abs, p.(us) .* q.(us) - (p * q).(us)) <= 1e-2  # this  can  be way  off for even moderate sized polynomials.
 
 
 end

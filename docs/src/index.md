@@ -1,6 +1,6 @@
 # SpecialPolynomials.jl
 
-Documentation for SpecialPolynomials.jl.
+Documentation for [SpecialPolynomials.jl](https://github.com/jverzani/SpecialPolynomials.jl).
 
 
 
@@ -33,15 +33,15 @@ SpecialPolynomials.AbstractOrthogonalPolynomial
 There are  several families of orthogonal polynomials available.
 
 ```@docs
-ChebyshevTT
+Legendre
+Chebyshev
 ChebyshevU
-Gegenbauer
-GeneralizedLaguerre
+Laguerre
 Hermite
 ChebyshevHermite
+Gegenbauer
 Jacobi
-Laguerre
-Legendre
+GeneralizedLaguerre
 ShiftedLegendre
 ```
 
@@ -87,16 +87,18 @@ Newton
 Bernstein
 ```
 
-Example of a Bezier curve  (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`:
+Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve  (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`:
 
 
 ```@example
 using Plots, Polynomials, SpecialPolynomials
-bs =[[220,40], [220,260], [35,200],  [120,160]]
+bs =[[220, 260], [220, 40], [35, 100],  [120, 140]]
 N = length(bs)-1
-r(t) = sum(b.*B(t) for (b,B) in zip(bs, Polynomials.basis.(Bernstein{N},0:N)))
-ts = range(0, stop=1, length=500); rs=r.(ts)
-plot([r[1] for r in rs], [r[2] for r in rs], legend=false)
+ρ = Bernstein(bs) 
+ts = range(0, stop=1, length=500)
+rs= ρ.(ts);
+p =  plot([r[1] for r in rs], [r[2] for r in rs], legend=false)
+scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 savefig("bezier.svg"); nothing # hide
 ```
 

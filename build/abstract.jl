@@ -17,46 +17,10 @@ depend on conversion to the base `Polynomial` type (which uses the standard poly
 """
 abstract type AbstractSpecialPolynomial{T} <: Polynomials.AbstractPolynomial{T} end
 
-# Macros to register POLY{α, T} and POLY{α, β, T}
-# modified from `Polynomials.jl`
-macro register1(name)
-    poly = esc(name)
-    quote
-        Base.convert(::Type{P}, p::P) where {P<:$poly} = p
-        Base.convert(P::Type{<:$poly}, p::$poly) where {T} = P(coeffs(p), p.var)
-        Base.promote_rule(::Type{$poly{α,T}}, ::Type{$poly{α,S}}) where {α,T,S} =
-            $poly{α,promote_type(T, S)}
-        Base.promote_rule(::Type{$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
-            $poly{α,promote_type(T, S)}
-        $poly{α}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {α,T} =
-            $poly{α,T}(coeffs, Symbol(var))
-        $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = n*one($poly{α,T}, Symbol(var))
-        $poly{α}(n::Number, var::Polynomials.SymbolLike = :x) where {α} = n*one($poly{α}, Symbol(var))
-        $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, Symbol(var))
-        $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, Symbol(var))
-    end
-end
 
-# Macro to register POLY{α, β, T}
-macro register2(name)
-    poly = esc(name)
-    quote
-        Base.convert(::Type{P}, p::P) where {P<:$poly} = p
-        Base.convert(P::Type{<:$poly}, p::$poly) where {T} = P(coeffs(p), p.var)
-        Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{$poly{α,β,S}}) where {α,β,T,S} =
-            $poly{α,β,promote_type(T, S)}
-        Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{S}) where {α,β,T,S<:Number} =
-            $poly{α,β,promote_type(T, S)}
-        $poly{α,β}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike = :x) where {α,β,T} =
-            $poly{α,β,T}(coeffs, Symbol(var))
-        $poly{α,β,T}(x::AbstractVector{S}, var = :x) where {α,β,T,S<:Number} = $poly{α,β}(promote_type(T,S).(x), var)
-        $poly{α,β,T}(n::Number, var = :x) where {α,β,T} = n*one($poly{α,β,T}, var)
-        $poly{α,β}(n::Number, var = :x) where {α,β} = n*one($poly{α,β}, var)
-        $poly{α,β,T}(var=:x) where {α,β, T} = variable($poly{α,β,T}, var)
-        $poly{α,β}(var=:x) where {α,β} = variable($poly{α,β}, var)
-    end
-end
-
+# some shortcuts
+basis =  Polynomials.basis
+export basis
 
 # set up some defaults
 

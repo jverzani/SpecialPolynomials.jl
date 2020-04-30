@@ -149,10 +149,12 @@ end
         @test derivative(cint) ≈ cheb
     end
 
-
     for i in 1:10
         p = Bernstein{5, Float64}(rand(1:5, 6))
-        @test degree(round(p - integrate(derivative(p)), digits=13)) <= 0
-        @test degree(round(p - derivative(integrate(p)), digits=13)) <= 0
+        pp = p - (integrate ∘ derivative)(p)
+        qq = p - (derivative ∘ integrate)(p)
+        @test degree(truncate(pp, atol=1e-13)) <= 0
+        @test degree(truncate(qq, atol=1e-13)) <  0
     end
+    
 end

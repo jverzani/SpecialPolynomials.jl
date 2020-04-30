@@ -52,6 +52,8 @@ Bn(::Type{<:ShiftedLegendre}, n) = -(2n + 1)/(n + 1)
 Cn(::Type{ShiftedLegendre{T}}, n) where {T <: Integer} = -n //(n  + 1)
 Cn(::Type{<:ShiftedLegendre}, n) = -n / (n  + 1)
 
+alpha(::Type{<:ShiftedLegendre}, n) = 1/2
+beta(::Type{<:ShiftedLegendre}, n) = iszero(n) ? 0 : 1/(4*(4-1/n^2))
 
 (ch::ShiftedLegendre{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 

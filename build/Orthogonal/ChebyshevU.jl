@@ -70,20 +70,20 @@ end
 
 # could do directly
 function Base.convert(P::Type{<:ChebyshevU}, p::Polynomial)
-    q = convert(ChebyshevTT,  p)
+    q = convert(Chebyshev,  p)
     convert(ChebyshevU, q )
 end
 
 
 # direct conversions between U and T types
-function Base.convert(P::Type{<:ChebyshevTT}, p::ChebyshevU{T}) where {T}
+function Base.convert(P::Type{<:Chebyshev}, p::ChebyshevU{T}) where {T}
     # Use
     # Un = 2sum(Tj, j in 1:2:n), n odd
     #    = 2sum(Tj, j in 0:n) - T_0  = 2sum(Tj j in 2:n) + T0, n even
     d = degree(p)
-    d == -1 && return ChebysevTT(zeros(T, 1), p.var)
+    d == -1 && return Chebysev(zeros(T, 1), p.var)
     ts = zeros(T, d + 1)
-    q = ChebyshevTT(ts, p.var)
+    q = Chebyshev(ts, p.var)
     q[0] = sum(p[i] for i in 0:2:d)
     tot = zero(T)
     for i in d:-2:1
@@ -98,7 +98,7 @@ function Base.convert(P::Type{<:ChebyshevTT}, p::ChebyshevU{T}) where {T}
     return q
 end
 
-function Base.convert(P::Type{<:ChebyshevU}, p::ChebyshevTT{T}) where {T <: Number}
+function Base.convert(P::Type{<:ChebyshevU}, p::Chebyshev{T}) where {T <: Number}
     # use  a_i T_i = a_i/2 (U_i - U_i-2)
     d = degree(p)
     R = typeof(one(T)/2)
@@ -143,7 +143,7 @@ end
 function Polynomials.derivative(p::ChebyshevU{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
 
-    q = convert(ChebyshevTT, p)
+    q = convert(Chebyshev, p)
     return convert(ChebyshevU, derivative(q, order))
 
 end
@@ -158,7 +158,7 @@ function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
         ts[i+1] = p[i-1]/(i)
     end
 
-    q = ChebyshevTT(ts, p.var)
+    q = Chebyshev(ts, p.var)
     q = q - q(0) + R(C)
 
     return convert(ChebyshevU, q)

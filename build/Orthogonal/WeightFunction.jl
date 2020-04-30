@@ -27,11 +27,11 @@ julia> N,  ω² = 40, 0.999
 julia> w(t) = ((1-ω²*t^2)*(1-t^2))^(-1/2)
 w (generic function with 1 method)
 
-julia> πs = ChebyshevTT{Float64}
-ChebyshevTT{Float64}
+julia> πs = Chebyshev{Float64}
+Chebyshev{Float64}
 
-julia> p = WeightFunction(πs, w, [0,0,1], :x)
-WeightFunction(1⋅e_2(x))
+julia> p = WeightFunction(πs, w)
+WeightFunction(1⋅e_1(x))
 
 julia> αs = SpecialPolynomials.alpha.(p, 0:5); # α_0, α_1, ..., α_5
 
@@ -47,9 +47,9 @@ julia> round.([αs βs], digits=8)
  -0.0  0.245429
 ```
 
-The integrals in the mixed moment, `σ_{kl} = ∫ p_k⋅π_l dw`,
-computation are done through recursion and are slow to compute.
-
+The main computation involved in this is the modified moment `ν_l = ∫
+π_l dw`. If πs has a fast gauss nodes available, then those are used,
+otherwise `QuadGK.quadgk` is.
 
 """
 struct WeightFunction{P, F, T <: Number} <: AbstractWeightFunction{T}
@@ -60,7 +60,8 @@ struct WeightFunction{P, F, T <: Number} <: AbstractWeightFunction{T}
     # no inner constructor here
 end
 
-WeightFunction(pis::Type{<:AbstractOrthogonalPolynomial}, W, coeffs::Vector{T}) where {T} = WeightFunction(pis, W, coeffs, :x)
+WeightFunction(pis::Type{<:AbstractOrthogonalPolynomial}, W, coeffs::Vector{T}=[0,1]; var::Symbol=:x) where {T} = WeightFunction(pis, W, coeffs, var)
+
 
 export WeightFunction
 
@@ -104,11 +105,35 @@ function Base.extrema(p::P) where {P <: WeightFunction}
     first(dom), last(dom)
 end
 
-function innerproduct(p::WeightFunction, f, g)
-    dom = domain(p)
-    fn = x -> f(x) * g(x) * weight_function(p)(x)
-    ∫(fn, first(dom)+eps(), last(dom)-eps())
+
+## Try to speed up  quadgk by not specializing on F
+mutable struct Wrapper
+    F
 end
+(F::Wrapper)(x) = F.F(x)
+
+# integrate fdw over region specified by domain(P)
+function ∫(fdw, P; kwargs...)
+    dom = domain(P)
+    a, b = first(dom), last(dom)
+    if !first(Polynomials.inclusivity(dom))
+        a += eps(float(one(a)))
+    end
+    if !last(Polynomials.inclusivity(dom))
+        b -= eps(float(one(b)))
+    end
+
+    F = Wrapper(fdw)
+
+    quadgk(F, a, b; kwargs...)[1]
+end
+    
+function innerproduct(p::WeightFunction, f, g)
+    P = p.pis
+    fgdw = x -> f(x) * g(x) * weight_function(p)(x)
+    ∫(fgdw, P)
+end
+
 
 
 ## Compute the modified moment
@@ -118,12 +143,26 @@ end
 ## q0 = WeightFunction(P,f,[1],:x)
 ## WW = typeof(q0)
 ## SpecialPolynomials.modified_moment(w::W, j) where {W <: WW} = v(j)
-@memoize function modified_moment(w::WeightFunction,  j)
+#@memoize
+function modified_moment(w::WeightFunction,  j; n = 10_000, kwargs...)
+    P = w.pis
+    val = Val(has_fast_gauss_nodes_weights(P))
+    _modified_moment(val, w, P, j; n=n, kwargs...)
+end
 
-    π_j = convert(Polynomial, Polynomials.basis(w.pis, j))
-    π_j /= π_j[end]
+# brute force, not  adaptive quadrature
+# 10_000 might be too big/too small
+# XXX this could use some theory behind it.
+function  _modified_moment(use_gauss::Val{true}, w, P, j; n=10_000, kwargs...)
+    xs,  ws = gauss_nodes_weights(P, n)
+    wf = weight_function(P)
+    π_jdw = x -> monic_orthogonal_basis_polyval(P, j, x)/wf(x)*w.W(x)
+    dot(π_jdw.(xs), ws)
+end
 
-    return innerproduct(w, π_j, one)
+function  _modified_moment(use_gauss::Val{false}, w, P, j; n=0, kwargs...)
+    π_jdw = x -> monic_orthogonal_basis_polyval(P, j, x)*w.W(x)
+    return ∫dw(π_jdw, P; kwargs...)
 end
 
 
@@ -142,33 +181,24 @@ end
 @memoize function sigma(w::W, k, l) where {W <: WeightFunction}
     P = w.pis
 
-    if k == -1
-        return 0
-    elseif  iszero(k)
-        return modified_moment(w, l)
-    elseif iszero(l)
+    T = eltype(w)
+    k == -1 && return zero(T)/1
+    k == 0  && return modified_moment(w, l) # ν_l = ∫π_l dw
+    k > l   && return zero(T)/1
 
-        π_l = 1
-
-        # get basis poly p_l
-        zs = zeros(Int, k+1); zs[end]=1
-        p_k = WeightFunction(w.pis, w.W, zs, w.var)
-
-        fn = x -> p_k(x) * π_l * weight_function(w.pis)(x)
-        return innerproduct(w.pis, p_k, π_l)
-    end
-    # l+1 or l-1?
+    # otherwise get through recursion (this uses Gautschi's formula, P&T have apparent error
     sigma(w, k-1, l+1) - (alpha(w, k-1) - alpha(P, l)) * sigma(w, k-1, l) - (beta(w, k-1))*sigma(w, k-2, l) + beta(P,l)*sigma(w, k-1, l-1)
+    
 end
 
 ## Compute the α, β functions for the 3-point recurrence for the orthogonal polynomials relative to the weight function
 @memoize function alpha(w::WeightFunction, k)
     P = w.pis
     if k == 0
-        v0, v1 =  modified_moment(w, 0), modified_moment(w, 1)
-        alpha(P, 0) + v1 / v0
+        ν₀, ν₁ =  modified_moment(w, 0), modified_moment(w, 1)
+        alpha(P, 0) + ν₁ / ν₀
     else
-        alpha(P, k) - sigma(w, k-1, k)/sigma(w, k-1, k-1) + sigma(w, k, k+1)/sigma(w, k, k)
+        alpha(P, k) - sigma(w, k-1, k)/sigma(w, k-1, k-1)  + sigma(w, k, k+1)/sigma(w, k, k) 
     end
 end
 
