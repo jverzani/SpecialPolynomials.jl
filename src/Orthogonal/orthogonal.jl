@@ -64,6 +64,8 @@ generating_function(::P) where {P <: AbstractOrthogonalPolynomial} = generating_
 # Orthogonal polynomials have a three-point recursion formula
 # parameterized here through:
 # P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
+# also commonly  written as
+# An⋅x⋅P_n = -P_{n+1} + Bn⋅P_n + C_n P_{n-1}
 """
     An(::Type{P},n)
     An(p::P, n)
@@ -135,7 +137,7 @@ dP0(::Type{P},  x) where {P <: AbstractOrthogonalPolynomial} = zero(x)
 """
     leading_term(::Type{P},n)
 
-Return leading term of `basis(P,n)`. By default this is generated through the three-point recursion.
+Return leading term of `basis(P,n)` in the  standard basis. By default this is generated through the three-point recursion.
 """
 function leading_term(::Type{P},n::Int) where {P <: AbstractOrthogonalPolynomial}
     n < 0 && throw(ArgumentError("n must be a non-negative integer"))
@@ -146,7 +148,7 @@ end
 """
     monic(p::AbstractOrthogonalPolynomial)
 
-Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zeror polynomial if the degree of `p` is `-1`. 
+Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`. 
 """
 function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     n = degree(p)
@@ -154,11 +156,11 @@ function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     p / leading_term(P, n)
 end
     
-
+# return `x`  in the  polynomial basis.
 Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = P([-Bn(P,0), 1]/An(P,0))
 Polynomials.variable(p::P, var::Polynomials.SymbolLike=:x) where {P <: AbstractOrthogonalPolynomial} = variable(P)
 
-
+# return the domain as a tuple, not an interval object
 function Base.extrema(::Type{P}) where {P <: AbstractOrthogonalPolynomial}
     dom = domain(P)
     first(dom), last(dom)
@@ -246,6 +248,18 @@ function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogona
 end
 
         
+## Direct implementations
+##             Linearization   Inversion   Connection{αs} integral derivative
+## Legendre         ✓              ✓          NA             ✓        ✓         
+## Hermite          ✓              ✓          NA             ✓        ✓
+## Hermite_e        ✓              ✓          NA             ✓        ✓
+## ChebyshevT       ✓              ✓          T <-> U        ✓        ✓
+## ChebyshevU       ✓              ✓          T <-> U        ✓        ✓
+## Laguerre        p29             ✓          ✓              ✓        ✓
+## Jacobi          p29             ✓          ✓              ✓        .
+## Gegenbauer       ✓              ✓          ✓              ✓        ✓
+## Bessel           X              X          ✓               X        .
+
 
 
 ##
@@ -257,7 +271,7 @@ end
 ## using the scheme: `x = variable(Q); p(x)`.
 ##
 ## *However* this requires being able to pass `x` through the
-## polynomial `p` and in particular, be able to multiply elements in
+## polynomial `p` and in particular, being able to multiply elements in
 ## `Q`. So conversion from Q to P is possible if multiplication in Q
 ## is defined.  Multiplication can be defined if a "linearization"
 ## formula is available of the form
@@ -272,18 +286,6 @@ end
 ## If `Q=Polynomial`, then conversion can be used to define
 ## multiplication through `x = variable(Q); convert(P, p(x)*q(x))`
 ## that is, multiplication is done in the standard basis.
-
-## Implementations
-##             Linearization   Inversion   Connection{αs}
-## Legendre         ✓              ✓          NA
-## Hermite          ✓              ✓          NA
-## Hermite_e        ✓              ✓          NA
-## ChebyshevT       ✓              ✓          T <-> U
-## ChebyshevU       ✓              ✓          T <-> U
-## Laguerre        p29             ✓          ✓
-## Jacobi          p29             ✓          ✓
-## Gegenbauer       ✓              ✓          ✓
-## Bessel           X             p28          ✓
 
 ##
 ## Linearization
@@ -398,10 +400,18 @@ end
 # being even or odd. The diagonal terms are not all complete, as α can
 # be 0 for certain values.
 #
-# cf. https://arxiv.org/pdf/1601.06122.pdf
-# 
-# On Connection, Linearization and DuplicationCoefficients of Classical Orthogonal Polynomials, thesis of Daniel Duviol Tcheutia; http://hdl.handle.net/123456789/2014071645714
+#  References.
+#  These formula  appear in various places, such as
 #
+# Daniel Duviol Tcheutia, On Connection, Linearization and DuplicationCoefficients of Classical Orthogonal Polynomials (http://hdl.handle.net/123456789/2014071645714)
+# for specific formula for the classic orthogonal polynomials  (Jacobi, Laguerre, Hermite, and Bessel).
+#
+# Koepf and  Schmersau, Representations of Orthogonal Polynomials (https://arxiv.org/pdf/math/9703217.pdf)
+#
+# Chaggara and Mabrouk, On inversion and connection coefficients for basic hypergeometric polynomials (https://arxiv.org/pdf/1601.06122.pdf)
+#
+
+##
 struct Linearization{P,V}
     l::Int
     n::Int
@@ -417,6 +427,8 @@ Linearization{P}(l,m,n) where {P} = Linearization{P, Val{:diagonal}}(l,m,n)
 #     k > o.n + o.m && return nothing
 #     return (k, linearization_α(P, k, n, m)), k
 # end
+#
+#
 function linearization_product_pq(p::P,  q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
     p.var == q.var || throw(ArgumentError("bases must match"))
     ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
@@ -446,6 +458,7 @@ end
 # non-zero α(k,n,m) for P_k through the linearization formula P_n⋅P_m = ∑ α(k,n,m) P_k
 #
 # compute product using a linearization formula, as implemented in an `iterate` method for the type
+#
 @inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
     pn.var == pm.var || throw(ArgumentError("bases must match"))
     ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
@@ -457,7 +470,8 @@ end
     cs = zeros(R, n+m+1)
     # pn*pm = ∑ a(l,m,n) H_l
     # so ∑_l ∑_p ∑_q a(l,p,q) H_l
-    # use iterator to keep as simple sum sum(pn[p] * pm[q] * val for (p,q,val) in Linearization{PP}(l,n,m))
+    # can  use iterator to keep as simple sum
+    # `sum(pn[p] * pm[q] * val for (p,q,val) in Linearization{PP}(l,n,m))`
     for l in 0:n+m
         for (p,q,val) in Linearization{PP}(l,n,m)
             cs[1+l] += pn[p] * pm[q] * val
@@ -466,7 +480,10 @@ end
     ⟒(P)(cs, pn.var)
 end
 
-function Base.:*(p1::P, p2::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
+function Base.:*(p1::P, p2::Q) where
+    {P <: AbstractOrthogonalPolynomial,
+     Q <: AbstractOrthogonalPolynomial}
+    
     R = promote_type(P, Q)
 
     if hasmethod(iterate, (Linearization{R, Val{:diagonal}}, ))
@@ -477,6 +494,7 @@ function Base.:*(p1::P, p2::Q) where {P <: AbstractOrthogonalPolynomial, Q <: Ab
         # gives poor error message if ⟒(R) not available
         convert(⟒(R), convert(Polynomial, p1) * convert(Polynomial, p2))
     end
+    
 end
 
 ## The connection problem relates
@@ -524,20 +542,28 @@ end
 #     val = connection_α(P,Q,j,k)
 #     (j,val), j
 # end
-
 struct Connection{P,Q}
     n::Int
     k::Int
 end
 
-function connection(::Type{P}, q::Q) where {P <: Polynomials.AbstractPolynomial,  Q<:Polynomials.AbstractPolynomial}
+function connection(::Type{P}, q::Q) where
+    {P <: Polynomials.AbstractPolynomial,
+     Q<:Polynomials.AbstractPolynomial}
+    
     n = degree(q)
     T = eltype(one(q)/1)
     cs = zeros(T, n+1)
-    for k in 0:n 
-        cs[1+k] = sum(q[i] * val for (i,val) in Connection{P,Q}(n, k))
+
+    for k in 0:n
+        for (i,val) in Connection{P,Q}(n, k)
+            cs[1+k] = muladd(q[i], val, cs[1+k])
+        end
+        #cs[1+k] = sum(q[i] * val for (i,val) in Connection{P,Q}(n, k))
     end
+
     ⟒(P)(cs, q.var)
+    
 end
                       
 
@@ -545,14 +571,17 @@ end
 
 # conversion to Polynomial is simply evaluating
 # the polynomial on `variable(Polynomial)`
-function Base.convert(P::Type{<:Polynomials.StandardBasisPolynomial}, ch::AbstractOrthogonalPolynomial)
+function Base.convert(P::Type{<:Polynomials.StandardBasisPolynomial},
+                      ch::AbstractOrthogonalPolynomial)
 
     x = variable(P)
     return ch(x)
     
 end
 
-function Base.convert(P::Type{J}, q::Q) where {J <: AbstractOrthogonalPolynomial, Q <: Polynomials.StandardBasisPolynomial}
+function Base.convert(P::Type{J}, q::Q) where
+    {J <: AbstractOrthogonalPolynomial,
+     Q <: Polynomials.StandardBasisPolynomial}
     
     if  hasmethod(iterate, (Connection{P,Q},))
         return connection(P, q)
@@ -571,9 +600,15 @@ function Base.convert(P::Type{J}, q::Q) where {J <: AbstractOrthogonalPolynomial
         end
         ⟒(P)(qs, q.var)
     end
+    
 end
 
-function Base.convert(::Type{P}, q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractSpecialPolynomial}
+function Base.convert(::Type{P}, q::Q) where
+    {P <: AbstractOrthogonalPolynomial,
+     Q <: AbstractSpecialPolynomial}
+
+    P == Q && return q
+    
     if hasmethod(iterate, (Connection{P,Q},))
         connection(P, q)
     else
@@ -581,22 +616,29 @@ function Base.convert(::Type{P}, q::Q) where {P <: AbstractOrthogonalPolynomial,
         # Does not give good error messages though
         convert(P, convert(Polynomial, q))
     end
+    
 end
 
 
 ##
 ## Vandermonde matrix can be generated through the 3-point recursion formula
 ##
-function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where {P <:  AbstractOrthogonalPolynomial, T <: Number}
+function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
+    {P <:  AbstractOrthogonalPolynomial,
+     T <: Number}
+    
     A = Matrix{T}(undef, length(x), n + 1)
     A[:, 1] .= P0(P, one(T))
+
     if n > 0
         A[:, 2] .= P1(P, x)
         @inbounds for i in 1:n-1
             A[:, i+2] .= A[:, i+1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i])
         end
     end
+    
     return A
+    
 end
 
 ##

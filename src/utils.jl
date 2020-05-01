@@ -1,5 +1,5 @@
 # some utility functions
-
+const Γ = gamma
 
 function generalized_binomial(α::T, n::S) where {T,S <: Integer}
     R = Base.promote_op(/,T,S)

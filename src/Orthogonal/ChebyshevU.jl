@@ -103,48 +103,6 @@ end
 
 
 
-# # direct conversions between U and T types
-# function Base.convert(P::Type{<:Chebyshev}, p::ChebyshevU{T}) where {T}
-#     # Use
-#     # Un = 2sum(Tj, j in 1:2:n), n odd
-#     #    = 2sum(Tj, j in 0:n) - T_0  = 2sum(Tj j in 2:n) + T0, n even
-#     d = degree(p)
-#     d == -1 && return Chebysev(zeros(T, 1), p.var)
-#     ts = zeros(T, d + 1)
-#     q = Chebyshev(ts, p.var)
-#     q[0] = sum(p[i] for i in 0:2:d)
-#     tot = zero(T)
-#     for i in d:-2:1
-#         tot += 2p[i]
-#         q[i] = tot
-#     end
-#     tot = zero(T)
-#     for i in (d-1):-2:1
-#         tot += 2p[i]
-#         q[i] = tot
-#     end
-#     return q
-# end
-
-# function Base.convert(P::Type{<:ChebyshevU}, p::Chebyshev{T}) where {T <: Number}
-#     # use  a_i T_i = a_i/2 (U_i - U_i-2)
-#     d = degree(p)
-#     R = typeof(one(T)/2)
-#     d == -1 && return ChebysevU(zeros(R, 1), p.var)
-#     d == 0 && return ChebyshevU(p[0:0]/1, p.var)
-#     ts = zeros(R, d + 1)
-#     q = ChebyshevU(ts, p.var)
-#     q[d] = p[d]/2
-#     q[d-1] = p[d-1]/2
-#     for i in (d-2):-1:1
-#         q[i] = (p[i]-p[i+2])/2  # uses: a_i T_i = a_i/2 (U_i - U_i-2)
-#     end
-#     q[0] = p[0] - p[2]/2        # uses a_0 T_0 = a_0 U_0
-
-#     return q
-# end
-
-
 function Base.:*(p1::ChebyshevU{T}, p2::ChebyshevU{S}) where {T,S}
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
 

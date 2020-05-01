@@ -77,6 +77,13 @@ end
 
 (ch::Gegenbauer)(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
+#Base.convert(::Type{<:Gegenbauer{α}}, q::Gegenbauer{α,T}) where {α, T} = q
+function Gegenbauer{α,T}(q::Gegenbauer{β,S})  where {α, β, T, S}
+    β == α && return Gegenbauer{α, T}(T.(coeffs(q)), q.var)
+    connection(Gegenbauer{α,T}, q)
+end
+Gegenbauer{α}(q::Gegenbauer{β,S})  where {α, β, S} = Gegenbauer{α,S}(q)
+
 # connection between α and β
 function Base.iterate(o::Connection{P, Q}, state=nothing) where
     {β, P <: Gegenbauer{β},
@@ -103,7 +110,8 @@ end
 function connection_α(::Type{<:Gegenbauer{β}},
                       ::Type{<:Gegenbauer{α}},
                       n,k) where {α, β}
-
+    α == β && return (n==k ? one(α) : zero(α))
+    
     # definitely replace with ratio
     val = gamma(β)/gamma(α)/gamma(α-β)
     val *= (k + β)

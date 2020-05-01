@@ -157,7 +157,7 @@ function Base.convert(::Type{P}, q::Q) where
      T, Q <: Polynomials.StandardBasisPolynomial{T}}
 
     n = degree(q)
-    
+    n < 1 && return P(q[0], q.var)
     qq = Q(_pascal(n)\coeffs(q))
 
     n = degree(q)
@@ -206,3 +206,38 @@ function connection_α(::Type{<:Jacobi{α,β}},
     return tot
 end
 
+
+
+# https://arxiv.org/pdf/math/9703217.pdf corollary 1
+function Polynomials.integrate(p::P, C::S) where
+    {α,β,T, P<:Jacobi{α,β,T},
+     S <: Number}
+    
+    R = promote_type(eltype(one(T) / 1), S)
+    if hasnan(p) || isnan(C)
+        return ⟒(P)([NaN])
+    end
+   d = degree(p)
+    if d == 0
+        return ⟒(P)([C, p[0]])
+    end
+    
+    as = zeros(R, d + 2)
+    
+    @inbounds for n in 0:d
+        pn = p[n]
+        
+        as[1 + n + 1] += pn * 2(n+α+β+1)/((2n+α+β+1)*(2n+α+β+2))
+        as[1 + n]     += pn * (iszero(α-β) ? zero(R) : 2*(α-β)/((2n+α+β)*(2n+α+β+2)))
+        if  n > 0
+            as[1 + n - 1] += pn * (-2*(n+α)*(n+β)/((n+α+β)*(2n+α+β)*(2n+α+β+1)))
+        end
+
+    end
+    
+    ∫p = ⟒(P)(as,  p.var)
+    ∫p[0] = R(C) - ∫p(0)
+
+    return  ∫p
+    
+end
