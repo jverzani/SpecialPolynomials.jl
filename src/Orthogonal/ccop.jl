@@ -15,7 +15,7 @@ Let σ = (a⋅x²+b⋅x+c), τ  =  (d⋅x + e).
 
 From these several structural  equations are represented.
 The three point recursion, expressed as:
-
+s
 P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎
 
 The three point recursion  is  utilized by  Clenshaws method to  evaluate the polynomials.
@@ -78,7 +78,15 @@ end
 
 
 function Base.setindex!(p::AbstractCCOP, value::Number, idx::Int)
-    throw(ArgumentError("CCOPs are immutable"))
+    T = eltype(p)
+    ## widen size...
+    idx < 0 &&  throw(ArgumentError("Negative index"))
+    val = T(value)
+    d = length(coeffs(p)) - 1
+    if idx > d
+        append!(p.coeffs, zeros(T, idx-d))
+    end
+    setindex!(p.coeffs, val,  idx+1)
 end
 
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: AbstractCCOP}
@@ -100,19 +108,31 @@ Polynomials.degree(p::AbstractCCOP1{α,T,N})  where {α,T,N} = N-1
 Polynomials.degree(p::AbstractCCOP2{α,β,T,N})  where {α,β,T,N} = N-1
 Polynomials.isconstant(p::AbstractCCOP) = degree(p) <=  0
 
-Polynomials.zero(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)(NTuple{0,T}(), Symbol(var))
-Polynomials.zero(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)(NTuple{0,T}(), Symbol(var))
-Polynomials.zero(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)(NTuple{0,T}(), Symbol(var))
-Polynomials.zero(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = zero(⟒(P){Float64}, Symbol(var))
+Polynomials.zero(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)(T[], var)
+Polynomials.zero(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)(T[], var)
+Polynomials.zero(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)(T[], var)
+Polynomials.zero(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = zero(⟒(P){Float64}, var)
+Polynomials.zero(p::P) where {P <: AbstractCCOP} = zero(P, var(p))
 
-Polynomials.variable(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)((zero(T),one(T)), Symbol(var))
-Polynomials.variable(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)((zero(T),one(T)), Symbol(var))
-Polynomials.variable(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)((zero(T),one(T)), Symbol(var))
-Polynomials.variable(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = zero(⟒(P){Float64}, Symbol(var))
+Polynomials.one(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)(T[1], var)
+Polynomials.one(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)(T[1], var)
+Polynomials.one(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)(T[1], var)
+Polynomials.one(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = one(⟒(P){Float64}, var)
+Polynomials.one(p::P) where {P <: AbstractCCOP} = one(P, var(p))
 
-basis(P::Type{<:AbstractCCOP{T}}, n::Int, var::Polynomials.SymbolLike=:x)  where {T} =
-    ⟒(P)(NTuple{n+1,T}(i==n+1 ? one(T) : zero(T) for i in 1:n+1), Symbol(var))
-basis(P::Type{<:AbstractCCOP}, n::Int, var::Polynomials.SymbolLike=:x) = basis(⟒(P){Float64}, n, Symbol(var))
+# This is not right!
+Polynomials.variable(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
+Polynomials.variable(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
+Polynomials.variable(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
+Polynomials.variable(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = variable(⟒(P){Float64}, var)
+Polynomials.variable(p::P) where {P <: AbstractCCOP} = variable(P, var(p))
+
+function basis(P::Type{<:AbstractCCOP{T}}, n::Int, var::Polynomials.SymbolLike=:x)  where {T}
+    cs = zeros(T, n+1)
+    cs[end] = one(T)
+    ⟒(P)(cs, var)
+end
+basis(P::Type{<:AbstractCCOP}, n::Int, var::Polynomials.SymbolLike=:x) = basis(⟒(P){Float64}, n, var)
 
 ##
 ## -----
@@ -136,28 +156,30 @@ end
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
-function eval_ccop(P::Type{<:AbstractCCOP}, cs::NTuple{N,T}, x::S) where {T,N,S}
+function eval_ccop(P::Type{<:AbstractCCOP}, ::Val{N}, cs::Vector{T}, x::S) where {N, T, S}
     if @generated
-        
-        N == 0 && return zero(T) * zero(S)
+        N == 0 && return zero(T)*zero(S)
         N == 1 && return cs[1] * one(S)
-
-        Δ0 = :(cs[N-1])
-        Δ1 = :(cs[N])
-        for i in N-1:-1:2
-            a = :(cs[i - 1] - c1 * Cn(P, i-1, eltype(S)))
-            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1,eltype(S)),Bn(P,i-1,eltype(S))))
-            Δ0 = :(a)
-            Δ1 = :(b)
+        
+        Δ0 = :(cs[end - 1])
+        Δ1 = :(cs[end])
+        @inbounds for i in N-1:-1:2
+            Δ0, Δ1 = :(cs[i - 1] - Δ1 * Cn(P, i-1,eltype(S))), :(Δ0 + Δ1 * muladd(x, An(P,i-1,eltype(S)),Bn(P,i-1,eltype(S))))
+#            a = :(s[i - 1] - Δ1 * Cn(P, i-1,eltype(S)))
+#            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1,eltype(S)),Bn(P,i-1,eltype(S))))
+#           Δ0 = :(a)
+#           Δ1 = :(b)
         end
-        c0 + c1* muladd(x, An(P,0,eltype(S)), Bn(P,0,eltype(S)))
+        
+        return :(Δ0 + Δ1 * muladd(x, An(P,0,eltype(S)),  Bn(P,0,eltype(S))))
     else
-        _eval_ccop(P,cs,x)
+        _eval_ccop(P, cs, x)
     end
 end
 
-function _eval_ccop(P::Type{<:AbstractCCOP}, cs::NTuple{N,T}, x::S) where {N,T,S}
+function _eval_ccop(P::Type{<:AbstractCCOP}, cs::Vector{T}, x::S) where {T,S}
 
+    N = length(cs)
     N == 0 && return zero(T)*zero(S)
     N == 1 && return cs[1] * one(S)
     
@@ -355,52 +377,45 @@ end
 
 
 # polynomial operations -p, p+c, p*c, p/c, p+q, p*q
-function Base.:+(p::AbstractCCOP, c::S) where {S<:Number}
-    P,T,N = typeof(p),eltype(p), degree(p)+1
-    R = promote_type(T,S)
-    as = NTuple{N,R}(i == 1 ? ai + c : ai for (i,ai) in enumerate(p.coeffs))
+# write generically in case P is sparse
+function Base.:+(p::P, c::S) where {P <: AbstractCCOP, S<:Number}
+    as = copy(coeffs(p))
+    as[1] += c  # *assume* basis(P,0) = 1
     ⟒(P)(as, var(p))
 end
-
-function Base.:-(p::AbstractCCOP)
-    P,T,N = typeof(p),eltype(p), degree(p)+1
-    as = NTuple{N,T}(-ai for ai in p.coeffs)
-    ⟒(P)(as, var(p))
+    
+function Base.:-(p::P) where {P <:AbstractCCOP}
+    as = copy(coeffs(p))
+    ⟒(P)(-as, var(p))
+end
+    
+function Base.:*(p::P, c::S) where {P<:AbstractCCOP, S<:Number}
+    as = copy(coeffs(p))
+    ⟒(P)(as * c, var(p))
 end
 
-function Base.:*(p::AbstractCCOP, c::S) where {S<:Number}
-    P,T,N = typeof(p),eltype(p), degree(p)+1
-    R = promote_type(T,S)
-    as = NTuple{N,R}(ai*c for ai in p.coeffs)
-    ⟒(P)(as, var(p))
-end
-
-function Base.:/(p::AbstractCCOP, c::S) where {S<:Number}
-    P,T,N = typeof(p),eltype(p), degree(p)+1
-    R = eltype(one(T)/one(S))
-    as = NTuple{N,R}(ai/c for ai in p.coeffs)
-    ⟒(P)(as, var(p))
+function Base.:/(p::P, c::S) where {P <: AbstractCCOP, S<:Number}
+    as = copy(coeffs(p))
+    ⟒(P)(as / c, var(p))
 end
 
 function Base.:+(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
-    Polynomials.isconstant(p) && return q + p[0]
-    Polynomials.isconstant(q) && return p + q[0]
-    var(p) != var(q) && throw(ArgumentError("Variables don't  match"))
+    if Polynomials.isconstant(p)
+        var!(p,var(q))
+    elseif Polynomials.isconstant(q)
+        var!(q,var(p))
+    else
+        var(p) != var(q) && throw(ArgumentError("Variables don't  match"))
+    end
     
     if ⟒(P) == ⟒(Q)
-        
-        T,N,S,M = eltype(p),degree(p)+1, eltype(q), degree(q)+1
-        R = promote_type(T,S)
-        NM = max(N,M)
-        as = NTuple{NM,R}(p[i]+q[i] for i in 0:NM-1)
-        return  ⟒(P)(as, var(p))
-       
+        d = max(degree(p), degree(q))
+        as = [p[i]+q[i] for i in 0:d]
+        return ⟒(P)(as, var(p))
     else
-        
         p1,q1 = promote(p1, q1)
         p1 + q1
-        
     end
 end
 
@@ -527,9 +542,8 @@ function Polynomials.integrate(p::AbstractCCOP, C::Number)
     end
 
     # adjust constant
-    F = P(as,  var(p))
-    as[1] = R(C) - F(0)
-    ∫p = P(as, var(p))
+    ∫p = P(as,  var(p))
+    ∫p[0] = R(C) - ∫p(0)
     
     return  ∫p
 end
@@ -547,57 +561,39 @@ macro register0(name)
     poly = esc(name)
     quote
         struct $poly{T,N} <: AbstractCCOP0{T,N}
-            coeffs::NTuple{N,T}
+            coeffs::Vector{T}
             var::Base.RefValue{Symbol}
-            
-            function $poly{T,N}(coeffs::NTuple{M,S},  var::Symbol=:x) where {T,N,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{T,0}(NTuple{0,T}(), Ref(var))
-                elseif lz != N
-                    throw(ArgumentError("coeffs is wrong size"))
+            function $poly{T,N}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {T, N}
+                M = length(coeffs)
+                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
+                new{T,N}(coeffs, Ref(Symbol(var)))
+            end
+            function $poly{T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {T,S}
+                N = findlast(!iszero, coeffs)
+                if N ==  nothing
+                    new{T,0}(T[], Ref(Symbol(var)))
                 else
-                    cs = NTuple{N,T}(i <= lz ? T(coeffs[i]) : zero(T)  for  i in 1:N)
-                    new{T,N}(cs,  Ref(var))
+                    cs = T.(coeffs[1:N])
+                    new{T,N}(cs,  Ref(Symbol(var)))
                 end
             end
             
-            function $poly{T}(coeffs::NTuple{M,S},  var::Symbol=:x) where {T,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    new{T,lz}(T.(coeffs),  Ref(var))
-                end
+            function $poly(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {S}
+                $poly{S}(coeffs, var)
             end
 
-            function $poly(coeffs::NTuple{N,T},  var::Symbol=:x) where {α, T, N}
-                lz = findlast(!iszero,  coeffs)
-                if lz == nothing
-                    new{T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    cs = NTuple{N,T}(coeffs[i] for i in  1:lz)
-                    new{T,lz}(cs, Ref(var))
-                end
-            end
-
-            
         end
 
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+        Base.length(p::$poly{T,N}) where {T,N} = N
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
     
         Base.convert(::Type{P}, p::P) where {P<:$poly} = p
         Base.promote_rule(::Type{$poly{T}}, ::Type{$poly{S}}) where {T,S} =
             $poly{promote_type(T, S)}
-        function $poly{T}(x::AbstractVector{S}, var::Polynomials.SymbolLike = :x) where {T,S}
-            $poly{T}(NTuple{length(x),T}(T(xi) for xi in x), Symbol(var))
-        end
-        $poly(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {T} =
-            $poly{T}(NTuple{length(coeffs),T}(c for c in coeffs), Symbol(var))
-        $poly{T}(n::Number, var::Polynomials.SymbolLike = :x) where {T} = $poly((one(T),), Symbol(var))
+        $poly{T}(n::Number, var::Polynomials.SymbolLike = :x) where {T} = $poly((one(T),), var)
         $poly(n::S, var::Polynomials.SymbolLike = :x) where {S<:Number} = $poly{S}(n,var)
-        $poly{T}(var::Polynomials.SymbolLike=:x) where {T} = variable($poly{T}, Symbol(var))
-        $poly(var::Polynomials.SymbolLike=:x) = variable($poly, Symbol(var))
+        $poly{T}(var::Polynomials.SymbolLike=:x) where {T} = variable($poly{T}, var)
+        $poly(var::Polynomials.SymbolLike=:x) = variable($poly, var)
         
     end
 end
@@ -606,57 +602,42 @@ macro register1(name)
     poly = esc(name)
     quote
         struct $poly{α,T,N} <: AbstractCCOP1{α,T,N}
-            coeffs::NTuple{N,T}
+            coeffs::Vector{T}
             var::Base.RefValue{Symbol}
             
-            function $poly{α,T,N}(coeffs::NTuple{M,S},  var::Symbol=:x) where {α,T,N,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{α,T,0}(NTuple{0,T}(), Ref(var))
-                elseif lz != N
-                    throw(ArgumentError("coeffs is wrong size"))
+            function $poly{α,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,T,N}
+                M =  length(coeffs)
+                (M  != N || iszero(coeffs[end])) &&  throw(ArgumentError("wrong  size")) 
+                new{α,T,N}(coeffs, Ref(Symbol(var)))
+            end
+            
+            function $poly{α,T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {α,T,S}
+                N = findlast(!iszero, coeffs)
+                if N ==  nothing
+                    new{α,T,0}(T[], Ref(Symbol(var)))
                 else
-                    cs = NTuple{N,T}(i <= lz ? T(coeffs[i]) : zero(T)  for  i in 1:N)
-                    new{α,T,N}(cs,  Ref(var))
+                    new{α,T,N}(T.(coeffs[1:N]),  Ref(var))
                 end
             end
             
-            function $poly{α,T}(coeffs::NTuple{M,S},  var::Symbol=:x) where {α,T,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{α,T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    new{α,T,lz}(T.(coeffs),  Ref(var))
-                end
-            end
-            
-            function $poly{α}(coeffs::NTuple{N,T},  var::Symbol=:x) where {α, T, N}
-                lz = findlast(!iszero,  coeffs)
-                if lz == nothing
-                    new{α,T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    cs = NTuple{N,T}(coeffs[i] for i in  1:lz)
-                    new{α,T,lz}(cs, Ref(var))
-                end
+            function $poly{α}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α, T}
+                $poly{α,T}(coeffs, var)
             end
         end
 
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+        Base.length(p::$poly{α,T,N}) where {α,T,N} = N        
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
     
         Base.convert(::Type{P}, p::P) where {P<:$poly} = p
         Base.promote_rule(::Type{$poly{α,T}}, ::Type{$poly{α,S}}) where {α,T,S} =
             $poly{α,promote_type(T, S)}
         Base.promote_rule(::Type{$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
             $poly{α,promote_type(T,S)}
-        function $poly{α,T}(x::AbstractVector{S}, var::Polynomials.SymbolLike = :x) where {α,T,S}
-            $poly{α,T}(NTuple{length(x),T}(T(xi) for xi in x), Symbol(var))
-        end
-        $poly{α}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {α,T} =
-            $poly{α,T}(NTuple{length(coeffs),T}(c for c in coeffs), Symbol(var))
-        $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = $poly{α}((one(T),), Symbol(var))
+
+        $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = $poly{α}((one(T),), var)
         $poly{α}(n::S, var::Polynomials.SymbolLike = :x) where {α,S<:Number} = $poly{α,S}(n,var)
-        $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, Symbol(var))
-        $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, Symbol(var))
+        $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, var)
+        $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, var)
         
     end
 end
@@ -665,57 +646,43 @@ macro register2(name)
     poly = esc(name)
     quote
         struct $poly{α,β,T,N} <: AbstractCCOP2{α,β,T,N}
-            coeffs::NTuple{N,T}
+            coeffs::Vector{T}
             var::Base.RefValue{Symbol}
             
-            function $poly{α,β,T,N}(coeffs::NTuple{M,S},  var::Symbol=:x) where {α,β,T,N,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{α,β,T,0}(NTuple{0,T}(), Ref(var))
-                elseif lz != N
-                    throw(ArgumentError("coeffs is wrong size"))
+            function $poly{α,β,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,β,T,N}
+                M = length(coeffs)
+                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
+                new{α,β,T,N}(coeffs, Ref(Symbol(var)))
+            end
+            
+            function $poly{α,β,T}(coeffs::AbstractVector{S},  var::Polynomials.SymbolLike=:x) where {α,β,T,S,M}
+                N = findlast(!iszero, coeffs)
+                if N ==  nothing
+                    new{α,β,T,0}(T[], Ref(Symbol(var)))
                 else
-                    cs = NTuple{N,T}(i <= lz ? T(coeffs[i]) : zero(T)  for  i in 1:N)
-                    new{α,β,T,N}(cs,  Ref(var))
+                    cs = T[c  for c in coeffs(1:N)]
+                    new{α,β,T,N}(cs,  Ref(Symbol(var)))
                 end
             end
             
-            function $poly{α,β,T}(coeffs::NTuple{M,S},  var::Symbol=:x) where {α,β,T,S,M}
-                lz = findlast(!iszero, coeffs)
-                if lz ==  nothing
-                    new{α,β,T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    new{α,β,T,lz}(T.(coeffs),  Ref(var))
-                end
-            end
-            
-            function $poly{α,β}(coeffs::NTuple{N,T},  var::Symbol=:x) where {α,β, T, N}
-                lz = findlast(!iszero,  coeffs)
-                if lz == nothing
-                    new{α,β,T,0}(NTuple{0,T}(), Ref(var))
-                else
-                    cs = NTuple{N,T}(coeffs[i] for i in  1:lz)
-                    new{α,β,T,lz}(cs, Ref(var))
-                end
+            function $poly{α,β}(coeffs::AbstractVector{T},  var::Polynomials.SymbolLike=:x) where {α,β, T}
+                $poly{α,β,T}(coeffs,  var)
             end
         end
 
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+        Base.length(p::$poly{α,β,T,N}) where {α,β,T,N} = N
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
     
         Base.convert(::Type{P}, p::P) where {P<:$poly} = p
         Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{$poly{α,β,S}}) where {α,β,T,S} =
             $poly{α,β,promote_type(T, S)}
         Base.promote_rule(::Type{$poly{α,β,T}}, ::Type{S}) where {α,β,T,S<:Number} = 
             $poly{α,β,promote_type(T,S)}
-        function $poly{α,β,T}(x::AbstractVector{S}, var::Polynomials.SymbolLike = :x) where {α,β,T,S}
-            $poly{α,β,T}(NTuple{length(x),T}(T(xi) for xi in x), Symbol(var))
-        end
-        $poly{α,β}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x) where {α,β,T} =
-            $poly{α,β,T}(NTuple{length(coeffs),T}(c for c in coeffs), Symbol(var))
-        $poly{α,β,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,β,T} = $poly{α,β}((one(T),), Symbol(var))
+
+        $poly{α,β,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,β,T} = $poly{α,β}((one(T),), var)
         $poly{α,β}(n::S, var::Polynomials.SymbolLike = :x) where {α,β,S<:Number} = $poly{α,β,S}(n,var)
-        $poly{α,β,T}(var::Polynomials.SymbolLike=:x) where {α,β, T} = variable($poly{α,β,T}, Symbol(var))
-        $poly{α,β}(var::Polynomials.SymbolLike=:x) where {α,β} = variable($poly{α,β}, Symbol(var))
+        $poly{α,β,T}(var::Polynomials.SymbolLike=:x) where {α,β, T} = variable($poly{α,β,T}, var)
+        $poly{α,β}(var::Polynomials.SymbolLike=:x) where {α,β} = variable($poly{α,β}, var)
         
     end
 end
