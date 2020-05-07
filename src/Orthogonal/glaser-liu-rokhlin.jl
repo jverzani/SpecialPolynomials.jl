@@ -6,7 +6,7 @@
 """
     pqr(x)
 
-For a family of orthogonal  polynomials satisfying the differential equation  `p(x)P''_n + q(x)P'_n + r(x)P_n=0`,
+For an orthogonal  polynomial type satisfying the differential equation  `p(x)P''_n + q(x)P'_n + r(x)P_n=0`,
 return the function `(x,n) -> (p,q,r,dp, dq, dr).
 
 """
@@ -15,7 +15,7 @@ pqr(p::P) where {P} = throw(ArgumentError("pqr not defined for polynomials of ty
 """
    pqr_scale(p::P)
 
-To scale a polynomial family so that π_n(x) = s_n(x) P_n(x) we need a function  to compute
+To scale a polynomial type so that π_n(x) = s_n(x) P_n(x) we need a function  to compute
 `s_{n+1}(x)/s_n(x)`, `s_{n+1}(x)/s_{n-1}(x)`, and the  two derivatives in `x`. This returns them.
 """
 pqr_scale(p::P) where {P} = (x,n) -> (one(x), one(x), zero(x), zero(x))

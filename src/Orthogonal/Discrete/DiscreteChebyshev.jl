@@ -1,7 +1,7 @@
 """
     DiscreteChebyshev{N,T}
 
-For each `N`, a family of discrete `N+1` orthogonal polynomials with `xs=0,1,...,N-1` and weight function `w_k=1`. 
+For each `N`, a collection of discrete `N+1` orthogonal polynomials with `xs=0,1,...,N-1` and weight function `w_k=1`. 
 
 # Example
 ```jldoctest
@@ -17,7 +17,7 @@ julia> p4, p5 = Polynomials.basis.(P, (4,5))
 (DiscreteChebyshev(1.0⋅e_4(x)), DiscreteChebyshev(1.0⋅e_5(x)))
 
 julia> p5(variable())
-Polynomial(-2519.9999999999927 + 54228.0*x - 66150.0*x^2 + 26880.0*x^3 - 4410.0*x^4 + 252.0*x^5)
+Polynomials.Polynomial(-2519.9999999999927 + 54228.0*x - 66150.0*x^2 + 26880.0*x^3 - 4410.0*x^4 + 252.0*x^5)
 
 julia> abs(SpecialPolynomials.innerproduct(P, p4, p5)) <= sqrt(eps())
 true

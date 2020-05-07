@@ -1,13 +1,13 @@
 """
     AbstractSpecialPolynomial{T}
 
-An abstract type to distinguish the families of polynomials in this package.
+An abstract type to distinguish the different polynomial types in this package.
 
-The families consist of different bases for the space of polynomials of degree `n` or less. 
+The concrete types specify different bases for the space of polynomials of degree `n` or less. 
 
 This package includes: 
 
-* several orthgonal polynomial familes.
+* several classic orthogonal polynomials.
 * Newton and Lagrange interpolating polynomials
 * Bernstein polynomials
 

@@ -1,7 +1,7 @@
 """
     Jacobi{α,  β, T}
 
-Implements the [Jacobi](https://en.wikipedia.org/wiki/Jacobi_polynomials) polynomials. These have weight function `w(x) = (1-x)^α ⋅ (1+x)^β` over the domain `[-1,1]`. Many orthogonal families are special cases. The parameters are  specified to the constructors:
+Implements the [Jacobi](https://en.wikipedia.org/wiki/Jacobi_polynomials) polynomials. These have weight function `w(x) = (1-x)^α ⋅ (1+x)^β` over the domain `[-1,1]`. Many orthogonal polynomial types are special cases. The parameters are  specified to the constructors:
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
@@ -10,14 +10,12 @@ julia> p = Jacobi{-1/2, -1/2}([0,0,1])
 Jacobi(1⋅J^(α, β)_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-0.375 + 0.75*x^2)
+Polynomials.Polynomial(-0.375 + 0.75*x^2)
 
 julia> monic(p::Polynomial) = p/p[end];
 
 julia> (monic ∘ convert).(Polynomial, (p, basis(Chebyshev, 2))) # scaled version of each other
-ERROR: UndefVarError: ChebyshevTT not defined
-Stacktrace:
- [1] top-level scope at none:1
+(Polynomials.Polynomial(-0.5 + 1.0*x^2), Polynomials.Polynomial(-0.5 + 1.0*x^2))
 ```
 
 """
@@ -70,7 +68,7 @@ Cn(::Type{<:Jacobi{α, β}}, n) where {α, β} = iszero(n) ? α*β*(α+β+2)/((�
 # compute <Jn, Jn>
 function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
     α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
-    2^(α+β+1)/(2n+α+β+1) * (gamma(n+α+1) *  gamma(n + β +1))/(gamma(n+α+β+1)*gamma(n+1))
+    2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
 end
 
 classical_σ(::Type{<:Jacobi})  = x -> 1 - x^2
@@ -113,13 +111,14 @@ function connection_α(::Type{<:Jacobi{γ, δ}},
                       ::Type{<:Jacobi{α, β}},
                       n,m) where {α, β, γ, δ}
 
-    val = Pochhammer_factorial(m+α+1,n-m)
+    val = one(α) * Pochhammer_factorial(m+α+1,n-m)
     val *= Pochhammer(n+α+β+1,m)
     val /= Pochhammer(m+γ+δ+1,m)
     as = (m-n,n+m+α+β+1,m+γ+1)
     bs = (m+α+1,2m+γ+δ+2)    
     val *= pFq(as, bs, 1)
 
+    
     val
     
 end
@@ -163,7 +162,7 @@ function Base.convert(::Type{P}, q::Q) where
     n = degree(q)
     R = eltype(one(T)/1)
     cs = zeros(R, n+1)
-    for k in 0:n 
+    for k in 0:n
         cs[1+k] = sum(qq[i] * val for (i,val) in Connection{P,Q}(n, k))
     end
     
@@ -183,7 +182,7 @@ function Base.iterate(o::Connection{P, Q}, state=nothing) where
     else
         j, val = state
         j += 1  
-        λ= 2*((-j)/(-j+k)) * (α+j) / (α + β + j + k + 1)
+        λ= one(α) * 2*(-j)/(-j+k) * (α+j) / (α + β + j + k + 1)
         val *= λ
         #val = connection_α(P,Q,j,k)        
     end
@@ -197,11 +196,11 @@ function connection_α(::Type{<:Jacobi{α,β}},
                       ::Type{<:Polynomials.StandardBasisPolynomial},
                       n,k) where {α,β}
 
-    tot = 2^n
-    tot *= gamma(α+β+1) 
+    tot = one(α) * one(β)
+    tot *= 2^n
     tot *= Pochhammer(α+β+1,k) * (α+β+2k+1)
-    tot *= Pochhammer(-n,k) * Pochhammer(α+k+1,n-k)    
-    tot /= gamma(α+β+n+k+2)
+    tot *= Pochhammer(-n,k) * Pochhammer(α+k+1,n-k)
+    tot /= prod(α+β+i for i in 1:n+k+1) # keeps rational Γ(α+β+1)/Γ(α+β+n+k+2)
     
     return tot
 end
@@ -213,7 +212,7 @@ function Polynomials.integrate(p::P, C::S) where
     {α,β,T, P<:Jacobi{α,β,T},
      S <: Number}
     
-    R = promote_type(eltype(one(T) / 1), S)
+    R = promote_type(eltype(one(α) * one(β) *one(T) / 1), S)
     if hasnan(p) || isnan(C)
         return ⟒(P)([NaN])
     end
@@ -227,12 +226,11 @@ function Polynomials.integrate(p::P, C::S) where
     @inbounds for n in 0:d
         pn = p[n]
         
-        as[1 + n + 1] += pn * 2(n+α+β+1)/((2n+α+β+1)*(2n+α+β+2))
-        as[1 + n]     += pn * (iszero(α-β) ? zero(R) : 2*(α-β)/((2n+α+β)*(2n+α+β+2)))
+        as[1 + n + 1] += pn * 2 * checked_div(n+α+β+1, (2n+α+β+1)*(2n+α+β+2) )
+        as[1 + n]     += pn * 2 * checked_div(α-β, (2n+α+β)*(2n+α+β+2))
         if  n > 0
-            as[1 + n - 1] += pn * (-2*(n+α)*(n+β)/((n+α+β)*(2n+α+β)*(2n+α+β+1)))
+                as[1 + n - 1] += pn * (-2) *checked_div((n+α)*(n+β), (n+α+β)*(2n+α+β)*(2n+α+β+1))
         end
-
     end
     
     ∫p = ⟒(P)(as,  p.var)

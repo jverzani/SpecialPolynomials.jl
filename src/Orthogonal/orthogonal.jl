@@ -5,9 +5,9 @@
 """
     AbstractOrthogonalPolynomial{T}
 
-Abstract type for an orthogonal polynomial family.
+Abstract type for an orthogonal polynomial type.
 
-An orthogonal polynomial family, `P_0`, `P_1`, ..., `P_n`, ... has the properties that:
+A basis of orthogonal polynomials, `P_0`, `P_1`, ..., `P_n`, ... has the properties that:
 
 * the degree  of `P_i` is `i`
 * the set `P_0`, `P_1`, ..., `P_n` forms a basis for the polynomials of degree `n` or less
@@ -19,7 +19,7 @@ The fact that these form a basis, allows the representation a degree
 `p = a_0⋅P_0 + a_1⋅P_1 + ⋅⋅⋅ + a_n⋅P_n` can be represented by the vector 
 `[a_0, a_1, ..., a_n]` in the same manner that `p = b_0 + b_1⋅x + ⋅⋅⋅ + b_n⋅x^n`
 is represented by `[b_0, b_1, ..., b_n]`. The coefficients depend on the 
-underlying family, which is implicit in the choice of defining type.
+underlying basis, which is implicit in the choice of defining type.
 
 The polynomials have numerous properties. For purposes of definitions,
 the three-point recursion property allows the implementation of much
@@ -45,7 +45,7 @@ end
     weight_function(p)
     weight_function(::Type{P})
 
-For an orthogonal polynomial family, a function `w` with `integrate B_n(t) B_m(t) w(t) dt = 0` when n and m are not equal.
+For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) dt = 0` when n and m are not equal.
 
 """
 weight_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
@@ -71,7 +71,7 @@ generating_function(::P) where {P <: AbstractOrthogonalPolynomial} = generating_
     An(p::P, n)
 
 
-Families of orthogonal polynomials defined by a weight function satisfy a three point recursion formula of the form:
+Orthogonal polynomials defined by a weight function satisfy a three point recursion formula of the form:
 
 `P_{n+1} = (A_n x + B_n) P_{n} + C_n P_{n-1}`
 
@@ -153,7 +153,7 @@ Return `p` as a monic polynomial *when* represented in the standard basis. Retur
 function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     n = degree(p)
     n == -1 && return ⟒(P)(0/one(eltype(p)))
-    p / leading_term(P, n)
+    p / (p[end]*leading_term(P, n))
 end
     
 # return `x`  in the  polynomial basis.
@@ -291,7 +291,7 @@ end
 ## Linearization
 ##
 
-# Let `P` be a polynomial family with basis `ϕᵢ`. A linearization formula is:
+# Let `P` be a polynomial type with basis `ϕᵢ`. A linearization formula is:
 #
 # ϕ_n * ϕ_m = ∑₀^(m+n) a(l,n,m) ϕ_l
 #
@@ -316,7 +316,7 @@ end
 # A full iteration over the entire range of n*m -(l-1)*l/2 values of
 # (p,q) would look like this:
 #
-# function Base.iterate(o::Linearization{P}, state =  nothing) where {P <: PolynomialFamily}
+# function Base.iterate(o::Linearization{P}, state =  nothing) where {P <: PolynomialType}
 #
 #     l, m, n = o.l, o.m, o.n
 #     l  > m + n && return nothing
@@ -431,7 +431,7 @@ Linearization{P}(l,m,n) where {P} = Linearization{P, Val{:diagonal}}(l,m,n)
 #
 function linearization_product_pq(p::P,  q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
     p.var == q.var || throw(ArgumentError("bases must match"))
-    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
+    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial type must match"))
     PP = promote_type(P,Q)
 
     n,m = length(p)-1, length(q)-1 # n,m = degree(p), degree(q)
@@ -461,7 +461,7 @@ end
 #
 @inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
     pn.var == pm.var || throw(ArgumentError("bases must match"))
-    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial  family must match"))
+    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial type must match"))
     PP = promote_type(P,Q)
 
     n,m = length(pn)-1, length(pm)-1 # n,m = degree(pn), degree(pm)
@@ -501,7 +501,7 @@ end
 ##
 ##    ψ_n(x) = ∑_{k=0}^n α_{n,k} ϕ_k(x)
 ##
-## That is we convert from basis ψ (Q) into basis family ϕ (P) through
+## That is we convert from basis ψ (Q) into basis  ϕ (P) through
 ## (`convert(P, q::Q)`):
 ##
 ## ∑_{i=0}^n  aᵢ ψᵢ = ∑_{i=0}^n aᵢ ∑_{k=0}^i α_{i,k} ϕ_kⱼ
@@ -516,7 +516,7 @@ end
 ##
 ## defined by iterate(Connection{ϕ, ψ}(n, k)
 ##
-## When the ϕ family is `Polynomial`, we can just use evaluation
+## When the ϕ type is `Polynomial`, we can just use evaluation
 ## through the Clenshaw recursion using `x =variable(Polynomial)`. For
 ## other conversions, we can directly define a `Base.convert` method,
 ## or we can define a `Connection` object and have `connection` create
@@ -552,14 +552,14 @@ function connection(::Type{P}, q::Q) where
      Q<:Polynomials.AbstractPolynomial}
     
     n = degree(q)
-    T = eltype(one(q)/1)
+    T = eltype(q)
+    T = eltype(one(eltype(one(P)))*one(q)/1)
     cs = zeros(T, n+1)
 
     for k in 0:n
         for (i,val) in Connection{P,Q}(n, k)
             cs[1+k] = muladd(q[i], val, cs[1+k])
         end
-        #cs[1+k] = sum(q[i] * val for (i,val) in Connection{P,Q}(n, k))
     end
 
     ⟒(P)(cs, q.var)
@@ -672,9 +672,9 @@ jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix
     gauss_nodes_weights(::Type{P}, n)
     gauss_nodes_weights(p::P, n)
 
-Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal family.
+Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal type.
 
-For some families, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
+For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
 
 For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
 
@@ -725,7 +725,7 @@ Base.abs2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
 Base.abs2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(p, n)
 
 ## Compute <p_i, p_i> = \| p \|^2
-## Slow default; generally should  be directly expressed for each family
+## Slow default; generally should  be directly expressed for each type
 function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
     p = basis(P,n)
     innerproduct(P, p, p)
@@ -826,7 +826,7 @@ end
     cks(::Val{:lsq}, ::Type{P}, f, n::Int)
 
 Fit `f` with a polynomial `∑ᵢⁿ cᵢ Pᵢ` chosen so `<f-p,f-p>_w` is as small as possible. Using the normal equations, the coefficients are found to be
-`c_k = <f,P_k>_w / <P_k,P_k>_w. For some families an approximation to the inner product, `<f,P_k>_w` may be used.
+`c_k = <f,P_k>_w / <P_k,P_k>_w. For some types an approximation to the inner product, `<f,P_k>_w` may be used.
 
 
 ref: http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION

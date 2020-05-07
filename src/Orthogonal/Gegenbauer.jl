@@ -1,7 +1,7 @@
 """
    Gegenbauer{α, T <: Number}
 
-The Gegenbauer family of orthogonal polynomials has weight function
+The Gegenbauer polynomials have weight function
 `(1-x^2)^(α-1/2)` over the domain `[-1,1]`. The parameter `α` is
 specified in the constructor. These are also called the ultra-spherical polynomials.
 
@@ -12,7 +12,7 @@ julia> p =  Gegenbauer{1/2}([1,2,3])
 Gegenbauer(1⋅C^(0.5)_0(x) + 2⋅C^(0.5)_1(x) + 3⋅C^(0.5)_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-0.5 + 2.0*x + 4.5*x^2)
+Polynomials.Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 ```
 
 """

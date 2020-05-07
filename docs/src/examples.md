@@ -13,8 +13,10 @@ end
 
 ## Construction
 
-This package provides alternate families of bases to the standard basis for univariate polynomials. 
-For example, the Legendre polynomials are a family of polynomials on `[-1,1]`. The first few may be seen through:
+This package provides several  types to represent  polynomials relative  to
+different  bases from the standard polynomial  basis, `1`,`x`,`x²`, `x³` etc.
+
+For example, the Legendre polynomials are a collection of polynomials on `[-1,1]`. The first few may be seen through:
 
 ```jldoctest example
 julia> using Polynomials, SpecialPolynomials
@@ -36,16 +38,15 @@ The coefficients, e.g., `[0,0,0,1]` indicate a polynomial `0⋅p0 +
 0⋅p1 + 0⋅p2 + 1⋅p3`. The `show` method expresses these polynomials
 relative to their bases. More familiar expressions are seen by
 conversion to the standard basis. For example:
-j
 
 
 ```jldoctest example
 julia> convert.(Polynomial, [p0,p1,p2,p3])
 4-element Array{Polynomial,1}:
- Polynomial(1)
- Polynomial(x)
- Polynomial(-1//2 + 3//2*x^2)
- Polynomial(-3//2*x + 5//2*x^3)
+ Polynomials.Polynomial(1)
+ Polynomials.Polynomial(x)
+ Polynomials.Polynomial(-1//2 + 3//2*x^2)
+ Polynomials.Polynomial(-3//2*x + 5//2*x^3)
 ```
 
 Polynomial instances are callable. We have, for example, to evaluate a polynomial at a set of points:
@@ -64,10 +65,10 @@ Conversion can also be achieved through polynomial evaluation, using a variable 
 
 ```jldoctest example
 julia> x = variable(Polynomial)
-Polynomial(x)
+Polynomials.Polynomial(x)
 
 julia> p3(x)
-Polynomial(-3//2*x + 5//2*x^3)
+Polynomials.Polynomial(-3//2*x + 5//2*x^3)
 ```
 
 Representation in another basis can be achieved this way:
@@ -80,10 +81,7 @@ julia> p3(u)
 ChebyshevU(- 0.125⋅U_1(x) + 0.3125⋅U_3(x))
 ```
 
-There are not conversion methods defined between each family, but
-typically converting to `Polynomial` and then to the alternate family
-will work.
-
+For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible.
 
 
 For the basis functions, the `basis` function can be used:
@@ -94,17 +92,17 @@ julia> h0,h1,h2,h3 = basis.(Hermite, 0:3);
 julia> x = variable();
 
 julia> h3(x)
-Polynomial(-12*x + 8*x^3)
+Polynomials.Polynomial(-12*x + 8*x^3)
 ```
 
 If the coefficients are known, they can be directly passed to the constructor:
 
 ```jldoctest example
-julia> Laguerre([1,2,3])
+julia> Laguerre{0}([1,2,3])
 Laguerre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 ```
 
-Some polynomial families are parameterized. The parameters are passed as in this example:
+Some polynomial types are parameterized. The parameters are passed as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
@@ -113,7 +111,7 @@ Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x) + 3⋅J^(α, β)_2(x))
 
 ----
 
-The polynomial families specified above are orthogonal, meaning the
+The polynomial types specified above are orthogonal, meaning the
 inner product of different basis vectors will be 0. For example:
 
 ```jldoctest example
@@ -144,7 +142,7 @@ julia> SpecialPolynomials.innerproduct(P, p4, p5)
 
 ## Polynomial methods
 
-For each polynomial family, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible. 
+For each polynomial ttype, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible. 
 
 
 ### Arithemtic
@@ -174,7 +172,7 @@ julia> p^2
 ChebyshevU(30⋅U_0(x) + 40⋅U_1(x) + 51⋅U_2(x) + 44⋅U_3(x) + 41⋅U_4(x) + 24⋅U_5(x) + 16⋅U_6(x))
 ```
 
-Multiplication formulas may not be defined for each family, and a fall back may be used where the multiplication is done with respect to the standard basis and the answer re-represented:
+Multiplication formulas may not be defined for each type, and a fall back may be used where the multiplication is done with respect to the standard basis and the answer re-represented:
 
 ```jldoctest example
 julia> P = Jacobi{1/2, -1/2}
@@ -189,7 +187,7 @@ Jacobi(- 1.5⋅J^(α, β)_0(x) - 2.0⋅J^(α, β)_1(x) + 1.3333333333333333⋅J^
 
 ### Derivatives and integrals
 
-Many families have integral and derivative formulas that allow a direct computation:
+Classic orthogonal polynomials  have known integral and derivative formulas. When implemented, these allow a direct computation, as is donee here:
 
 ```jldoctest example
 julia> P = ChebyshevU{Float64}
@@ -202,7 +200,7 @@ julia> dp = derivative(p)
 ChebyshevU(4.0⋅U_0(x) + 12.0⋅U_1(x))
 
 julia> convert.(Polynomial, (p, dp))
-(Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
+(Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomials.Polynomial(4.0 + 24.0*x))
 ```
 
 There is a default  method defined through conversion to  the standard basis. It is  used behind the  scenes  in the next example.
@@ -217,20 +215,20 @@ julia> p,q = P([1,2]), P([-2,1])
 julia> p * q # as above, only with rationals for paramters
 Jacobi(- 3//2⋅J^(α, β)_0(x) - 2//1⋅J^(α, β)_1(x) + 4//3⋅J^(α, β)_2(x))
 
-julia> P = Jacobi{1//2, -1//2}
-Jacobi{1//2,-1//2,T} where T<:Number
+julia> P = Jacobi{1//2, 1//2}
+Jacobi{1//2,1//2,T} where T<:Number
 
 julia> p = P([1,2,3])
 Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x) + 3⋅J^(α, β)_2(x))
 
 julia> dp = derivative(p)
-Jacobi(- 1//4⋅J^(α, β)_0(x) + 9//1⋅J^(α, β)_1(x))
+Jacobi(3//1⋅J^(α, β)_0(x) + 10//1⋅J^(α, β)_1(x))
 
 julia> integrate(p)
-Jacobi(1//16⋅J^(α, β)_0(x) + 15//16⋅J^(α, β)_1(x) + 11//12⋅J^(α, β)_2(x) + 3//5⋅J^(α, β)_3(x))
+Jacobi(3//4⋅J^(α, β)_0(x) + 1//4⋅J^(α, β)_1(x) + 3//5⋅J^(α, β)_2(x) + 4//7⋅J^(α, β)_3(x))
 
 julia> integrate(p, 0, 1)
-9//2
+25//8
 ```
 
 
@@ -266,11 +264,13 @@ Jacobi{0.5,-0.5,T} where T<:Number
 julia> p = P([1,1,2,3])
 Jacobi(1⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x) + 2⋅J^(α, β)_2(x) + 3⋅J^(α, β)_3(x))
 
-julia> q = p / (convert(Polynomial,p)[end])   # monic
-Jacobi(0.13333333333333333⋅J^(α, β)_0(x) + 0.13333333333333333⋅J^(α, β)_1(x) + 0.26666666666666666⋅J^(α, β)_2(x) + 0.4⋅J^(α, β)_3(x))
+julia> q = SP.monic(p) # monic is not exported
+ERROR: UndefVarError: SP not defined
+Stacktrace:
+ [1] top-level scope at none:1
 
-julia> fromroots(P, roots(q)) - q |> u -> round(u, digits=14)
-Jacobi(0.0)
+julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps())) 
+Polynomials.Polynomial(0.0)
 ```
  
 The roots are found from the eigenvalues of the companion matrix,
@@ -313,7 +313,7 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> s
 ```
 
 
-The unexported `gauss_nodes_weights` function returns the nodes and weights. For some families (`Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For some types (`Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
 
 ```jldoctest example
 julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
@@ -321,7 +321,7 @@ julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
 ```
 
 !!! note
-    For a broader and more robust implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for many families. 
+    For a broader and more robust implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for many classic orthogonal polynomial types.
 
 ## Fitting
 
@@ -335,7 +335,7 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
 julia> p1 = fit(Polynomial,  xs, ys)
-Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
+Polynomials.Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
 
 julia> p2 = fit(Lagrange, xs, ys)
 Lagrange(1⋅ℓ^3_0(x) + 2⋅ℓ^3_1(x) + 2⋅ℓ^3_2(x) + 3⋅ℓ^3_3(x))
@@ -344,7 +344,7 @@ julia> p3 = fit(Newton, xs, ys)
 Newton(1.0⋅p_0(x) + 4.0⋅p_1(x) - 8.0⋅p_2(x) + 21.333333333333332⋅p_3(x))
 ```
 
-The `Lagrange` and `Newton` families represent the polynomial in
+The `Lagrange` and `Newton` types represent the polynomial in
 convenient bases based on the nodes (`xs`). These all represent the
 same interpolating polynomial:
 
@@ -365,7 +365,7 @@ julia> p = fit(Newton, [1,2,3], x->x^2)
 Newton(1.0⋅p_0(x) + 3.0⋅p_1(x) + 1.0⋅p_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(1.0*x^2)
+Polynomials.Polynomial(1.0*x^2)
 ```
 
 Polynomial interpolation can demonstrate the Runge phenomenon if the
@@ -373,7 +373,7 @@ nodes are evenly spaced. For higher degree fitting, the choice of
 nodes can greatly effect the approximation of the interpolating
 polynomial to the function generating the `y` values.
 
-For a family of orthogonal polynomials, the zeros of the basis
+For an orthogonal polynomial type, the zeros of the basis
 polynomial `p_{n+1}`, labeled `x_0, x_1, ..., x_n` are often used as
 nodes, especially for the Chebyshev nodes (of the first kind).  
 [Gil, Segura, and Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) say
@@ -382,7 +382,7 @@ approximation ..., but usually it is the best practical possibility
 for interpolation and certainly much better than equispaced
 interpolation"
 
-For the orthogonal polynomial families, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in this graphic:
+For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in this graphic:
 
 ```example
 f(x) = exp(-x)*sinpi(x)
@@ -418,16 +418,16 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomial(1.5 + 0.4*x)
+Polynomials.Polynomial(1.5 + 0.4*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
+Polynomials.Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
-Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)
+Polynomials.Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)
 ```
 
-For the orthogonal families, fitting a polynomial to a function using least squares can be solved using the polynomial
+For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial
 `a0⋅p0 + a1⋅p1 + ⋅⋅⋅ + an⋅pn` where `ai=∫f⋅pi⋅w⋅dx / ∫pi^2⋅w⋅dx`. There is no need to specify values for `x`:
 
 ```jldoctest example
@@ -483,14 +483,14 @@ savefig("wavy.svg"); nothing # hide
 
 
 !!! note
-    The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial families. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
+    The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
 
 
 
 ## Plotting
 
 The `plot` recipe from the `Polynomials` package works as expected for
-the polynomial families in this package. The domain to be plotted over
+the polynomial types in this package. The domain to be plotted over
 matches that given by `domain`, unless this is infinite. A plot of the first few
 Chebyshev Polynomials of the second kind can be produced as follows:
 

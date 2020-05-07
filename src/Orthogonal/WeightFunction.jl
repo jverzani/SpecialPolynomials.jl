@@ -13,7 +13,7 @@ function. The Wheeler or modified Chebyshev algorithm
 [Press and Teukolsky](https://doi.org/10.1063/1.4822929))
 is used
 to generate the three-term recurrence relation.  This uses a known
-family of orthogonal polynomials over the domain of the weight
+basis of orthogonal polynomials over the domain of the weight
 function.  These are specified through `pis`.
 
 #  Example. 
@@ -44,9 +44,9 @@ julia> round.([αs βs], digits=8)
   0.0  9.68226
  -0.0  0.793782
  -0.0  0.119868
- -0.0  0.22704
+  0.0  0.22704
  -0.0  0.241061
- -0.0  0.245429
+  0.0  0.245429
 ```
 
 

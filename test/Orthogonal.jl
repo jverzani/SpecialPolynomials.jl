@@ -7,12 +7,13 @@ Ps = (Chebyshev{T},
       Laguerre{1/2, T},
       Hermite{T},
       ChebyshevHermite{T},
-#      Jacobi{1/2, 1/2, T},
-#      Jacobi{0,0,T},
-#      Jacobi{0,1,T},
+      Jacobi{1/2, 1/2, T},
+      Jacobi{0, 0, T},
+      Jacobi{0,  1, T},
       Legendre{T},
-      Gegenbauer{1/2,T}
-      #,Bessel{T}
+      Gegenbauer{1/2, T},
+      Bessel{2, T},
+      Bessel{1/2, T}
 #      ,DiscreteChebyshev{12,T}
 #      ,Krawtchouk{12, 5/2, T}
       )
@@ -81,6 +82,30 @@ end
         end
 
     end
+
+    # through evaluation
+    for P in  Ps
+        for Q in Ps
+            p = P([1,2,3])
+            x = variable(Q)
+            @test  p(x) ≈ convert(Q,  p)
+        end
+    end
+
+    
+    # Connections
+    α, β, γ = 1/3,2/3, 1/2
+    Qs = (Laguerre, Jacobi{γ}, Gegenbauer)
+    for P in Qs
+        for n in 2:5
+            q = basis(P{β}, n)
+            qq = convert(P{β}, convert(P{α}, q)) - q
+            qq = P{β}(round.(coeffs(qq), digits=10), q.var)
+            @test degree(qq) == -1
+        end
+    end
+    
+    
 end
 
 
@@ -159,7 +184,6 @@ end
 @testset "Derivatives and integrals" begin
     _truncate(x) = truncate(x, atol=sqrt(eps(T)))
     for P in Ps
-        @show P
         p = P([1.0, 2, 3, 4, 3, 2, 1])
         q = convert(Polynomial, p)
         @test derivative(p) ≈ convert(P, derivative(q))
@@ -247,7 +271,7 @@ end
 
 
     # Test representations via pFq([a],[b],z)
-    for P in Ps; @show P
+    for P in Ps
         n = 5
         for x in (1/4, 1/2, 3/4)
             p = basis(P, 5)(x)

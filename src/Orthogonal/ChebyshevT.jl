@@ -73,19 +73,18 @@ Evaluate the Chebyshev polynomial at `x`. If `x` is outside of the domain of [-1
 julia> using SpecialPolynomials
 
 julia> c = Chebyshev([2.5, 1.5, 1.0])
-ERROR: UndefVarError: Chebyshev not defined
-Stacktrace:
- [1] top-level scope at none:1
+Chebyshev(2.5⋅T_0(x) + 1.5⋅T_1(x) + 1.0⋅T_2(x))
 
 julia> c(0)
-ERROR: UndefVarError: c not defined
-Stacktrace:
- [1] top-level scope at none:1
+1.5
 
 julia> c.(-1:0.5:1)
-ERROR: UndefVarError: c not defined
-Stacktrace:
- [1] top-level scope at none:1
+5-element Array{Float64,1}:
+ 2.0
+ 1.25
+ 1.5
+ 2.75
+ 5.0
 ```
 """
 function (ch::Chebyshev{T})(x::S) where {T,S}

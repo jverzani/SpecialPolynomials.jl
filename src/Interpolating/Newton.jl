@@ -22,7 +22,7 @@ julia> p.(xs) == f.(xs)  # p interpolates
 true
 
 julia> convert(Polynomial, p)
-Polynomial(1.0 - 2.0*x + 1.0*x^3)
+Polynomials.Polynomial(1.0 - 2.0*x + 1.0*x^3)
 ```
 
 """

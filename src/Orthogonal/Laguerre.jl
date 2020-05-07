@@ -4,7 +4,7 @@ abstract type AbstractLaguerre{T} <: OrthogonalPolynomial{T} end
 """
    Laguerre{α, T <: Number}
 
-The generalized Laguerre family have weight function `x^α * exp(-x)` over the domain `[0, oo)`. The parameter `α` is specified through the constructor.
+The  Laguerre polynomials have weight function `x^α * exp(-x)` over the domain `[0, oo)`. The parameter `α` is specified through the constructor.
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
@@ -13,7 +13,7 @@ julia> p = Laguerre{1/2}([1,2,3])
 Laguerre(1⋅L^(0.5)_0(x) + 2⋅L^(0.5)_1(x) + 3⋅L^(0.5)_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(9.625 - 9.5*x + 1.5*x^2)
+Polynomials.Polynomial(9.625 - 9.5*x + 1.5*x^2)
 ```
 
 The Laguerre polynomials are the case `α=0`.
@@ -25,19 +25,19 @@ julia> p = Laguerre{0}([1,2,3])
 Laguerre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(6//1 - 8//1*x + 3//2*x^2)
+Polynomials.Polynomial(6.0 - 8.0*x + 1.5*x^2)
 
 julia> phi(u, i) = derivative(u) -  u # verify Rodrigues' formula for small n; n! L_n = (d/dx-1)^n x^n
 phi (generic function with 1 method)
 
 julia> x = Polynomial(:x)
-Polynomial(x)
+Polynomials.Polynomial(x)
 
 julia> n = 7
 7
 
-julia> factorial(n) * basis(Laguerre, n) - foldl(phi, 1:n, init=x^n)
-Polynomial(0.0)
+julia> factorial(n) * basis(Laguerre{0}, n) - foldl(phi, 1:n, init=x^n)
+Polynomials.Polynomial(0.0)
 ```
 
 

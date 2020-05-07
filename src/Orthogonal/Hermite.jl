@@ -17,7 +17,7 @@ julia> p = Hermite([1,2,3])
 Hermite(1⋅H_0(x) + 2⋅H_1(x) + 3⋅H_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-5 + 4*x + 12*x^2)
+Polynomials.Polynomial(-5 + 4*x + 12*x^2)
 
 julia> p4, p5 = basis.(Hermite, (4,5)) # verify orthogonality of H4, H5
 (Hermite(1⋅H_4(x)), Hermite(1⋅H_5(x)))
@@ -248,7 +248,7 @@ julia> p = ChebyshevHermite([1,2,3])
 ChebyshevHermite(1⋅He_0(x) + 2⋅He_1(x) + 3⋅He_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-2 + 2*x + 3*x^2)
+Polynomials.Polynomial(-2 + 2*x + 3*x^2)
 ```
 
 """

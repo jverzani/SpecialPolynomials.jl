@@ -2,7 +2,7 @@
     DiscreteWeightFunction
 
 For a discrete measure, `dλ = ∑ wᵢ δ(x - xᵢ)`, specified through two
-vectors, `xs` and `ws`, a family of monic orthogonal polynomials is
+vectors, `xs` and `ws`, a collection of monic orthogonal polynomials is
 produced through Darboux's formula for `α_n` and `β_n` using the
 3-term recurrence defined by `π_{n+1} = (x-α_n)⋅π_n - β_n⋅π_{n-1}`
 and the discrete Stieltjes method.

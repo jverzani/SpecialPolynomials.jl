@@ -17,7 +17,7 @@ end
 
 ## Overview
 
-This package provides a number of different polynomial families to
+This package provides a number of different polynomial types to
 represent polynomials, extending the `Polynomials` package.
 
 ```@docs
@@ -30,7 +30,7 @@ SpecialPolynomials.AbstractSpecialPolynomial
 SpecialPolynomials.AbstractOrthogonalPolynomial
 ```
 
-There are  several families of orthogonal polynomials available.
+There are  several classic orthogonal polynomials available:
 
 ```@docs
 Legendre
@@ -41,7 +41,6 @@ Hermite
 ChebyshevHermite
 Gegenbauer
 Jacobi
-GeneralizedLaguerre
 ShiftedLegendre
 ```
 

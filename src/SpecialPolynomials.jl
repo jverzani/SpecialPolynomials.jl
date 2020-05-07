@@ -24,6 +24,7 @@ include("Orthogonal/Jacobi.jl")
 include("Orthogonal/Legendre.jl")
 include("Orthogonal/WeightFunction.jl")
 
+include("Orthogonal/ccop.jl")
 
 include("Orthogonal/Discrete/discrete-orthogonal.jl")
 include("Orthogonal/Discrete/DiscreteChebyshev.jl")

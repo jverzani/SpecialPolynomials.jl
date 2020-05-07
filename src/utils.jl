@@ -41,7 +41,7 @@ Pochhammer(z,n::Int) = Pochhammer(Val(:rising),  z, n)
 Pochhammer_factorial(z, n) = Pochhammer_factorial(Val(:rising), z, n)
 
 function Pochhammer_factorial(::Val{:rising}, z, n)
-    iszero(n) && return 1/1
+    iszero(n) && return one(z)/1
     prod((z+i)/(n-i) for i in 0:n-1)
 end
 
@@ -59,7 +59,7 @@ From [mathworld](https://mathworld.wolfram.com/HypergeometricFunction.html)
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
 
-julia> import SpecialPolynomials: pFq
+julia> import SpecialPolynomials: pFq, Pochhammer
 
 julia> pFq((1/3,2/3), 5/6, 27/32) ≈ 8/5
 true
@@ -68,7 +68,7 @@ julia> pFq([1/4, 1/2], [3/4], 80/81; maxevals=2000) ≈ 9/5
 true
 
 julia> x = variable()
-Polynomial(x)
+Polynomials.Polynomial(x)
 
 julia> n = 5
 5
@@ -99,7 +99,7 @@ function pFq(as, bs, z; maxevals=1000)
         iszero(a) && return acc
         iszero(b) && return Inf  # check on b
 
-        trm *= (a/b)*(z/n)
+        trm *= a /b * z  /n
         acc += trm
 
         as = plus_1(as)
@@ -146,3 +146,6 @@ end
 
 _quadgk(f, a, b) = quadgk(Wrapper(f), a, b)[1]
 const ∫ = _quadgk
+
+
+checked_div(a, b) = (iszero(a) && iszero(b)) ? a : a/b

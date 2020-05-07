@@ -17,7 +17,7 @@ julia> p = Bernstein{3,Int}([0,0,1,0])
 Bernstein(1⋅β(3, 2)(x))
 
 julia> convert(Polynomial, p)
-Polynomial(3*x^2 - 3*x^3)
+Polynomials.Polynomial(3*x^2 - 3*x^3)
 ```
 
 """

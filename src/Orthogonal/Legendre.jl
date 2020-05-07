@@ -12,7 +12,7 @@ julia> p = Legendre([1,2,3])
 Legendre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-1//2 + 2//1*x + 9//2*x^2)
+Polynomials.Polynomial(-1//2 + 2//1*x + 9//2*x^2)
 
 julia> p2m, p2m1 = basis.(Legendre, (8,9)) # evaluation P_{2m+k}(-1) =  (-1)^k
 (Legendre(1⋅L_8(x)), Legendre(1⋅L_9(x)))
@@ -27,16 +27,16 @@ julia> n = 5  # verify  Rodrigues' formula
 5
 
 julia> x = Polynomial(:x)
-Polynomial(x)
+Polynomials.Polynomial(x)
 
 julia> derivative((x^2-1)^n, n) - 2^n *  factorial(n) * basis(Legendre, n)
-Polynomial(0.0)
+Polynomials.Polynomial(0//1)
 
 julia> p4, p5  =  basis.(Legendre, (4,5)) # verify  orthogonality  of  L4, L5
 (Legendre(1⋅L_4(x)), Legendre(1⋅L_5(x)))
 
 julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
-6.096184133406375e-16
+0.0
 ```
 
 
@@ -301,7 +301,7 @@ julia> p = ShiftedLegendre([1,2,3])
 ShiftedLegendre(1⋅L̃_0(x) + 2⋅L̃_1(x) + 3⋅L̃_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(2//1 - 14//1*x + 18//1*x^2)
+Polynomials.Polynomial(2//1 - 14//1*x + 18//1*x^2)
 
 julia> q = Legendre([1,2,3])
 Legendre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))

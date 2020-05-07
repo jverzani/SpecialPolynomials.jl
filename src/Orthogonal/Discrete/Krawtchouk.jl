@@ -2,7 +2,7 @@
 """
     Krawtchouk{N,s,T}
 
-A family of discrete orthogonal polynomials for each N. 
+A collection of discrete orthogonal polynomials for each N. 
 
 We follow the parameterization  of  [Coleman](https://arxiv.org/pdf/1101.1798.pdf), notably with a parameter, `N` and a parameter `s > 2` (not a parameter `0 < p  < 1` used in several other sources). With this  parameterization, the nodes are `xs=0,1,...,N` and the weight function is  `w_k=binomial(N,k)⋅(s-1)^k`.
 
@@ -12,7 +12,7 @@ We follow the parameterization  of  [Coleman](https://arxiv.org/pdf/1101.1798.pd
 julia> using Polynomials, SpecialPolynomials
 
 julia> basis = Polynomials.basis
-basis (generic function with 3 methods)
+basis (generic function with 9 methods)
 
 julia> N, s = 8, 5/2
 (8, 2.5)
@@ -21,13 +21,13 @@ julia> P = Krawtchouk{N, s, Float64}
 Krawtchouk{8,2.5,Float64}
 
 julia> x = Polynomial(:x)
-Polynomial(x)
+Polynomials.Polynomial(x)
 
 julia> K5 = basis(P, 5)
 Krawtchouk(1.0⋅e_5(x))
 
 julia> K5(x)
-Polynomial(425.25 - 849.2187499999999*x + 534.8307291666666*x^2 - 145.67057291666666*x^3 + 17.903645833333336*x^4 - 0.8138020833333335*x^5)
+Polynomials.Polynomial(425.25 - 849.2187499999999*x + 534.8307291666666*x^2 - 145.67057291666666*x^3 + 17.903645833333336*x^4 - 0.8138020833333335*x^5)
 
 julia> m,i = 4,5
 (4, 5)
