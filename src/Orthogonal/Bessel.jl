@@ -1,196 +1,65 @@
-abstract type AbstractBessel{T} <: OrthogonalPolynomial{T} end
+## Bessel
+@register1 Bessel
+
 
 """
-    Bessel{α,T}
+    Bessel{α}
 
 Implements the [Bessel](https://dlmf.nist.gov/18.34) polynomials, introduced by [Krall and Frink](https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf) (with `b=2`). The  case `a=2` corresponds to the 
 [Bessel](https://en.wikipedia.org/wiki/Bessel_polynomials) polynomials of Wikipedia. The Bessel  polynomials are not orthogonal over  a domain of the real  line, rather over an arbitray curve in the complex plane enclosing the  origin.  The weight  function is `ρ(x)=(2πi)^(-1)∑Γ(α)/Γ(α+n-1)(-β/x)^n`,   where `β=2`.
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
+
+julia> 𝐐 = Rational{Int}
+Rational{Int64}
+
+julia> x = variable(Polynomial{𝐐})
+Polynomial(x)
+
+julia> [basis(Bessel{1//2, 𝐐}, i)(x) for i in 0:5]
+
+6-element Array{Polynomial{Rational{Int64}},1}:
+ Polynomial(1//1)
+ Polynomial(1//1 + 1//4*x)
+ Polynomial(1//1 + 3//2*x + 15//16*x^2)
+ Polynomial(1//1 + 15//4*x + 105//16*x^2 + 315//64*x^3)
+ Polynomial(1//1 + 7//1*x + 189//8*x^2 + 693//16*x^3 + 9009//256*x^4)
+ Polynomial(1//1 + 45//4*x + 495//8*x^2 + 6435//32*x^3 + 96525//256*x^4 + 328185//1024*x^5)
 ```
 
-
-
 """
-struct Bessel{α, T <: Number} <: OrthogonalPolynomial{T}
-    coeffs::Vector{T}
-    var::Symbol
-    function Bessel{α, T}(coeffs::AbstractVector{T}, var::Symbol=:x) where {α, T <: Number}
-        α <= -1 && throw(ArgumentError("α > -1 is necessary"))
-        length(coeffs) == 0 && return new{α, T}(zeros(T, 1), var)
-        last_nz = findlast(!iszero, coeffs)
-        last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{α, T}(coeffs[1:last], var)
-    end
-end
-
+Bessel
 export Bessel
+basis_symbol(::Type{<:Bessel{α}}) where {α} = "C^($α)"
+abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α, 2))
 
-Polynomials.@register1 Bessel
-constructorof(P::Type{<:Bessel{α}})  where {α} = Bessel{α}
-
-basis_symbol(::Type{<:Bessel{α}}) where {α} = "B^($(round(α,digits=2)))"
-
-
-Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
-Polynomials.variable(::Type{P}, var::Polynomials.SymbolLike=:x) where {α, P <: Bessel{α}} = P((2/α)*[-1, 1], var)
-
-weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
-generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")
-function leading_coefficient(::Type{<:Bessel{α}}, n) where {α}
-    m = n - 1
-    prod((α + i)/2 for i in m:2m)
+# From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
+# kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
+# Koepf suggests kn = (n + α + 1)_n/2^n
+function kn(::Type{<:Bessel{α}}, n::Int) where {α}
+    one(α)*Pochhammer(n+α-1,n)/2^n
 end
-
-
-
-## from Krall and  Frink
-## taking b=2
-function An(::Type{<:Bessel{α}}, n) where {α}
-    (iszero(n) && α ∈ (1,2)) && return (2n+1)*(α/2)
-    
-    den = (n + α - 1) * (2n + α - 2)
-    return  (2n+α)*(2n+α-1)*(2n+α-2)/2  / den
-
-end
-function Bn(::Type{<:Bessel{α}}, n) where {α}
-    (iszero(n) && α ∈ (1,2)) && return 1#zero(α)
-    
-    den = (n + α - 1) * (2n + α - 2)
-    return (α - 2) * (2n + α - 1) / den
-end
-function Cn(::Type{<:Bessel{α}}, n) where {α}
-    (iszero(n) && α ∈ (1,2)) && return 1
-    
-    den = (n + α - 1) * (2n + α - 2)
-    return n * (2n + α) / den
-end
-
-norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
-classical_σ(::Type{<:Bessel})  = x -> x^2
-classical_τ(::Type{<:Bessel{α}}) where {α} = x -> 2 + (α + 2) * x
-function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
-    as = (-n, n + α - 1)
-    bs = ()
-    pFq(as, bs, -x/2) #/ kn
-end
-
-
-
-(ch::Bessel{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
-
-function Bessel{α,T}(q::Bessel{β,S})  where {α, β, T, S}
-    β == α && return Bessel{α, T}(T.(coeffs(q)), q.var)
-    connection(Bessel{α,T}, q)
-end
-Bessel{α}(q::Bessel{β,S})  where {α, β, S} = Bessel{α,S}(q)
-
-# Conversion from J{α, β} to J{γ,δ}
-# p29 of thesis
-function Base.iterate(o::Connection{P, Q}, state=nothing) where
-    {β, P <: Bessel{β},
-     α, Q <: Bessel{α}}
-    
-    n,k = o.n, o.k
-
-    if state  == nothing
-        j = k
-    else
-        j, val = state
-        j += 1  # likely j += 2 if parity condition
-    end
-    j > n && return nothing
-    val = connection_α(P,Q,j,k)        
-    (j,val), (j, val)
-end
-
-function connection_α(::Type{<:Bessel{β}},
-                      ::Type{<:Bessel{α}},
-                      n,m) where {α, β}
-
-    α == β && return (n==m ? one(α) : zero(α))
-    
-    if m-n+β-α+1 < 0
-        @show m,n,β,α
-        return 0.0
-    end
-    val = (-1)^m * (2m+β+1)
-    val *= Pochhammer(-n,m) * Pochhammer(n+α+1, m)
-    val *= Γ(m + β+1)*Γ(β-α+1)
-    val /= Γ(1+m) * Γ(n+m+β+2) * Γ(m-n+β-α+1)
-    
+function k1k0(::Type{<:Bessel{α}}, k, ::Type{S}=Float64) where {S,α}
+    iszero(k) && return α/2
+    val = one(S)
+    val *=  (2k+α)*(2k+α-1)
+    val /= (k+α-1)*2
     val
-    
+end
+function k1k_1(P::Type{<:Bessel{α}}, k, ::Type{S}=Float64) where {S,α}
+    @assert k > 0
+    val = one(S)
+    if k == 1
+        val *= (α + 1)*(α + 2) # cancels  factor (α-1)(α-1)
+        val /= 4
+    else
+        val *= (2k+α-3) * (2k+α-2) * (2k+α-1) * (2k+α)
+        val /= 4 * (k+α-2) * (k+α-1)
+    end
+    return val
 end
 
-# # Inversion
-# # p28 of thesis
-# This doesn't work for us
-# function Base.iterate(o::Connection{P, Q}, state=nothing) where
-#     {α, P <: Bessel{α},
-#      Q <: Polynomials.StandardBasisPolynomial}
-  
-#     n,k = o.n, o.k
-#     if state  == nothing
-#         j = k
-#         val = connection_α(P,Q,j,k)                
-#     else
-#         j, val = state
-#         j += 1
-#         #λ = ...
-#         #val *= λ
-#         val = connection_α(P,Q,j,k)                        
-#     end
-#     j > n && return nothing
-
-
-#     (j,val), (j, val)
-  
-# end
-
-# function connection_α(::Type{<:Bessel{α}},
-#                       ::Type{<:Polynomials.StandardBasisPolynomial},
-#                       n,m) where {α}
-         
-#     val = (-2)^n 
-#     val *= (2m + α + 1)
-#     val *= Pochhammer(-n, m) * Γ(α + m + 1)
-#     val /= Γ(1  +  m) * Γ(n + m + α + 2)
-  
-#     val
-  
-# end
-
-# Koepf and Schmersau  p7 Corollary 1
-# function Polynomials.integrate(p::P, C::S) where
-#     {α,T, P<:Bessel{α,T},
-#      S <: Number}
-    
-#     R = promote_type(eltype(one(T) / 1), S)
-#     if hasnan(p) || isnan(C)
-#         return ⟒(P)([NaN])
-#     end
-#     d = degree(p)
-#     if d == 0
-#         return ⟒(P)([C, p[0]])
-#     end
-    
-#     as = zeros(R, d + 2)
-    
-#     @inbounds for n in 0:d
-
-#         pn = p[n]
-#         as[1 + n + 1] += pn * 2(n+1+α) / ((n+1)*(2n+α+1)*(2n+α+2))
-#         as[1 + n] += pn * 4 / ((2n+α)*(2n+α+2))
-#         if  n > 0
-#             as[1 + n - 1] += pn * 2n / ((n+α)*(2n+α)*(2n+α+1))
-#         end
-#     end
-    
-#     ∫p = ⟒(P)(as,  p.var)
-#     ∫p[0] = R(C) - ∫p(0)
-
-#     return  ∫p
-    
-# end
+## Overrides
+Bn(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where  {S}  =  zero(S)
+Cn(::Type{<:Bessel{α}}, ::Val{1}, ::Type{S}) where {α,S} = -α^2*(1+α)/4
