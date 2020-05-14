@@ -12,6 +12,18 @@ Hermite
 
 
 basis_symbol(::Type{<:Hermite}) = "H"
+Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
+weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
+generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
+function classical_hypergeometric(::Type{<:Hermite}, n, x)
+    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
+    bs = ()
+    (2x)^n * pFq(as, bs, -1/x^2)
+end
+
+
+
+
 abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
 
 function kn(::Type{<:Hermite}, n::Int)
@@ -27,45 +39,114 @@ function k1k_1(P::Type{<:Hermite}, k, ::Type{S}=Float64) where {S}
     val = 4*one(S)
     return val
 end
+norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
 
 ## Overrides
 # Use override here, as we get  0/0 in  default  defn
-Bn(::Type{Hermite{T,N}}, n::Int, ::Type{S}) where {T,N,S} = zero(S)
-Cn(::Type{Hermite{T,N}}, n::Int, ::Type{S}) where {T,N,S} = 2*n*one(S)
+Bn(::Type{<:Hermite{T}}, n::Int, ::Type{S}=Float64) where {T,S} = zero(S)
+Cn(::Type{<:Hermite{T}}, n::Int, ::Type{S}) where {T,S} = 2*n*one(S)
 
+# This is the issue
+b̂n(::Type{<:Hermite}, n::Int, ::Type{S}=Float64) where {M,S} = error("Don't call me")#zero(S)
+ĉn(::Type{<:Hermite}, n::Int, ::Type{S}=Float64) where {M,S} = error("Don't call me")#zero(S)
 
-b̂n(::Type{<:Hermite}, n::Val{M}, ::Type{S}) where {M,S} = zero(S)
-ĉn(::Type{<:Hermite}, n::Val{M}, ::Type{S}) where {M,S} = zero(S)
-
-## https://arxiv.org/pdf/1901.01648.pdf
+## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
-Base.convert(P::Type{<:Polynomial}, q::Hermite) = q(variable(P))
-function Base.convert(P::Type{<:Hermite}, q::Polynomial)
-    d = degree(q)
-    R = eltype(one(eltype(p))/1)
-    ps = zeros(R, d+1)
+
+Base.convert(P::Type{<:Hermite}, q::Polynomial) = connection(P,q)
+function Base.iterate(o::Connection{P, Q}, state=nothing) where
+    {P<:Hermite,
+     Q<:Polynomials.StandardBasisPolynomial}
+
+    k, n = o.k, o.n
+
+    if state == nothing
+        i = k
+        j = 0
+        i > n && return nothing
+        val = __hermite_lambda(i,k)
+    elseif state[1] + 2 > n # terminate
+        return nothing
+    else
+        j,val1 = state
+        #val1 *= (i+1)*(i+2)/4/(j+1/4)
+        j += 1
+        i = k + 2j
+        val = __hermite_lambda(i,k)
+    end
+
+    return(i, val), (j, val)
+end
+
+function __hermite_lambda(n,k)
+    val = gamma(1+n)/2^n
+    val /= gamma(1+k)
+    val /= gamma(1 + (n-k)/2)
+    val
+end
+
+
+# function Base.convert(P::Type{<:Hermite}, q::Polynomial)
+#     d = degree(q)
+#     R = eltype(one(eltype(1))/1)
+#     ps = zeros(R, max(0,d)+1)
+#     for i in 0:max(0,d)
+#         ps[i+1] = sum(q[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
+#     end
+#     Hermite(ps, q.var)
+# end
+
+# # compute n!/(2^n * (n-2j)! * j!)
+# function _hermite_lambda(n,j)
+#     tot = 1/1
+#     for i in 1:j
+#         tot  /=  2
+#         tot *= n
+#         n -= 1
+#     end
+#     for i in 1:j
+#         tot /= i
+#         tot *= n
+#         n -= 1
+#     end
+#     tot
+# end
+
+function Polynomials.derivative(p::P, order::Integer = 1) where {T, P <: Hermite{T}}
+
+    order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
+    order == 0 && return p
+    hasnan(p) && return Hermite(T[NaN], p.var)
+    order > length(p) && return zero(P, p.var)
+
+    d = degree(p)
+    qs = zeros(T, d+1-order)
+    for i in order:d # Hn' =  2n Hn-1
+        qs[i+1-order] = prod(2*(1 + i - j) for j in 1:order)  * p[i]
+    end
+
+    q = Hermite(qs, p.var)
+
+
+end
+
+
+
+function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
+    # int H_n = 1/(n+1) H_{n+1}
+    R = eltype(one(T)/1)
+    d = degree(p)
+    qs = zeros(R, d+2)
+    q = ⟒(P)(qs, p.var)
+
     for i in 0:d
-        ps[i+1] = sum(q[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
+        q[i+1] = p[i]/(2(i+1))
     end
-    Hermite(qs, q.var)
-end
 
-# compute n!/(2^n * (n-2j)! * j!)
-function _hermite_lambda(n,j)
-    tot = 1/1
-    for i in 1:j
-        tot  /=  2
-        tot *= n
-        n -= 1
-    end
-    for i in 1:j
-        tot /= i
-        tot *= n
-        n -= 1
-    end
-    tot
-end
+    q = q - q(0) + R(C)
 
+    return q
+end
 
 
 ##
@@ -85,6 +166,15 @@ export ChebyshevHermite
 ChebyshevHermite
 
 basis_symbol(::Type{<:ChebyshevHermite}) = "Hₑ"
+Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
+weight_function(::Type{ChebyshevHermite{T}}) where {T} = x -> exp(-x^2/2)
+generating_function(::Type{<:ChebyshevHermite}) = (t, x)  -> exp(t*x - t^2/2)
+function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
+    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
+    bs = ()
+    (x)^n * pFq(as, bs, -1/x^2)
+end
+
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
 abcde(::Type{<:ChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
 

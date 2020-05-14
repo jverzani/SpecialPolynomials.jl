@@ -50,6 +50,12 @@ weight_function(::Type{<:Laguerre{α}}) where {α} = x  -> x^α * exp(-x)
 generating_function(::Type{<:Laguerre{α}}) where {α} = (t,x) -> begin
     exp(-t*x/(1-t))/(1-t)^(α-1)
 end
+function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
+    α > -1 || throw(ArgumentError("α > -1 is required"))
+    as = -n
+    bs = α+1
+    Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
+end
 
 
 abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
@@ -59,6 +65,12 @@ function kn(::Type{<:Laguerre{α}}, n::Int, ::Type{S}=Float64)  where {α,S}
 end
 k1k0(::Type{<:Laguerre{α}}, k, ::Type{S}=Float64) where {S,α} = -one(S)/(k+1)
 k1k_1(::Type{<:Laguerre{α}}, k, ::Type{S}=Float64) where {S,α} =  one(S)/(k+1)/k
+function norm2(::Type{<:Laguerre{α}}, n) where{α}
+    iszero(α) && return one(α)
+    gamma(n + α + 1) / gamma(n+1)
+end
+
+## Overrides
 
 # default  connection between Laguerre is popping out  0s
 function Base.iterate(o::Connection{P, Q}, state=nothing) where
@@ -84,5 +96,7 @@ function Base.iterate(o::Connection{P, Q}, state=nothing) where
     
 end
 
-Base.convert(::Type{Q}, p::P) where  {α,Q<:Laguerre{α},β,T,N,P<:Laguerre{β,T,N}} = connection_n(Q,  p)
+
+
+Base.convert(::Type{Q}, p::P) where  {α,Q<:Laguerre{α},β,T,N,P<:Laguerre{β,T,N}} = connection(Q,  p)
 

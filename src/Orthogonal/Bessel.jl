@@ -17,7 +17,7 @@ Rational{Int64}
 julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
-julia> [basis(Bessel{1//2, 𝐐}, i)(x) for i in 0:5]
+julia> [basis(Bessel{1//2, 2//1, 𝐐}, i)(x) for i in 0:5]
 
 6-element Array{Polynomial{Rational{Int64}},1}:
  Polynomial(1//1)
@@ -31,7 +31,16 @@ julia> [basis(Bessel{1//2, 𝐐}, i)(x) for i in 0:5]
 """
 Bessel
 export Bessel
-basis_symbol(::Type{<:Bessel{α}}) where {α} = "C^($α)"
+basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
+Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
+weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
+generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")
+function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
+    as = (-n, n + α - 1)
+    bs = ()
+    pFq(as, bs, -x/2) #/ kn
+end
+
 abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α, 2))
 
 # From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
@@ -59,7 +68,13 @@ function k1k_1(P::Type{<:Bessel{α}}, k, ::Type{S}=Float64) where {S,α}
     end
     return val
 end
+norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
 
-## Overrides
-Bn(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where  {S}  =  zero(S)
-Cn(::Type{<:Bessel{α}}, ::Val{1}, ::Type{S}) where {α,S} = -α^2*(1+α)/4
+## Overrides XXX fails wih 1 and 2
+#Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
+Bn(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where {α,S} = zero(S)
+Cn(::Type{<:Bessel{α}}, ::Val{1}, ::Type{S}) where {α,S} = -4/(α^2*(α + 1))
+
+b̂n(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = (one(S) * 2)/(n*(2n+2))
+b̂n(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where {S} = one(S) * Inf
+#ĉn(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = one(S)/n/(2n-1)/(2n+1)

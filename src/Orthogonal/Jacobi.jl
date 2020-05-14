@@ -32,6 +32,16 @@ generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
     R = sqrt(1 - 2x*t+t^2)
     2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
 end
+function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
+
+    (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
+    
+    as = (-n, n+α+β+1)
+    bs = (α+1,)
+    
+    Pochhammer_factorial(α+1,n) * pFq(as, bs, (1 - x)/2)
+end
+
 
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
@@ -86,8 +96,18 @@ function k1k_1(P::Type{<:Jacobi{α,β}}, n, ::Type{S}=Float64) where {S,α, β}
     return val
 end
 
+function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
+    α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
+    2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
+end
+
 # overrides
 Bn(::Type{<:Jacobi{α,β}}, ::Val{0}, ::Type{S}) where {α, β, S} = iszero(α+β) ? (α-β)/2 : (α-β)/(2(α+β+2))
 Cn(P::Type{<:Jacobi{α,β}}, ::Val{1}, ::Type{S}) where {α,β,S} = -((α - β)^2 - (α + β + 2)^2)*(α + β + 4)/(8*(α + β + 2)^2)
+
+b̂n(P::Type{<:Jacobi{α,β}}, ::Val{0}, ::Type{S}) where {α,β,S} = one(S) * NaN
 ĉn(P::Type{<:Jacobi}, ::Val{0}, ::Type{S}) where {S} = zero(S)
 ĉn(P::Type{<:Jacobi{α,β}}, ::Val{1}, ::Type{S}) where {α,β,S} = one(S) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 1)*(α + β + 2)^2*(α + β + 3))
+
+# conversion through convert_ccop is FAILING
+Base.convert(::Type{P}, q::Jacobi) where {α, β, P <:Jacobi{α,β}}= q(variable(P))

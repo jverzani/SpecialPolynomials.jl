@@ -33,9 +33,10 @@ macro register0(name)
         end
 
         Base.length(p::$poly{T,N}) where {T,N} = N
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
     
-        #Base.convert(::Type{P}, p::P) where {P<:$poly} = p
+        Base.convert(::Type{P}, q::Q) where {T, P <:$poly{T}, Q <: $poly{T}} = q
+        Base.promote(p::P, q::Q) where {T, P <:$poly{T}, Q <: $poly{T}} = p,q
         Base.promote_rule(::Type{<:$poly{T}}, ::Type{<:$poly{S}}) where {T,S} =
             $poly{promote_type(T, S)}
         Base.promote_rule(::Type{<:$poly{T}}, ::Type{S}) where {T,S<:Number} = 
@@ -46,8 +47,10 @@ macro register0(name)
         $poly{T}(var::Polynomials.SymbolLike=:x) where {T} = variable($poly{T}, var)
         $poly(var::Polynomials.SymbolLike=:x) = variable($poly, var)
 
+        # work around N parameter in promote(p,q) usage in defaults
         Base.:*(p::$poly{T}, q::$poly{T}) where {T}  = ⊗(p,q)
         Base.:+(p::$poly{T}, q::$poly{T}) where {T}  = ⊕(p,q)
+        Base.divrem(p::$poly{T}, q::$poly{T}) where {T}  = _divrem(p,q)
     end
 end
 
@@ -79,9 +82,11 @@ macro register1(name)
         end
 
         Base.length(p::$poly{α,T,N}) where {α,T,N} = N        
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p),  p.coeffs, x)
     
-        #Base.convert(::Type{P}, p::P) where {P<:$poly} = p
+        Base.convert(::Type{P}, q::Q) where {α,T, P<:$poly{α,T}, Q <: $poly{α,T}} = q
+        Base.convert(::Type{$poly{α}}, q::Q) where {α,T, Q <: $poly{α,T}} = q        
+        Base.promote(p::P, q::Q) where {α,T, P<:$poly{α,T}, Q <: $poly{α,T}} = p,q
         Base.promote_rule(::Type{<:$poly{α,T}}, ::Type{<:$poly{α,S}}) where {α,T,S} =
             $poly{α,promote_type(T, S)}
         Base.promote_rule(::Type{<:$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
@@ -92,9 +97,11 @@ macro register1(name)
         $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, var)
         $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, var)
 
+        # work around N parameter in promote
         Base.:*(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = ⊗(p,q)
         Base.:+(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = ⊕(p,q)
-        #Base.convert(Q::Type{<:$poly{α}}, p::$poly{β}) where {α, β} = _convert_ccop(Q,p)
+        Base.divrem(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = _divrem(p,q)
+
     end
 end
 
@@ -127,9 +134,11 @@ macro register2(name)
         end
 
         Base.length(p::$poly{α,β,T,N}) where {α,β,T,N} = N
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), Val(length(p)), p.coeffs, x)
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
     
-        #Base.convert(::Type{P}, p::P) where {P<:$poly} = p
+        Base.convert(::Type{P}, q::Q) where {α,β,T,P<:$poly{α,β,T},Q<:$poly{α,β,T}} = q
+        Base.convert(::Type{$poly{α,β}}, q::Q) where {α,β,T,Q<:$poly{α,β,T}} = q
+        Base.promote(p::P, q::Q) where {α,β,T,P<:$poly{α,β,T},Q<:$poly{α,β,T}} = (p,q)
         Base.promote_rule(::Type{<:$poly{α,β,T}}, ::Type{<:$poly{α,β,S}}) where {α,β,T,S} =
             $poly{α,β,promote_type(T, S)}
         Base.promote_rule(::Type{<:$poly{α,β,T}}, ::Type{S}) where {α,β,T,S<:Number} = 
@@ -142,6 +151,7 @@ macro register2(name)
 
         Base.:*(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = ⊗(p,q)
         Base.:+(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = ⊕(p,q)        
-        #Base.convert(Q::Type{<:$poly{α,β}}, p::$poly{γ,δ}) where {α, β, γ, δ} = _convert_connection_m(Q, p)
+        Base.divrem(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = _divrem(p,q)
+
     end
 end

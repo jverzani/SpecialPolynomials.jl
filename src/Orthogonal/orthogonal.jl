@@ -2,6 +2,12 @@ abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} en
 abstract type OrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 abstract type DiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 
+## fixme
+## bessel 2
+## structural for Chebyshevs
+## convert(Hermite, q)
+## connectino J <-> J
+
 
 """
     AbstractCCOP{T}
@@ -69,12 +75,13 @@ leading_term(P::Type{<:AbstractCCOP},  n::Int) =  kn(P, n)
 kn(::Type{<:ConvertibleTypes},  n, ::Type{S}=Float64) where{S} = one(S)
 
 # k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{<:ConvertibleTypes},  i, ::Type{S}=Float64) where {S} =  one(S) #throw(MethodError())
+k1k0(::Type{P},  i, ::Type{S}=Float64) where {P<:ConvertibleTypes, S} =  kn(P,i+1,S)/kn(P,i,S)
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{<:ConvertibleTypes},  i, ::Type{S}=Float64) where {S} =  one(S) #throw(MethodError())
+k1k_1(::Type{P},  i, ::Type{S}=Float64) where {P<:ConvertibleTypes, S} =  kn(P,i+1,S)/kn(P,i-1,S)
 
-#kn(::Type{<:Polynomials.StandardBasisPolynomial}, n::Int, ::Type{S}=Float64) where {S} = one(S) # need this
-#k1k0(::Type{<:Polynomials.StandardBasisPolynomial}, i, ::Type{S}=Float64) where {S} =  one(S)
+monic(p::P) where {T,N,P <: AbstractCCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
+
+
 
 
 Polynomials.domain(::Type{<:AbstractCCOP}) = Polynomials.Interval(-Inf,  Inf)
@@ -118,37 +125,26 @@ end
 
 # variables  are  mutable
 
-Polynomials.degree(p::AbstractCCOP0{T,N})  where {T,N} = N-1
-Polynomials.degree(p::AbstractCCOP1{α,T,N})  where {α,T,N} = N-1
-Polynomials.degree(p::AbstractCCOP2{α,β,T,N})  where {α,β,T,N} = N-1
+Polynomials.degree(p::AbstractCCOP{T,N})  where {T,N} = N-1
 Polynomials.isconstant(p::AbstractCCOP) = degree(p) <=  0
 
-Polynomials.zero(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)(T[], var)
-Polynomials.zero(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)(T[], var)
-Polynomials.zero(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)(T[], var)
-Polynomials.zero(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = zero(⟒(P){Float64}, var)
+Polynomials.zero(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCCOP} = ⟒(P)(eltype(P)[], var)
 Polynomials.zero(p::P) where {P <: AbstractCCOP} = zero(P, p.var)
 
-Polynomials.one(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = ⟒(P)(T[1], var)
-Polynomials.one(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = ⟒(P)(T[1], var)
-Polynomials.one(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = ⟒(P)(T[1], var)
-Polynomials.one(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = one(⟒(P){Float64}, var)
+Polynomials.one(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCCOP} = ⟒(P)(ones(eltype(P),1), var)
 Polynomials.one(p::P) where {P <: AbstractCCOP} = one(P, p.var)
 
-# This is not right!
-Polynomials.variable(P::Type{<:AbstractCCOP0{T}},  var::Polynomials.SymbolLike=:x)     where {T}     = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
-Polynomials.variable(P::Type{<:AbstractCCOP1{α,T}},  var::Polynomials.SymbolLike=:x)   where {α,T}   = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
-Polynomials.variable(P::Type{<:AbstractCCOP2{α,β,T}},  var::Polynomials.SymbolLike=:x) where {α,β,T} = (basis(P,1,var) - Bn(P,0,T))/An(P,0,T)
-Polynomials.variable(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) where {α} = variable(⟒(P){Float64}, var)
+Polynomials.variable(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) = (basis(P,1,var) - Bn(P,0)) / An(P,0)
 Polynomials.variable(p::P) where {P <: AbstractCCOP} = variable(P, p.var)
 
 function Polynomials.basis(::Type{P}, n::Int, var::Polynomials.SymbolLike=:x) where {P  <: AbstractCCOP}
-    T = eltype(one(P))
+    T = eltype(P)
     cs = zeros(T, n+1)
     cs[end] = one(T)
     ⟒(P)(cs, var)
 end
 Polynomials.basis(p::P, n::Int) where {P <: AbstractCCOP} = basis(P, n, p.var)
+
 
 ##
 ## -----
@@ -189,40 +185,40 @@ end
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
-function eval_ccop(P::Type{<:AbstractCCOP}, ::Val{N}, cs::Vector{T}, x::S) where {T,N,S}
+function eval_ccop(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {T,N,S}
     if @generated
         
         N == 0 && return zero(T) * zero(S)
         N == 1 && return cs[1] * one(S)
-        SS = eltype(one(S))
+        #SS = eltype(one(S))
         Δ0 = :(cs[N-1])
         Δ1 = :(cs[N])
         for i in N-1:-1:2
-            a = :(cs[i - 1] - c1 * Cn(P, i-1, eltype(SS)))
-            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1,eltype(SS)),Bn(P,i-1,eltype(SS))))
+            a = :(cs[i - 1] - c1 * Cn(P, i-1))
+            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1)))
             Δ0 = :(a)
             Δ1 = :(b)
         end
-        c0 + c1* muladd(x, An(P,0,eltype(SS)), Bn(P,0,eltype(SS)))
+        c0 + c1* muladd(x, An(P,0,eltype(SS)), Bn(P,0))
     else
-        _eval_ccop(P,cs,x)
+        clenshaw_eval(P, cs, x)
     end
 end
 
-function _eval_ccop(P::Type{<:AbstractCCOP}, cs::Vector{T}, x::S) where {T,S}
+function clenshaw_eval(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {N, T,S}
 
-    N = length(cs)
+
     N == 0 && return zero(T)*zero(S)
     N == 1 && return cs[1] * one(S)
 
-    SS = eltype(one(S))
+    #SS = eltype(one(S))
     Δ0 = cs[end - 1]
     Δ1 = cs[end]
     @inbounds for i in N-1:-1:2
-        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1,eltype(SS)), Δ0 + Δ1 * muladd(x, An(P,i-1,eltype(SS)),Bn(P,i-1,eltype(SS)))
+        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1,eltype(SS)), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
     end
 
-    return Δ0 + Δ1 * muladd(x, An(P,0,eltype(SS)),  Bn(P,0,eltype(SS)))
+    return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
 end
     
 
@@ -249,10 +245,10 @@ end
 
 
 function _Bn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) where {S}
+
     num = (2b*n*(a*n+d-a)-e*(-d+2a))
     den = (d+2a*n) * (d-2a+2a*n)
 
-    (iszero(num) && !iszero(den)) && return zero(S)
     iszero(den) && return Bn(P, Val(n), S)  
     
     val = one(S) * num / den
@@ -270,7 +266,7 @@ function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) wher
 
     numa = (a*n+d-2a) * n * (4c*a-b^2) + 4a^2*c -a*b^2 + a*e^2 - 4*a*c*d
     numa += d*b^2 - b*e*d + d^2*c
-    num = -numa * (a*n+d-2a)*n
+    num = -numa * (a*n + d - 2a) * n
     den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
 
     iszero(den) && return Cn(P, Val(n), S)
@@ -288,7 +284,7 @@ function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) wher
 end
 
 # an, bn, cn
-# 0 = [an,bn,cn] ⋅ [p_{n+1},p_n,p_{n-1}]
+# x⋅pn = [an,bn,cn] ⋅ [p_{n+1},p_n,p_{n-1}]
 function an(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
     1/An(P,n,S)
 end
@@ -315,7 +311,7 @@ end
 function βn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
     a,b,c,d,e = abcde(P)
     num = -n*(a*n+d-a)*(2e*a-d*b)
-    den = (d+2*a*n)(d-2a+2a*n)
+    den = (d+2*a*n)*(d-2a+2a*n)
     iszero(den) &&  return βn(P, Val(n), S)
     val = one(S) *  num  / den
     return val
@@ -324,9 +320,9 @@ end
 
 function γn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
     a,b,c,d,e = abcde(P)
-    num = ((n-1)*(a*n+d-a)*(4c*a-b^2)+a*e^2 + d^2*c - b*e*d)
-    num *= (a*n+d-a)*(a*n+d-2a)*n
-    den = (d-2a+2a*n)^2*(2a*n-3a+d)*(2a*n-a+d)
+    num = ((n-1) * (a*n + d - a) * (4c*a - b^2) + a*e^2 + d^2*c - b*e*d)
+    num *= (a*n + d - a) * (a*n + d - 2a) * n
+    den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
     iszero(den) &&  return γn(P, Val(n), S)
     
     val = one(S) * num / den
@@ -346,7 +342,7 @@ end
 
 function βᴵn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
     a,b,c,d,e = abcdeᴵ(P)
-    -(_Bn(P,a,b,c,d,e,n,S)/An(P,a,b,c,d,e,n,S))
+    -(_Bn(P,a,b,c,d,e,n,S)/_An(P,a,b,c,d,e,n,S))
 end
 
 function γᴵn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
@@ -400,13 +396,13 @@ function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynom
     _convert_ccop(Q, p)
 end
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
-    a,b,c,d,e = abcde(P)
-    ā,b̄,c̄,d̄,ē = abcde(Q)
-    
-    if a == ā && b == b̄ && c == c̄  #  σ = σ̄
+
+    if constructorof(Q) == constructorof(P)
+        a,b,c,d,e = abcde(P)
+        ā,b̄,c̄,d̄,ē = abcde(Q)
         _convert_ccop(Q, p)
     else
-        T = eltype(one(Q))
+        T = eltype(Q)
         convert(Q, convert(Polynomial{T}, p))
     end
 end
@@ -447,6 +443,53 @@ function ⊗(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 #    convert(⟒(P){R}, convert(Polynomial, p) * convert(Polynomial, q))
 end
 
+function _divrem(num::P, den::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
+
+    @assert  ⟒(P) == ⟒(Q)
+    @assert eltype(num) == eltype(den)
+
+    p1 = convert(Polynomial, num)
+    p2 = convert(Polynomial, den)
+    q,r = divrem(p1, p2)
+    convert.(P, (q,r))
+
+end
+
+
+function Polynomials.truncate(p::P;
+                               rtol::Real = Base.rtoldefault(real(T)),
+                               atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}}
+    ps = coeffs(p)
+    max_coeff = maximum(abs, ps)
+    thresh = max_coeff * rtol + atol
+    map!(c->abs(c) <= thresh ? zero(T) : c, ps,ps)
+    ⟒(P){T}(ps, p.var)
+end
+
+Polynomials.truncate!(p::P;
+                      rtol::Real = Base.rtoldefault(real(T)),
+                      atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}} = error("`truncate!` not defined")
+
+function Base.chop(p::P;
+                   rtol::Real = Base.rtoldefault(real(T)),
+                   atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}}
+    
+    N == 0 && return p
+    i = N-1
+    while i >= 0
+        val = p[i]
+        if !isapprox(val, zero(T); rtol = rtol, atol = atol)
+            break
+        end
+        i -= 1
+    end
+    ⟒(P)(coeffs(p)[1:i+1], p.var)
+end
+
+Polynomials.chop!(p::P;
+                  rtol::Real = Base.rtoldefault(real(T)),
+                  atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}} = error("`chop!` not defined")
+
 
 # function Base.:*(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
@@ -480,7 +523,7 @@ end
 
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
 # find expression for p' in terms of p
-function Polynomials.derivative(p::P, order::Int=1) where {P <:AbstractCCOP}
+function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCCOP}
 
     R = eltype(one(eltype(p))/1)
     d = degree(p)
@@ -508,17 +551,19 @@ function Polynomials.derivative(p::P, order::Int=1) where {P <:AbstractCCOP}
     
 end
 
-function Polynomials.integrate(p::AbstractCCOP, C::Number)
-
+function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCCOP}
+    
     T,S = eltype(p), typeof(C)
-    R = promote_type(eltype(one(T) / 1), S)
-    P = ⟒(typeof(p)){R}
+    @show T,S
+    R = promote_type(typeof(one(T) / 1), S)
+    @show P, ⟒(P)
+    Q = ⟒(P){R}
     #if hasnan(p) || hasnan(C)
     #    error("XXX nan")
     #end
     n = degree(p)
     if n == 0
-        return P([C, p[0]], p.var)
+        return Q([C, p[0]], p.var)
     end
     
     as = zeros(R, n + 2)
@@ -531,15 +576,15 @@ function Polynomials.integrate(p::AbstractCCOP, C::Number)
     as[2] = pd*c₁
     @inbounds for d in 1:n
         pd = p.coeffs[d+1]
-        as[1 + d + 1] += pd * ân(P, d, S)
-        as[1 + d]     += pd * b̂n(P, d, S)
+        as[1 + d + 1] += pd * ân(Q, d, S)
+        as[1 + d]     += pd * b̂n(Q, d, S)
         if  d > 0
-            as[1 + d - 1] += pd * ĉn(P, d, S)
+            as[1 + d - 1] += pd * ĉn(Q, d, S)
         end
     end
 
     # adjust constant
-    ∫p = P(as,  p.var)
+    ∫p = Q(as,  p.var)
     ∫p[0] = R(C) - ∫p(0)
     
     return  ∫p

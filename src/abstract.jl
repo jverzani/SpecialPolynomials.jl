@@ -17,6 +17,9 @@ depend on conversion to the base `Polynomial` type (which uses the standard poly
 """
 abstract type AbstractSpecialPolynomial{T} <: Polynomials.AbstractPolynomial{T} end
 
+# polynomial like Vector{T} with variable
+Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T
+Base.eltype(::Type{<:AbstractSpecialPolynomial}) = Float64
 
 # to strip off type parameters. See Polynomials.constructorof
 # We want ⟒(P{α,T,N}) = P{α} where {T, N}x
@@ -66,13 +69,19 @@ end
 # faster than +(promote(p,c)...); as that allocates twice
 # useful to define p + P(:θ) (mismatched symbols
 function Base.:+(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
-    as = copy(coeffs(p))
-    as[1] += c  # *assume* basis(P,0) = 1
+    R = promote_type(eltype(p), S)
+    as = R[a for a in coeffs(p)]
+    if length(as) >= 1
+        as[1] += c  # *assume* basis(P,0) = 1
+    else
+        push!(as, c)
+    end
     ⟒(P)(as, p.var)
 end
    
 function Base.:*(p::P, c::S) where {P<:AbstractSpecialPolynomial, S<:Number}
-     as = copy(coeffs(p))
+    R = promote_type(eltype(p), S)
+    as = R[a for a in coeffs(p)]
      ⟒(P)(as * c, p.var)
 end
 

@@ -52,9 +52,10 @@ generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
 
 abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
 
-kn(::Type{<:Legendre}, n::Int)  = kn(Gegenbauer{1/2}, n)
-k1k0(::Type{<:Legendre}, n::Int)  = k1k0(Gegenbauer{1/2}, n)
-k1k_1(::Type{<:Legendre}, n::Int)  = k1k_1(Gegenbauer{1/2}, n)
+kn(::Type{<:Legendre}, n::Int,  ::Type{S}=Float64 ) where {S} = kn(Gegenbauer{1/2}, n,S)
+k1k0(::Type{<:Legendre}, n::Int,  ::Type{S}=Float64) where {S} = k1k0(Gegenbauer{1/2}, n,S)
+k1k_1(::Type{<:Legendre}, n::Int, ::Type{S}=Float64) where {S} = k1k_1(Gegenbauer{1/2}, n,S)
+norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 
 # overrides
 Bn(::Type{<:Legendre}, ::Val{0}, ::Type{S}) where  {S}  =  Bn(Gegenbauer{1/2}, Val(0), S)

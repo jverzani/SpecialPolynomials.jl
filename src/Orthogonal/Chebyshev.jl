@@ -48,12 +48,15 @@ k1k0(::Type{<:Chebyshev}, n, ::Type{S}) where  {S} = iszero(n) ? one(S) : 2*one(
 k1k_1(::Type{<:Chebyshev}, n, ::Type{S}) where  {S} = n==1 ? 2*one(S) : 4*one(S)
 
 # directly adding these gives a large speed up in polynomial evaluation
-An(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = iszero(n) ? 1 : 2
-Bn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = 0
-Cn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = 1
+#An(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = iszero(n) ? one(S) : 2*one(S)
+#Bn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = zero(S)
+#Cn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = one(S)
 
+# 
+Cn(::Type{<:Chebyshev}, ::Val{1}, ::Type{S}=Float64) where {S} = one(S)
 ĉn(::Type{<:Chebyshev}, ::Val{0}, ::Type{S}) where {S} = one(S)/4
 ĉn(::Type{<:Chebyshev}, ::Val{1}, ::Type{S}) where {S} = Inf
+γn(P::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = n==1 ? one(S)/2 : n*one(S)/4 *  k1k0(Chebyshev,n-1, S)
 
 function ⊗(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
 
@@ -66,7 +69,7 @@ function ⊗(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
     z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
     prod = Polynomials.fastconv(z1, z2)
     ret = Chebyshev(_z_to_c(prod), p1.var)
-    return truncate!(ret)
+    return truncate(ret)
     
 end
 
@@ -213,7 +216,7 @@ An(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 2
 Bn(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 0
 Cn(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 1
 # work around cancellation
-ĉn(::Type{<:ChebyshevU}, n::Int, ::Type{S}) where {S} = -one(S) /(4n+4)
+ĉn(::Type{<:ChebyshevU}, n::Int, ::Type{S}) where {S} = -one(S) /(4n+4) *  k1k0(ChebyshevU,n-1,S)
 
 function ⊗(p1::ChebyshevU{T}, p2::ChebyshevU{S}) where {T,S}
 
@@ -247,6 +250,31 @@ Base.convert(::Type{Q}, p::P) where {Q <: Chebyshev, P<: ChebyshevU} = _convert_
 Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_ccop(Q,p)
 
 
+## Why does default fail?
+# use T <--> U to take derivatives,  integrate
+# function Polynomials.derivative(p::ChebyshevU{T}, order::Integer = 1) where {T}
+#     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
+    
+#     q = convert(Chebyshev, p)
+#     return convert(ChebyshevU, derivative(q, order))
+
+# end
+
+# function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
+
+#     # int Un dx = T_n+1/(n+1)
+#     R = eltype(one(T)/1)
+#     n = length(p)
+#     ts = zeros(R, n+1)
+#     for i in 1:n
+#         ts[i+1] = p[i-1]/(i)
+#     end
+
+#     q = Chebyshev(ts, p.var)
+#     q = q - q(0) + R(C)
+
+#     return convert(ChebyshevU, q)
+# end
 
 
 

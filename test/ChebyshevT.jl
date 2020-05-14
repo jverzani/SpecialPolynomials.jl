@@ -33,7 +33,7 @@ end
     @test p.coeffs == [30]
 
     p = zero(Chebyshev{Int})
-    @test p.coeffs == [0]
+    @test p.coeffs == Int[]
 
     p = one(Chebyshev{Int})
     @test p.coeffs == [1]

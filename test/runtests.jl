@@ -1,6 +1,6 @@
 using SpecialPolynomials; const SP=SpecialPolynomials
 using Polynomials
-import LinearAlgebra: eigvals
+import LinearAlgebra: eigvals, dot
 import SpecialFunctions: gamma
 using Test
 

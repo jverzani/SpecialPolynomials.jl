@@ -148,6 +148,30 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
 
 end
 
+## With an explicit connectioni
+struct Connection{P,Q}
+    n::Int
+    k::Int
+end
+function connection(::Type{P}, q::Q) where
+    {P <: Polynomials.AbstractPolynomial,
+     Q<:Polynomials.AbstractPolynomial}
+    
+    n = degree(q)
+    T = eltype(q)
+    T = eltype(one(eltype(one(P)))*one(q)/1)
+    cs = zeros(T, n+1)
+
+    for k in 0:n
+        for (i,val) in Connection{P,Q}(n, k)
+            cs[1+k] = muladd(q[i], val, cs[1+k])
+        end
+    end
+
+    ⟒(P)(cs, q.var)
+    
+end
+
 
 ## For this implementation, we suppose there is an is an iterator
 ## C_{n, k} which iterates
@@ -176,30 +200,6 @@ end
 #     val = connection_α(P,Q,j,k)
 #     (j,val), j
 # end
-struct Connection{P,Q}
-    n::Int
-    k::Int
-end
-
-function connection_n(::Type{P}, q::Q) where
-    {P <: Polynomials.AbstractPolynomial,
-     Q<:Polynomials.AbstractPolynomial}
-    
-    n = degree(q)
-    T = eltype(q)
-    T = eltype(one(eltype(one(P)))*one(q)/1)
-    cs = zeros(T, n+1)
-
-    for k in 0:n
-        for (i,val) in Connection{P,Q}(n, k)
-            cs[1+k] = muladd(q[i], val, cs[1+k])
-        end
-    end
-
-    ⟒(P)(cs, q.var)
-    
-end
-
 
 
 
@@ -244,10 +244,10 @@ end
 #
 @inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
 
-    (!Polynomials.isconstant(pn) && !Polynomials.isconstant(pm)) && pn.var != pm.var && throw(ArgumentError("Variables don't  match"))    
-#    Polynomials.isconstant(pn) && return pm * pn[0]
-#    Polynomials.isconstant(pm) && return pn * pm[0]
-#    pn.var == pm.var || throw(ArgumentError("bases must match"))
+
+    Polynomials.isconstant(pn) && return pm * pn[0]
+    Polynomials.isconstant(pm) && return pn * pm[0]
+    pn.var == pm.var || throw(ArgumentError("bases must match"))
     
     ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial type must match"))
     PP = promote_type(P,Q)
@@ -268,3 +268,5 @@ end
     end
     ⟒(P)(cs, pn.var)
 end
+
+
