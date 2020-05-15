@@ -2,26 +2,26 @@
 
 T = Float64
 Ps = (
-    #Chebyshev{T},
-     # ChebyshevU{T},
-      Laguerre{0, T},
-      Laguerre{1/2, T},
-      Hermite{T},
-      ChebyshevHermite{T},
-      Jacobi{1/2, 1/2, T},
-      Jacobi{1/4, 3/4, T},
-      Jacobi{-1/2, 1/2, T},
-      Jacobi{1/2, -1/2, T},      
-      Legendre{T},
-      Gegenbauer{1/2, T},
-      Bessel{3/2, T}, # Bessel{1} is an issue
-      Bessel{1/2, T}
+    Chebyshev,
+    ChebyshevU,
+    Laguerre{0},
+    Laguerre{1/2},
+    Hermite,
+    ChebyshevHermite,
+    Jacobi{1/2, 1/2},
+    Jacobi{1/4, 3/4},
+    Jacobi{-1/2, 1/2},
+    Jacobi{1/2, -1/2},      
+    Legendre,
+    Gegenbauer{1/2},
+    Bessel{3/2}, # Bessel{1} is an issue
+    Bessel{1/2}
 #      ,DiscreteChebyshev{12,T}
 #      ,Krawtchouk{12, 5/2, T}
       )
 
 @testset "Construction" begin
-
+    
     for P in Ps
         x = variable(P)
         # basic recurrence
@@ -29,7 +29,7 @@ Ps = (
             @test basis(P,n+1) ≈ (SP.An(P,n) * x + SP.Bn(P,n)) * basis(P,n) - SP.Cn(P,n)*basis(P,n-1)
         end
 
-        # leading term
+        # leading term and ratios
         x = variable(Polynomial)
         for n = 0:5
             @test basis(P,n)(x)[end] ≈ SP.kn(P,n)
@@ -51,8 +51,10 @@ Ps = (
 
 
         ## Different type
-        @test eltype(coeffs(P(ones(Int32, 4)))) ==  T
-        @test degree(P(1) -1) ==  -1
+        T = Float64
+        @test eltype(P(ones(Int32, 4))) ==  Int32
+        @test eltype(P{T}(ones(Int32, 4))) ==  T
+        @test degree(P(1)-1) ==  -1
         @test degree(zero(P)) == -1
         @test degree(one(P)) == 0
         @test degree(variable(P)) == 1
@@ -64,6 +66,19 @@ Ps = (
         @test P()(1) ≈ 1
         @test variable(P, :y) == P(:y)
 
+        # test  ignore constant's symbol
+        @test zero(P, :x) == zero(P, :y)
+        @test one(P, :x) == one(P, :y)
+        @test !(variable(P, :x) == variable(P,:y))
+
+        @test !(zero(P, :x) === zero(P, :y))
+        @test !(one(P, :x) === one(P, :y))
+        @test !(variable(P, :x) === variable(P,:y))
+
+        @test zero(P, :x) ≈ zero(P, :y)
+        @test one(P, :x) ≈ one(P, :y)
+        @test (variable(P, :x) ≈ variable(P, :x))
+        @test_throws ErrorException variable(P, :x) ≈ variable(P, :y)
 
     end
 
@@ -98,7 +113,7 @@ end
             
             # x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^*
             @test (a=a,b=b,c=c,d=d+2a,e=e+b)  == SP.abcdeᴵ(P)
-            αᴵs = SP.αᴵn(P,i-1), SP.βᴵn(P,i-1), SP.γᴵn(P,i-1) # note shift
+            αᴵs = SP.αᴵn(P,i), SP.βᴵn(P,i), SP.γᴵn(P,i) 
             @test x * dpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, dps))
         end
     end
@@ -271,64 +286,33 @@ end
 # end
 
 
-@testset "fitting" begin
+# @testset "fitting" begin
 
-    f(x) = exp(-x) * cospi(x)
+#     f(x) = exp(-x) * cospi(x)
 
-    for P in Ps
-        P <: SP.OrthogonalPolynomial || continue
-        dom = domain(P)
-        (isinf(first(dom)) || isinf(last(dom))) && continue
-        q = fit(P, f, 10)
-        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
-    end
+#     for P in Ps
+#         P <: SP.AbstractOrthogonalPolynomial || continue
+#         dom = domain(P)
+#         (isinf(first(dom)) || isinf(last(dom))) && continue
+#         q = fit(P, f, 10)
+#         @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
+#     end
 
-end
+# end
 
-@testset "quadrature" begin
+# @testset "quadrature" begin
 
-    f(x) = x^7
-    n = 4
+#     f(x) = x^7
+#     n = 4
 
-    for P in Ps
-        P <: SP.OrthogonalPolynomial || continue
-        !all(isfinite.(extrema(P))) && continue
-        q = sum(f(tau)*w for (tau, w)  in  zip(SP.gauss_nodes_weights(P,n)...))
-        p = SP.innerproduct(P, f, one)
-        @test abs(p - q)  <= sqrt(eps(T))
-     end
+#     for P in Ps
+#         P <: SP.AbstractOrthogonalPolynomial || continue
+#         !all(isfinite.(extrema(P))) && continue
+#         q = sum(f(tau)*w for (tau, w)  in  zip(SP.gauss_nodes_weights(P,n)...))
+#         p = SP.innerproduct(P, f, one)
+#         @test abs(p - q)  <= sqrt(eps(T))
+#      end
 
-end
-
-
-@testset "Classical orthogonal" begin
-
-    Ps = Ps = (Jacobi{1/2, 1/4},
-               Gegenbauer{1/3},
-               Hermite,
-               Laguerre{0},
-               Laguerre{1/2}) #,
-    #Bessel{1/2})
-
-    # leading term
-    x = variable(Polynomial{Float64})
-    for P in Ps
-        @test basis(P,5)(x)[end] ≈ SP.leading_term(P,5)
-    end
+# end
 
 
-
-    # Test representations via pFq([a],[b],z)
-    for P in Ps
-        n = 5
-        for x in (1/4, 1/2, 3/4)
-            p = basis(P, 5)(x)
-            q = SP.classical_hypergeometric(P, n, x)
-            @test p ≈ q
-        end
-    end
-
-    
-
-
-end

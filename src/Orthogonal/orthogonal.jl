@@ -1,19 +1,23 @@
+## Abstract types
+##
 abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} end
-abstract type OrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
-abstract type DiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
+
 
 
 """
-    AbstractCCOP{T}
+    AbstractCCOP{T,N}
 
 
 A classic continuous orthogonal polynomial (CCOP) is characterized by 5 coefficients: a,b,c,d,e where
 
 (a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
 
-Let σ = (a⋅x²+b⋅x+c), τ  =  (d⋅x + e).
+Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
 
-From these several structural  equations are represented,  for  example
+From these several structural  equations are represented, for example
 the three-point recusion.
 
 P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎
@@ -31,11 +35,11 @@ x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
 p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
 x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^* 
 
-Using (7) Clenshaw evaluation using the three  point recursion is defied
+Using (7), Clenshaw polynomial evaluation using the three  point recursion is defined.
 
-Using (19) expressions for derivatives are found.
+Using (19), expressions for derivatives are found.
 
-Using  (19)  expressions   for  integration are  found  (p7).
+Using  (19),  expressions   for  integration are  found  (p7).
 
 Using Thms 2,4, and 5, connection coefficients,  C(n,m) satisfying 
 P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n) are  found. These 
@@ -43,8 +47,8 @@ allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polyno
 `convert(P{α…}, p::P(β…))` and through composition  `p*q`
 
 """
-abstract type AbstractCCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
-ConvertibleTypes = Union{AbstractCCOP, Polynomials.StandardBasisPolynomial}
+abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
+ConvertibleTypes = Union{AbstractCOP, Polynomials.StandardBasisPolynomial}
 
 
 ##
@@ -52,18 +56,20 @@ ConvertibleTypes = Union{AbstractCCOP, Polynomials.StandardBasisPolynomial}
 ##
 ## interface for a  given type
 
-basis_symbol(::Type{<:AbstractCCOP}) = "P"
+basis_symbol(::Type{<:AbstractCOP}) = "P"
+Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf,  Inf)
+Base.extrema(P::Type{<:AbstractCOP}) = (first(domain(P)), last(domain(P)))
 
 """
    abcde
 
-A tuple returning  the  constants a,b,c,d,e  for a CCOP type with
+A named tuple returning  the  constants a,b,c,d,e  for a CCOP type with
 (a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
 """
-abcde(::Type{<:AbstractCCOP}) = throw(MethodError())
+abcde(::Type{<:AbstractCOP}) = throw(MethodError())
 
 # kn is the leading term (Section 3 table)
-leading_term(P::Type{<:AbstractCCOP},  n::Int) =  kn(P, n)
+leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
 
 # Set defaults to be monic
 kn(::Type{P},  n) where{P <: ConvertibleTypes} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
@@ -73,15 +79,11 @@ k1k0(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i)
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
 k1k_1(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i-1)
 
-monic(p::P) where {T,N,P <: AbstractCCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
+monic(p::P) where {T,N,P <: AbstractCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
 
 
-
-
-Polynomials.domain(::Type{<:AbstractCCOP}) = Polynomials.Interval(-Inf,  Inf)
-
-
-
+# subtypes  to keep track of number of parameters
+# passed to  @registerN macros
 abstract type AbstractCCOP0{T,N} <: AbstractCCOP{T,N} end
 abstract type AbstractCCOP1{α,T,N} <: AbstractCCOP{T,N} end
 abstract type AbstractCCOP2{α, β,T,N} <: AbstractCCOP{T,N}  end
@@ -99,37 +101,36 @@ function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,β,P<:Abs
     print(io,")")
 end
 
-
+# We want to  be able to strip  off T,N  or α,...,T,N
+# * constructorof(P{α,..,T,N}) =  P
+# * ⟒(P(α,...,T,N)) =  P(α...)
 ⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
 ⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α, β} = constructorof(P){α,  β}
 
+# Can't  change  N  here
+function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}
 
-function Base.setindex!(p::AbstractCCOP, value::Number, idx::Int)
-    T = eltype(p)
     ## widen size...
     idx < 0 &&  throw(ArgumentError("Negative index"))
     val = T(value)
-    d = length(coeffs(p)) - 1
-    if idx > d
-        append!(p.coeffs, zeros(T, idx-d))
+    d = N - 1
+    if idx > d || (idx == d && iszero(value))
+        throw(ArgumentError("Polynomials of AbstractCCOP type have fixed size parameter, N, which  can't  be changed through  assignment. Make new polynomial  instance?"))
     end
     setindex!(p.coeffs, val,  idx+1)
 end
 
+Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
+Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 
-# variables  are  mutable
+Polynomials.zero(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(eltype(P)[], var)
+Polynomials.zero(p::P) where {P <: AbstractCOP} = zero(P, p.var)
 
-Polynomials.degree(p::AbstractCCOP{T,N})  where {T,N} = N-1
-Polynomials.isconstant(p::AbstractCCOP) = degree(p) <=  0
+Polynomials.one(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(ones(eltype(P),1), var)
+Polynomials.one(p::P) where {P <: AbstractCOP} = one(P, p.var)
 
-Polynomials.zero(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCCOP} = ⟒(P)(eltype(P)[], var)
-Polynomials.zero(p::P) where {P <: AbstractCCOP} = zero(P, p.var)
-
-Polynomials.one(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCCOP} = ⟒(P)(ones(eltype(P),1), var)
-Polynomials.one(p::P) where {P <: AbstractCCOP} = one(P, p.var)
-
-Polynomials.variable(P::Type{<:AbstractCCOP},  var::Polynomials.SymbolLike=:x) = (basis(P,1,var) - Bn(P,0)) / An(P,0)
-Polynomials.variable(p::P) where {P <: AbstractCCOP} = variable(P, p.var)
+Polynomials.variable(P::Type{<:AbstractCOP},  var::Polynomials.SymbolLike=:x) = (basis(P,1,var) - Bn(P,0)) / An(P,0)
+Polynomials.variable(p::P) where {P <: AbstractCOP} = variable(P, p.var)
 
 function Polynomials.basis(::Type{P}, n::Int, var::Polynomials.SymbolLike=:x) where {P  <: AbstractCCOP}
     T = eltype(P)
@@ -160,26 +161,10 @@ Polynomials.basis(p::P, n::Int) where {P <: AbstractCCOP} = basis(P, n, p.var)
 ## standard
 
 
-
-"""
-    abcdeᴵ
-
-If P_n is a CCOP, then 
-
-x pᵢ = αᵢ p₍ᵢ₊₁₎ + βᵢ pᵢ + γᵢ p₍ᵢ₋₁₎.
-
-Sp will pᵢ' with this  choice of a,b,d,e derived from  those of  pᵢ. (Eqn  (13)
-"""
-function abcdeᴵ(P::Type{<:AbstractCCOP}) 
-    a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
-    NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,e+b))
-end
-
-
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
-function eval_ccop(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {T,N,S}
+function eval_ccop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
     if @generated
         
         N == 0 && return zero(T) * zero(S)
@@ -199,7 +184,7 @@ function eval_ccop(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {T,N,S}
     end
 end
 
-function clenshaw_eval(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {N, T,S}
+function clenshaw_eval(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {N, T,S}
 
 
     N == 0 && return zero(T)*zero(S)
@@ -226,7 +211,7 @@ function  An(P::Type{<:AbstractCCOP}, n::Int)
     _An(P, a,b,c,d,e ,n) *  k1k0(P, n)
 end
             
-@inline function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
+function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
     one(eltype(P))
 end
 
@@ -373,17 +358,32 @@ function ĉn(P::Type{<:AbstractCCOP}, n::Int)
     return val
 end
 
-# kn(dP,n) = (n+1)*kn(P,n+1)
+"""
+    abcdeᴵ
+
+If P_n is a CCOP, then 
+
+x pᵢ = αᵢ p₍ᵢ₊₁₎ + βᵢ pᵢ + γᵢ p₍ᵢ₋₁₎.
+
+Sp will pᵢ' with this  choice of a,b,d,e derived from  those of  pᵢ. (Eqn  (13)
+"""
+function abcdeᴵ(P::Type{<:AbstractCCOP}) 
+    a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
+    NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,e+b))
+end
+
 
 # αᴵn, βᴵn, γᴵn  (α^*,...)
 # x⋅pn' = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1},p'_n,p'_{n-1}]
 function αᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    n  = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Aᴵn = _An(P,a,b,c,d,e,n) * (n+2)/(n+1)*k1k0(P,n+1) # . *  k1k0(dP,n) = k(dP,n+1)/k(dP,n) = (n+2)kn(P,n+1)/((n+1)kn(P,n+1) = (n+2)/(n+1)*k1k0(P,n+1)
     1/Aᴵn
 end
 
 function βᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Aᴵn = _An(P,a,b,c,d,e,n) # * k1k0(dP,n)
     Bᴵn = _Bn(P,a,b,c,d,e,n) # * k1k0(dP,n)
@@ -392,6 +392,7 @@ function βᴵn(P::Type{<:AbstractCCOP}, n::Int)
 end
 
 function γᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Aᴵn = _An(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n)
     Cᴵn = _Cn(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n-1)
@@ -426,13 +427,13 @@ end
 ##
 ## --------------------------------------------------
 ##
-## multiply/additioni with P{α…,T,N} =  Q{α...,T, M}
+## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
 ## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCCOP} as an available signature
-## so we create these fall  backs, and direct + and  * to ⊕ and  ⊗  in the `register` macros
+## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
 function ⊕(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
-    @assert  ⟒(P) == ⟒(Q)
-    @assert eltype(p) == eltype(q)
+    #@assert  ⟒(P) == ⟒(Q)
+    #@assert eltype(p) == eltype(q)
 
     Polynomials.isconstant(p)  && return q + p[0]
     Polynomials.isconstant(q)  && return p + q[0]    
@@ -446,8 +447,8 @@ end
 
 function ⊗(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
-    @assert  ⟒(P) == ⟒(Q)
-    @assert eltype(p) == eltype(q)
+    #@assert  ⟒(P) == ⟒(Q)
+    #@assert eltype(p) == eltype(q)
 
     Polynomials.isconstant(p)  && return q * p[0]
     Polynomials.isconstant(q)  && return p * q[0]    
@@ -461,8 +462,8 @@ end
 
 function _divrem(num::P, den::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
-    @assert  ⟒(P) == ⟒(Q)
-    @assert eltype(num) == eltype(den)
+    #@assert  ⟒(P) == ⟒(Q)
+    #@assert eltype(num) == eltype(den)
 
     p1 = convert(Polynomial, num)
     p2 = convert(Polynomial, den)
@@ -471,6 +472,7 @@ function _divrem(num::P, den::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
 end
 
+## Modifications needed due to `N` in the type parameter
 
 function Polynomials.truncate(p::P;
                                rtol::Real = Base.rtoldefault(real(T)),
@@ -506,36 +508,6 @@ Polynomials.chop!(p::P;
                   rtol::Real = Base.rtoldefault(real(T)),
                   atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}} = error("`chop!` not defined")
 
-
-# function Base.:*(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
-
-#     Polynomials.isconstant(p) && return q * p[0]
-#     Polynomials.isconstant(q) && return p * q[0]
-#     p.var != q.var && throw(ArgumentError("Variables don't  match"))
-
-#     R = promote_type(P, Q)
-
-#     if hasmethod(iterate, (Linearization{R, Val{:diagonal}}, ))
-#         linearization_product(p, q)
-#     elseif hasmethod(iterate, (Linearization{R, Val{:pq}}, ))
-#         linearization_product_pq(p, q)        
-#     else
-#         # gives poor error message if ⟒(R) not available
-#         convert(⟒(R), convert(Polynomial, p) * convert(Polynomial, q))
-#     end
-
-
-        
-    #     R = promote_type(eltype(p), eltype(q))
-    #     pq = convert(Polynomial, p) * convert(Polynomial, q)
-    #     convert(⟒(P){R}, pq)
-    # else
-        
-    #     p1,q1 = promote(p, q)
-    #     p1 * q1
-        
-    # end
-#end
 
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
 # find expression for p' in terms of p
@@ -604,24 +576,6 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCCOP}
     return  ∫p
 end
 
-
-
-
-
-
-
-
-
-
-##           H   Hₑ  Lᵅ   Bᵅ   Gᵅ  Jᵅᵝ
-## scalar    ✓   ✓   ✓   ✓    ✓   ✓
-## p+q       ✓   ✓   ✓   ✓    ✓   ✓
-## p*q
-## Pᵅ -> Pᵝ  -   -    ✓   ✓    ✓   x (unless α, β > 0 
-## pᵅ -> P   x   ✓   ✓   ✓    ✓   x (unless α, β > 0 
-## P -> Pᵅ   x   ✓   ✓   ✓    ✓   x (unless α, β > 0  
-## p'
-## ∫p        ✓   ✓   ✓   ✓    ✓   x (unless  α,β > 0)  
 
 
 

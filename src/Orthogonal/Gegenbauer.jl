@@ -1,11 +1,5 @@
-@register1 dGeg
-export dGeg
-abcde(::Type{<:dGeg{α}}) where α = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(2α+1)+2*(-1),0+0))
-#ĉn(P::Type{<:dCheb}, ::Val{0}) = one(eltype(P))/4
-#ĉn(P::Type{<:dCheb}, ::Val{1}) = Inf
-
 ## Gegenbauer Polynomials
-@register1 Gegenbauer
+@register1 Gegenbauer AbstractCCOP1
 export  Gegenbauer
 
 """
@@ -31,19 +25,6 @@ Gegenbaeur
 
 basis_symbol(::Type{<:Gegenbauer{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1,1)
-weight_function(::Type{<:Gegenbauer{α}}) where {α} = x -> (1-x^2)^(α-1/2)
-generating_function(::Type{<:Gegenbauer{α}}) where {α} = (t,x) -> begin
-    1/(1-2x*t +t^2)^α
-end
-function classical_hypergeometric(::Type{<:Gegenbauer{α}}, n, x) where {α}
-    (α > -1/2 && !iszero(α)) || throw(ArgumentError("α > -1/2 and α ≠ 0 is necessary"))
-
-    as = (-n, 2α+n)
-    bs = (α + 1/2,)
-    return Pochhammer_factorial(2α,n) * pFq(as, bs, (1-x)/2)
-          
-end
-
 
 abcde(::Type{<:Gegenbauer{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(2α+1),0))
 
@@ -75,13 +56,32 @@ function k1k_1(P::Type{<:Gegenbauer{α}}, k) where {α}
     return val
     
 end
+
 function norm2(::Type{<:Gegenbauer{α}}, n) where{α}
     pi * 2^(1-2α) * gamma(n + 2α) / (gamma(n+1) * (n+α) * gamma(α)^2)
 end
+weight_function(::Type{<:Gegenbauer{α}}) where {α} = x -> (1-x^2)^(α-1/2)
+generating_function(::Type{<:Gegenbauer{α}}) where {α} = (t,x) -> begin
+    1/(1-2x*t +t^2)^α
+end
+function classical_hypergeometric(::Type{<:Gegenbauer{α}}, n, x) where {α}
+    (α > -1/2 && !iszero(α)) || throw(ArgumentError("α > -1/2 and α ≠ 0 is necessary"))
+
+    as = (-n, 2α+n)
+    bs = (α + 1/2,)
+    return Pochhammer_factorial(2α,n) * pFq(as, bs, (1-x)/2)
+          
+end
+
 
 
 # overrides
+#An(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = 2*one(eltype(P))*(n+α)/(n+1)
+#Bn(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))
+#Cn(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = -(one(eltype(P)) *  (n - 1 + 2α))/(n+1)
+
 Bn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where  {α}  =  zero(eltype(P))
+Cn(P::Type{<:Gegenbauer{α}}, ::Val{1}) where  {α}  =  one(eltype(P))/2/(α+2)
 b̂n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2) 
 ĉn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2) 
 

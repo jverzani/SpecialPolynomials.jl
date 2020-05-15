@@ -1,5 +1,5 @@
 ## Jacobi Polynomials
-@register2 Jacobi
+@register2 Jacobi AbstractCCOP2
 export Jacobi
 
 """
@@ -27,22 +27,6 @@ Jacobi
 
 basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
 Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} = Polynomials.Interval(-1, 1, β >= 0, α >= 0)
-weight_function(::Type{<:Jacobi{α, β}}) where {α, β} = x -> (1-x)^α *  (1+x)^β
-generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
-    R = sqrt(1 - 2x*t+t^2)
-    2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
-end
-function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
-
-    (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
-    
-    as = (-n, n+α+β+1)
-    bs = (α+1,)
-    
-    Pochhammer_factorial(α+1,n) * pFq(as, bs, (1 - x)/2)
-end
-
-
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
 #kn =  1/2^n ⋅ choose(2n+α+β, n) = (2n+α+β)_n / (2^b  n!)
@@ -96,6 +80,23 @@ function k1k_1(P::Type{<:Jacobi{α,β}}, n) where {α, β}
     return val
 end
 
+weight_function(::Type{<:Jacobi{α, β}}) where {α, β} = x -> (1-x)^α *  (1+x)^β
+generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
+    R = sqrt(1 - 2x*t+t^2)
+    2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
+end
+function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
+
+    (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
+    
+    as = (-n, n+α+β+1)
+    bs = (α+1,)
+    
+    Pochhammer_factorial(α+1,n) * pFq(as, bs, (1 - x)/2)
+end
+
+
+
 function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
     α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
     2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
@@ -104,15 +105,8 @@ end
 # overrides
 Bn(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α, β} = iszero(α+β) ? (α-β)*one(eltype(P))/2 : (α-β)*one(eltype(P))/(2(α+β+2))
 Cn(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = -one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 2)^2*(α + β + 3))
-# function Cn(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β} 
-#     val = -n*(n + α + β)*(-4*n*(n + α + β) + 4*α + 4*β + (α - β)^2 - (α + β + 2)^2 + 4)/((2*n + α + β)^2*(2*n + α + β - 1)*(2*n + α + β + 1))
-#     val *= k1k_1(P, 1)
-#     val
-# end
 
 b̂n(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α,β} = one(eltype(P)) * NaN
 ĉn(P::Type{<:Jacobi}, ::Val{0})  = zero(eltype(P))
 ĉn(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 1)*(α + β + 2)^2*(α + β + 3))
 
-# conversion through convert_ccop is FAILING
-Base.convert(::Type{P}, q::Jacobi) where {α, β, P <:Jacobi{α,β}}= q(variable(P))

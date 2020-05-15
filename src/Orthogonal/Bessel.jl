@@ -1,5 +1,5 @@
 ## Bessel
-@register1 Bessel
+@register1 Bessel AbstractCCOP1
 
 
 """
@@ -33,13 +33,6 @@ Bessel
 export Bessel
 basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
-weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
-generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")
-function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
-    as = (-n, n + α - 1)
-    bs = ()
-    pFq(as, bs, -x/2) #/ kn
-end
 
 abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α, 2))
 
@@ -72,6 +65,14 @@ function k1k_1(P::Type{<:Bessel{α}}, k) where {α}
     return val
 end
 norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
+
+weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
+generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")
+function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
+    as = (-n, n + α - 1)
+    bs = ()
+    pFq(as, bs, -x/2) #/ kn
+end
 
 ## Overrides XXX fails wih 1 and 2
 #Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")

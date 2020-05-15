@@ -1,5 +1,5 @@
 ## Legendre Polynomials = Gegenbauer{1/2}
-@register0 Legendre
+@register0 Legendre AbstractCCOP0
 export Legendre
 
 
@@ -46,16 +46,17 @@ Legendre
 
 basis_symbol(::Type{<:Legendre})  = "L"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
-weight_function(::Type{<:Legendre})  = x -> one(x)
-generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
-
 
 abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
 
 kn(P::Type{<:Legendre}, n::Int)  = kn(Gegenbauer{1/2, eltype(P)}, n)
 k1k0(P::Type{<:Legendre}, n::Int) = k1k0(Gegenbauer{1/2, eltype(P)}, n)
 k1k_1(P::Type{<:Legendre}, n::Int) = k1k_1(Gegenbauer{1/2, eltype(P)}, n)
+
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
+weight_function(::Type{<:Legendre})  = x -> one(x)
+generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
+
 
 # overrides
 Bn(P::Type{<:Legendre}, ::Val{0}) = Bn(Gegenbauer{1/2, eltype(P)}, Val(0))
@@ -85,13 +86,3 @@ function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
 
 end
 
-
-@register0 MonicLegendre
-
-
-basis_symbol(::Type{<:MonicLegendre})  = "L̃"
-abcde(::Type{<:MonicLegendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
-
-Bn(P::Type{<:MonicLegendre}, ::Val{0}) = Bn(Gegenbauer{1/2, eltype(P)}, Val(0))
-b̂n(P::Type{<:MonicLegendre}, ::Val{0}) = b̂n(Gegenbauer{1/2, eltype(P)}, Val(0))
-ĉn(P::Type{<:MonicLegendre}, ::Val{0}) = ĉn(Gegenbauer{1/2, eltype(P)}, Val(0))

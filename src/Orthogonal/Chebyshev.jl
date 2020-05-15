@@ -1,6 +1,6 @@
 
 # Chebyshev Polynomials of first and second kind
-@register0 Chebyshev
+@register0 Chebyshev AbstractCCOP0
 export Chebyshev
 """
    Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
@@ -170,7 +170,7 @@ end
 ## --------------------------------------------------
 ##
 
-@register0 ChebyshevU
+@register0 ChebyshevU AbstractCCOP0
 export ChebyshevU
 """
     ChebyshevU{T}

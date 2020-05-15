@@ -1,4 +1,4 @@
-# Compare with tabulated values
+# Compare with tabulated values,  classical hypergeometric formulas
 
 
 
@@ -23,6 +23,16 @@
             @test p2(x) ≈ 1 + 2(α+1)*(x/β) + (α+1)*(α+2)*(x/β)^2
             @test p3(x) ≈ 1 + 3(α+2)*(x/β) + 3(α+2)*(α+3)*(x/β)^2 +  (α+2)*(α+3)*(α+4)*(x/β)^3
             @test p4(x) ≈ 1 + 4(α+3)*(x/β) + 6(α+3)*(α+4)*(x/β)^2 +  4(α+3)*(α+4)*(α+5)*(x/β)^3 + (α+3)*(α+4)*(α+5)*(α+6)*(x/β)^4
+        end
+    end
+
+    
+    x = variable(Polynomial)
+    for  α  ∈ (1/4,1/2,3/4)
+        P =  Bessel{α}
+        for n in 2:5
+            p  = basis(P,n)
+            @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
         end
     end
 
@@ -82,6 +92,14 @@ end
         @test p4(x) ≈ 16x^4 - 48x^2 + 12
     end
 
+    x = variable(LaurentPolynomial)
+    P =  Hermite
+    for n in 2:5
+        p  = basis(P,n)
+        @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+    end
+
+
 end
 
 @testset "ChebyshevHermite" begin
@@ -100,6 +118,15 @@ end
         @test p4(x) ≈ x^4 - 6x^2 + 3
     end
 
+    x = variable(LaurentPolynomial)
+    P =  ChebyshevHermite
+    for n in 2:5
+        p  = basis(P,n)
+        @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+    end
+
+
+    
 end
 
 @testset "Legendre" begin
@@ -161,6 +188,14 @@ end
         @test p4(x) ≈ 1/24 * (x^4 - 16x^3 + 72x^2 - 96x + 24)
     end
 
+    x = variable(Polynomial)
+    for  α  ∈ (0, 1/4,1/2,3/4)
+        P =  Laguerre{α}
+        for n in 2:5
+            p  = basis(P,n)
+            @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+        end
+    end
 
 end
 
@@ -182,6 +217,16 @@ end
             @test p3(x) ≈ -2α * (1 + α) *x + 4/3*α*(1+α) * (2 + α)*x^3
         end
     end
+
+    x = variable(Polynomial)
+    for  α  ∈ (1/4,1/2,3/4, 1)
+        P =  Gegenbauer{α}
+        for n in 2:5
+            p  = basis(P,n)
+            @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+        end
+    end
+
 end
 
 @testset "Jacobi" begin
@@ -203,5 +248,15 @@ end
         end
 
     end
+
+    x = variable(Polynomial)
+    for  (α,β)  ∈ ((1/2,1/2),  (-1/2,1/2), (1/2,-1/2), (-1/2, -1/2))
+        P =  Jacobi{α,β}
+        for n in 2:5
+            p  = basis(P,n)
+            @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+        end
+    end
+            
 
 end

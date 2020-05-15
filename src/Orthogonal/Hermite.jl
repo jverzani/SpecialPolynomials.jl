@@ -1,5 +1,5 @@
 ## Hermite
-@register0 Hermite
+@register0 Hermite AbstractCCOP0
 export Hermite
 
 
@@ -13,16 +13,6 @@ Hermite
 
 basis_symbol(::Type{<:Hermite}) = "H"
 Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
-weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
-generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
-function classical_hypergeometric(::Type{<:Hermite}, n, x)
-    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
-    bs = ()
-    (2x)^n * pFq(as, bs, -1/x^2)
-end
-
-
-
 
 abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
 
@@ -39,10 +29,22 @@ function k1k_1(P::Type{<:Hermite}, k)
     val = 4*one(eltype(P))
     return val
 end
+
 norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
+weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
+generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
+function classical_hypergeometric(::Type{<:Hermite}, n, x)
+    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
+    bs = ()
+    (2x)^n * pFq(as, bs, -inv(x)^2)
+end
+
+
+
 
 ## Overrides
 # Use override here, as we get  0/0 in  default  defn
+An(P::Type{<:Hermite}, n::Int) = 2*one(eltype(P))
 Bn(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Hermite}, n::Int) = 2*n*one(eltype(P))
 
@@ -137,12 +139,12 @@ function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
     R = eltype(one(T)/1)
     d = degree(p)
     qs = zeros(R, d+2)
-    q = ⟒(P)(qs, p.var)
 
     for i in 0:d
-        q[i+1] = p[i]/(2(i+1))
+        qs[i+2] = p[i]/(2(i+1))
     end
 
+    q = ⟒(P)(qs, p.var)
     q = q - q(0) + R(C)
 
     return q
@@ -152,22 +154,8 @@ end
 ##
 ## --------------------------------------------------
 ##
-@register0 dChebyshevHermite
-export dChebyshevHermite
-
-
-
-## ChebyshevHermite
-@register0 ChebyshevHermite
+@register0 ChebyshevHermite AbstractCCOP0
 export ChebyshevHermite
-abcde(::Type{<:dChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
-
-kn(P::Type{<:dChebyshevHermite}, n::Int) =  n+1
-k1k0(P::Type{<:dChebyshevHermite}, n)  = (n+2)/(n+1)
-k1k_1(P::Type{<:dChebyshevHermite}, n) =  (n+2)/(n)
-
-
-
 """
     ChebyshevHermite
 
@@ -176,13 +164,6 @@ ChebyshevHermite
 
 basis_symbol(::Type{<:ChebyshevHermite}) = "Hₑ"
 Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
-weight_function(::Type{ChebyshevHermite{T}}) where {T} = x -> exp(-x^2/2)
-generating_function(::Type{<:ChebyshevHermite}) = (t, x)  -> exp(t*x - t^2/2)
-function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
-    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
-    bs = ()
-    (x)^n * pFq(as, bs, -1/x^2)
-end
 
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
 abcde(::Type{<:ChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
@@ -191,7 +172,16 @@ kn(P::Type{<:ChebyshevHermite}, n::Int) =  one(eltype(P))
 k1k0(P::Type{<:ChebyshevHermite}, k)  = one(eltype(P))
 k1k_1(P::Type{<:ChebyshevHermite}, k) =  one(eltype(P))
 
+weight_function(::Type{ChebyshevHermite{T}}) where {T} = x -> exp(-x^2/2)
+generating_function(::Type{<:ChebyshevHermite}) = (t, x)  -> exp(t*x - t^2/2)
+function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
+    2^(-n/2)*classical_hypergeometric(Hermite, n,  x/sqrt(2))
+end
 
+## Overrides
+#An(P::Type{<:ChebyshevHermite}, n::Int) = one(eltype(P))
+#Bn(P::Type{<:ChebyshevHermite}, n::Int) = zero(eltype(P))
+#Cn(P::Type{<:ChebyshevHermite}, n::Int) = -one(eltype(P))*n
 
 ##
 ## --------------------------------------------------

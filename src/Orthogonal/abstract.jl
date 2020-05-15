@@ -5,10 +5,11 @@
 #
 # We use `Vector{T}` with N =  d+1 to store  a degree d  polynomial - no trailing zeros permitted.
 #
-macro register0(name)
+macro register0(name, parent)
     poly = esc(name)
+    parent_type = esc(parent)
     quote
-        struct $poly{T,N} <: AbstractCCOP0{T,N}
+        struct $poly{T,N} <: $parent_type{T,N}
             coeffs::Vector{T}
             var::Symbol
             function $poly{T,N}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {T, N}
@@ -54,10 +55,11 @@ macro register0(name)
     end
 end
 
-macro register1(name)
+macro register1(name,parent)
     poly = esc(name)
+    parent_type = esc(parent)
     quote
-        struct $poly{α,T,N} <: AbstractCCOP1{α,T,N}
+        struct $poly{α,T,N} <: $parent_type{α,T,N}
             coeffs::Vector{T}
             var::Symbol
             
@@ -105,10 +107,11 @@ macro register1(name)
     end
 end
 
-macro register2(name)
+macro register2(name, parent)
     poly = esc(name)
+    parent_type = esc(parent)
     quote
-        struct $poly{α,β,T,N} <: AbstractCCOP2{α,β,T,N}
+        struct $poly{α,β,T,N} <: $parent_type{α,β,T,N}
             coeffs::Vector{T}
             var::Symbol
             
