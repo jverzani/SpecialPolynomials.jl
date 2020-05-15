@@ -41,7 +41,7 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
                                                Q <: ConvertibleTypes}
 
     d = degree(p)
-    T,S = eltype(one(Q)), eltype(p)
+    T,S = eltype(one(Q)), eltype(p)  #
     R = promote_type(T,S)
     
     as = zeros(R, 1+d)
@@ -51,7 +51,7 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
     for j in  0:d
 
         λ = λⱼⱼ
-        λⱼⱼ *= k1k0(P,j,R) / k1k0(Q,j,R)
+        λⱼⱼ *= k1k0(P,j) / k1k0(Q,j)
 
         pⱼ = p[j]
         iszero(pⱼ) && continue
@@ -62,12 +62,11 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
         C̃ⁱ⁺²ⱼ, C̃ⁱ⁺¹ⱼ = zero(R), C̃ʲⱼ  # for recursion starting  with C̃ʲ⁺¹ⱼ, C̃ʲⱼ
         for i in j-1:-1:0
 
-            λ *= k1k0(Q,i,R)
-            
+            λ *= k1k0(Q,i)
+
             # c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ) = 0
             c₀,c₁,c₂ = connection_m(P, Q, i, j)
             C̃ⁱⱼ = iszero(c₀) ? zero(R) : -one(R)*(c₁*C̃ⁱ⁺¹ⱼ + c₂*C̃ⁱ⁺²ⱼ) / c₀
-
             as[1+i] += pⱼ * (λ * C̃ⁱⱼ)
 
             C̃ⁱ⁺²ⱼ, C̃ⁱ⁺¹ⱼ = C̃ⁱ⁺¹ⱼ, C̃ⁱⱼ
@@ -93,7 +92,7 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
     c0 *= (d̄ + 2a⋅m  + 2a)^2
 
     c1 = -d⋅b⋅n⋅d̄ + 2d⋅a⋅m²⋅b + d⋅b⋅d̄ + 2d⋅a⋅m⋅b + 2d⋅ē⋅n⋅a
-    c1 += d⋅d̄⋅e + 2d⋅d̄⋅b⋅m - m⋅b⋅d̄² - e⋅d̄² - 4a²⋅m²⋅e - m²⋅a⋅b⋅d̄ + b⋅n⋅d̄⋅a - 2e⋅d̄⋅a
+    c1 += d⋅d̄⋅ē + 2d⋅d̄⋅b⋅m - m⋅b⋅d̄² - e⋅d̄² - 4a²⋅m²⋅e - m²⋅a⋅b⋅d̄ + b⋅n⋅d̄⋅a - 2e⋅d̄⋅a
     c1 += -4a²⋅m⋅e - 4e⋅d̄⋅a⋅m + 2m²⋅a²⋅ē + 2ē⋅a²⋅n² - 2ē⋅a²⋅n - m⋅a⋅b⋅d̄ + 2m⋅d̄⋅ē⋅a
     c1 += 2m⋅ē⋅a² - b⋅n²⋅d̄⋅a
     c1 *= (d̄ + 2a⋅m + 2a) ⋅ (m + 1) ⋅  (d̄ + a + 2a⋅m) ⋅ (d̄ + 3a + 2a⋅m)

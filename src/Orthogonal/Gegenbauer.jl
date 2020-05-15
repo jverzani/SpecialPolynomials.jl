@@ -1,3 +1,9 @@
+@register1 dGeg
+export dGeg
+abcde(::Type{<:dGeg{α}}) where α = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(2α+1)+2*(-1),0+0))
+#ĉn(P::Type{<:dCheb}, ::Val{0}) = one(eltype(P))/4
+#ĉn(P::Type{<:dCheb}, ::Val{1}) = Inf
+
 ## Gegenbauer Polynomials
 @register1 Gegenbauer
 export  Gegenbauer
@@ -46,15 +52,18 @@ function kn(::Type{<:Gegenbauer{α}}, n::Int, ::Type{S}=Float64) where {α,S}
     SpecialPolynomials.Pochhammer_factorial(α, n) * 2^n
 end
 
-function k1k0(::Type{<:Gegenbauer{α}}, k, ::Type{S}=Float64) where {S,α}
+function k1k0(P::Type{<:Gegenbauer{α}}, k) where {α}
+    S = eltype(P)
     iszero(k) && return 2*one(S)*α
     val = one(S)
     val *= 2(α+k)
     val /= k + 1
     val
 end
-function k1k_1(P::Type{<:Gegenbauer{α}}, k, ::Type{S}=Float64) where {S,α}
+function k1k_1(P::Type{<:Gegenbauer{α}}, k) where {α}
     @assert k > 0
+    S = eltype(P)
+    
     val = one(S)
     if k == 1
         val *= 2α*(α+1)
@@ -62,7 +71,9 @@ function k1k_1(P::Type{<:Gegenbauer{α}}, k, ::Type{S}=Float64) where {S,α}
         val *= 4(α+k)*(α+k-1)
         val /= (k+1)*k
     end
+    
     return val
+    
 end
 function norm2(::Type{<:Gegenbauer{α}}, n) where{α}
     pi * 2^(1-2α) * gamma(n + 2α) / (gamma(n+1) * (n+α) * gamma(α)^2)
@@ -70,9 +81,9 @@ end
 
 
 # overrides
-Bn(::Type{<:Gegenbauer{α}}, ::Val{0}, ::Type{S}) where  {α,S}  =  zero(S)
-b̂n(::Type{<:Gegenbauer{α}}, n::Int, ::Type{S}) where {α,S} = zero(S)# one(S) *  4/α/(α+2) 
-ĉn(::Type{<:Gegenbauer{α}}, ::Val{0}, ::Type{S}) where {α,S} = zero(S) #one(S) *  4/α/(α+2) 
+Bn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where  {α}  =  zero(eltype(P))
+b̂n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2) 
+ĉn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2) 
 
 
 # # connection Cᵅ <--> Cᵝ

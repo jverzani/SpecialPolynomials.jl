@@ -57,14 +57,14 @@ function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
 end
 
-
 abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
 
-function kn(::Type{<:Laguerre{α}}, n::Int, ::Type{S}=Float64)  where {α,S}
-    (-one(S))^n/Γ(1+n)
+function kn(P::Type{<:Laguerre{α}}, n::Int)  where {α}
+    (-one(eltype(P)))^n/factorial(n) #Γ(1+n)
 end
-k1k0(::Type{<:Laguerre{α}}, k, ::Type{S}=Float64) where {S,α} = -one(S)/(k+1)
-k1k_1(::Type{<:Laguerre{α}}, k, ::Type{S}=Float64) where {S,α} =  one(S)/(k+1)/k
+k1k0(P::Type{<:Laguerre{α}}, k) where {α} = k <= 0  ? -one(eltype(P)) : -one(eltype(P))/(k+1)
+k1k_1(P::Type{<:Laguerre{α}}, k) where {α} =  k <= 0  ? zero(eltype(P)) : one(eltype(P))/(k+1)/k
+
 function norm2(::Type{<:Laguerre{α}}, n) where{α}
     iszero(α) && return one(α)
     gamma(n + α + 1) / gamma(n+1)
@@ -98,5 +98,5 @@ end
 
 
 
-Base.convert(::Type{Q}, p::P) where  {α,Q<:Laguerre{α},β,T,N,P<:Laguerre{β,T,N}} = connection(Q,  p)
+#Base.convert(::Type{Q}, p::P) where  {α,Q<:Laguerre{α},β,T,N,P<:Laguerre{β,T,N}} = connection(Q,  p)
 

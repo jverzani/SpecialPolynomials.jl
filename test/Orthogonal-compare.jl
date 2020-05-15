@@ -196,7 +196,6 @@ end
                              )
 
         P = Jacobi{alpha_beta..., T}
-        @show Q
         for i in  2:6
             p = basis(P,i)
             q = basis(Q,i)

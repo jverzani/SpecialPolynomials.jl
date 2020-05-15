@@ -2,12 +2,6 @@ abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} en
 abstract type OrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 abstract type DiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 
-## fixme
-## bessel 2
-## structural for Chebyshevs
-## convert(Hermite, q)
-## connectino J <-> J
-
 
 """
     AbstractCCOP{T}
@@ -72,12 +66,12 @@ abcde(::Type{<:AbstractCCOP}) = throw(MethodError())
 leading_term(P::Type{<:AbstractCCOP},  n::Int) =  kn(P, n)
 
 # Set defaults to be monic
-kn(::Type{<:ConvertibleTypes},  n, ::Type{S}=Float64) where{S} = one(S)
+kn(::Type{P},  n) where{P <: ConvertibleTypes} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
 
 # k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i, ::Type{S}=Float64) where {P<:ConvertibleTypes, S} =  kn(P,i+1,S)/kn(P,i,S)
+k1k0(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i)
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{P},  i, ::Type{S}=Float64) where {P<:ConvertibleTypes, S} =  kn(P,i+1,S)/kn(P,i-1,S)
+k1k_1(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i-1)
 
 monic(p::P) where {T,N,P <: AbstractCCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
 
@@ -199,7 +193,7 @@ function eval_ccop(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {T,N,S}
             Δ0 = :(a)
             Δ1 = :(b)
         end
-        c0 + c1* muladd(x, An(P,0,eltype(SS)), Bn(P,0))
+        c0 + c1* muladd(x, An(P,0), Bn(P,0))
     else
         clenshaw_eval(P, cs, x)
     end
@@ -215,7 +209,7 @@ function clenshaw_eval(P::Type{<:AbstractCCOP{T,N}}, cs, x::S) where {N, T,S}
     Δ0 = cs[end - 1]
     Δ1 = cs[end]
     @inbounds for i in N-1:-1:2
-        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1,eltype(SS)), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
+        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
     end
 
     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
@@ -227,52 +221,52 @@ end
 ##
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
-function  An(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function  An(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    _An(P, a,b,c,d,e ,n, S)
+    _An(P, a,b,c,d,e ,n) *  k1k0(P, n)
 end
             
-@generated function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) where {S}
-    quote
-        k1k0(P, n, S)
-    end
+@inline function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
+    one(eltype(P))
 end
 
-function Bn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function Bn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    _Bn(P, a,b,c,d,e ,n, S)
+    _Bn(P, a,b,c,d,e ,n) * k1k0(P,n)
 end
 
 
-function _Bn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) where {S}
+function _Bn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
 
+    S = eltype(P)
+    
     num = (2b*n*(a*n+d-a)-e*(-d+2a))
     den = (d+2a*n) * (d-2a+2a*n)
 
-    iszero(den) && return Bn(P, Val(n), S)  
+    iszero(den) && return Bn(P, Val(n))  
     
     val = one(S) * num / den
-    val *=  k1k0(P,n,S)
     
     val
 end
 
-function Cn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function Cn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    _Cn(P, a,b,c,d,e,n,S)
+    _Cn(P, a,b,c,d,e,n) *  k1k_1(P, n)
 end
 
-function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int, ::Type{S}=Float64) where {S}
+function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
 
+    S = eltype(P)
+    
     numa = (a*n+d-2a) * n * (4c*a-b^2) + 4a^2*c -a*b^2 + a*e^2 - 4*a*c*d
     numa += d*b^2 - b*e*d + d^2*c
     num = -numa * (a*n + d - 2a) * n
     den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
 
-    iszero(den) && return Cn(P, Val(n), S)
+    iszero(den) && return Cn(P, Val(n))
     
     val = one(S) * num  / den
-    val *= k1k_1(P, n, S)
     
         # oops, this is the discrete case
 #        val *= -((n-1)*(d+a*n-a)*(a*n*d-d*b-a*d+a^2*n^2-2a^2*n+4c*a+a^2+2e*a-b^2)-d*b*e+d^2*c+a*e^2)
@@ -285,104 +279,125 @@ end
 
 # an, bn, cn
 # x⋅pn = [an,bn,cn] ⋅ [p_{n+1},p_n,p_{n-1}]
-function an(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    1/An(P,n,S)
+function an(P::Type{<:AbstractCCOP}, n::Int)
+    1/An(P,n)
 end
 
-function bn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    -Bn(P,n,S)/An(P,n,S)
+function bn(P::Type{<:AbstractCCOP}, n::Int)
+    -Bn(P,n)/An(P,n)
 end
 
-function cn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    Cn(P,n,S)/An(P,n,S)
+function cn(P::Type{<:AbstractCCOP}, n::Int)
+    Cn(P,n)/An(P,n)
 end
 
 # αn, βn,γn
 # σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-function αn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function αn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
+    S = eltype(P)
+
     num = a * n
     val = one(S) *  num
     
-    val /= k1k0(P,n, S) 
+    val /= k1k0(P,n) 
     return val
 end
 
-function βn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function βn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
+    S = eltype(P)
+
     num = -n*(a*n+d-a)*(2e*a-d*b)
     den = (d+2*a*n)*(d-2a+2a*n)
-    iszero(den) &&  return βn(P, Val(n), S)
+
+    iszero(den) &&  return βn(P, Val(n))
+
     val = one(S) *  num  / den
+
     return val
 end    
 
 
-function γn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function γn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
     num = ((n-1) * (a*n + d - a) * (4c*a - b^2) + a*e^2 + d^2*c - b*e*d)
     num *= (a*n + d - a) * (a*n + d - 2a) * n
     den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
-    iszero(den) &&  return γn(P, Val(n), S)
+    iszero(den) &&  return γn(P, Val(n))
     
     val = one(S) * num / den
-    val *= k1k0(P,n-1, S)
+    val *= k1k0(P,n-1)
     
     return val
 end
 
-
-
-# αᴵn, βᴵn, γᴵn  (α^*,...)
-# x⋅pn' = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1},p'_n,p'_{n-1}]
-function αᴵn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    a,b,c,d,e = abcdeᴵ(P)
-    1/_An(P,a,b,c,d,e,n,S)
-end
-
-function βᴵn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    a,b,c,d,e = abcdeᴵ(P)
-    -(_Bn(P,a,b,c,d,e,n,S)/_An(P,a,b,c,d,e,n,S))
-end
-
-function γᴵn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
-    a,b,c,d,e = abcdeᴵ(P)
-    _Cn(P,a,b,c,d,e,n,S)/_An(P,a,b,c,d,e,n,S)
-end
 
 
 # for integration formulas
 # ân, b̂n, ĉn
 # pn = [ân, b̂n, ĉn] ⋅ [p'_{n+1},p'_n,p'_{n-1}]
-function ân(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function ân(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
     val = one(S)
     val /= n+1
-    val /= k1k0(P,n, S)
+    val /= k1k0(P,n)
     return val
 end
 
-function b̂n(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function b̂n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
+    S = eltype(P)
     
     num = (2e*a - d*b)
     den = (d+2a*n)*(d-2a+2a*n)
-    iszero(den) && return b̂n(P, Val(n), S)
+    iszero(den) && return b̂n(P, Val(n))
         val = one(S) * num/ den
     return val
     
 end
 
-function ĉn(P::Type{<:AbstractCCOP}, n::Int, ::Type{S}=Float64) where {S}
+function ĉn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    num = ((n-1)*(a*n+d-a)*(4c*a-b^2)+a*e^2+d^2*c-b*e*d)*a*n
-    den =  (d-2a+2a*n)^2*(2a*n-3a+d)*(2a*n-a+d)
-    iszero(den)  &&  return ĉn(P, Val(n),  S)
+    S = eltype(P)
     
-    val = one(S)  *  num / den        
-    val *= k1k0(P,n-1,S)
+    num = ((n-1)*(a*n+d-a)*(4c*a-b^2)+a*e^2+d^2*c-b*e*d)*a*n
+    den =  (d-2a+2a*n) * (d-2a+2a*n) * (2a*n-3a+d) * (2a*n-a+d)
+    iszero(den)  &&  return ĉn(P, Val(n))
+    val = one(S)  *  num / den
+    n > 0 && (val *= k1k0(P,n-1))
     return val
 end
+
+# kn(dP,n) = (n+1)*kn(P,n+1)
+
+# αᴵn, βᴵn, γᴵn  (α^*,...)
+# x⋅pn' = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1},p'_n,p'_{n-1}]
+function αᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    a,b,c,d,e = abcdeᴵ(P)
+    Aᴵn = _An(P,a,b,c,d,e,n) * (n+2)/(n+1)*k1k0(P,n+1) # . *  k1k0(dP,n) = k(dP,n+1)/k(dP,n) = (n+2)kn(P,n+1)/((n+1)kn(P,n+1) = (n+2)/(n+1)*k1k0(P,n+1)
+    1/Aᴵn
+end
+
+function βᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    a,b,c,d,e = abcdeᴵ(P)
+    Aᴵn = _An(P,a,b,c,d,e,n) # * k1k0(dP,n)
+    Bᴵn = _Bn(P,a,b,c,d,e,n) # * k1k0(dP,n)
+   
+    - Bᴵn / Aᴵn 
+end
+
+function γᴵn(P::Type{<:AbstractCCOP}, n::Int)
+    a,b,c,d,e = abcdeᴵ(P)
+    Aᴵn = _An(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n)
+    Cᴵn = _Cn(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n-1)
+    Cᴵn/Aᴵn * (n+1)/n * k1k0(P, n)     # k(dp,n)/k(dp,n-1) = (n+1)k(P,n+1)/(n k(P,n)) = (n+1)/n * k1k0(n)
+end
+
 
 ##
 ## --------------------------------------------------
@@ -397,9 +412,10 @@ function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynom
 end
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
 
-    if constructorof(Q) == constructorof(P)
-        a,b,c,d,e = abcde(P)
-        ā,b̄,c̄,d̄,ē = abcde(Q)
+    a,b,c,d,e = abcde(P)
+    ā,b̄,c̄,d̄,ē = abcde(Q)
+    
+    if (a,b,c) == (ā,b̄,c̄)  &&  !(Q <: Hermite || P  <: Hermite)  # σ ==  σ̄   and not Hermite
         _convert_ccop(Q, p)
     else
         T = eltype(Q)
@@ -534,7 +550,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCCOP}
     as = zeros(R, d)
     ps = R.(coeffs(p))
     for n = d-1:-1:1
-        a,b,c = ân(P,n,R),b̂n(P,n,R),ĉn(P,n,R)
+        a,b,c = ân(P,n),b̂n(P,n),ĉn(P,n)
         if !iszero(a)
             pn = ps[1+n+1]
             as[1+n] = pn/a
@@ -542,7 +558,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCCOP}
             ps[1+n-1] -= pn*c/a
         end
     end
-    a,b,c = ân(P,0,R),b̂n(P,0,R),ĉn(P,0,R)
+    a,b,c = ân(P,0),b̂n(P,0),ĉn(P,0)
     p1 = ps[1+1]
     as[1+0] = p1/a
 
@@ -554,9 +570,7 @@ end
 function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCCOP}
     
     T,S = eltype(p), typeof(C)
-    @show T,S
     R = promote_type(typeof(one(T) / 1), S)
-    @show P, ⟒(P)
     Q = ⟒(P){R}
     #if hasnan(p) || hasnan(C)
     #    error("XXX nan")
@@ -576,10 +590,10 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCCOP}
     as[2] = pd*c₁
     @inbounds for d in 1:n
         pd = p.coeffs[d+1]
-        as[1 + d + 1] += pd * ân(Q, d, S)
-        as[1 + d]     += pd * b̂n(Q, d, S)
+        as[1 + d + 1] += pd * ân(Q, d)
+        as[1 + d]     += pd * b̂n(Q, d)
         if  d > 0
-            as[1 + d - 1] += pd * ĉn(Q, d, S)
+            as[1 + d - 1] += pd * ĉn(Q, d)
         end
     end
 
@@ -608,145 +622,6 @@ end
 ## P -> Pᵅ   x   ✓   ✓   ✓    ✓   x (unless α, β > 0  
 ## p'
 ## ∫p        ✓   ✓   ✓   ✓    ✓   x (unless  α,β > 0)  
-
-
-using  Test
-function testit()
-    Ps  = (Hermite,
-           ChebyshevHermite,
-           Laguerre{0}, Laguerre{1},
-           Gegenbauer{1/2}, Gegenbauer{2},
-           ChebyshevFirst, ChebyshevSecond,
-           Bessel{1/2}, Bessel{1/4},
-           Jacobi{1,1/2},Jacobi{1/2,2},
-           Jacobi{1/2,1/2},
-           Jacobi{-1/2,1/2},
-           Jacobi{1/2,-1/2}, Jacobi{-1/2,-1/2}
-           )
-
-    x = variable()
-    @show :arithmetic
-    for P in Ps
-        # p(x), -p,p+s,p*s,p/s, p+q, p*q
-        as,bs = [1,2,3], [1,2,0]
-        asc = [2,2,3]
-        s,c,p,q = 1, P(1,:θ), P(as), P(bs)
-        p(1/2)
-        p(x)
-        @test -p == P(-as)
-        @test p+s == P(asc)
-        @test p*s == P(as .*
-                       s)
-        @test p/s == P(as ./ s)
-        @test p+c == P(asc)
-        @test p*c == P(as.*s)
-        @test p+q == P(as+bs)
-        #p*q
-    end
-
-    @show :integrate
-    for P in Ps
-        p = basis(P,3)
-        out = integrate(p)(x) ≈ integrate(p(x))
-        !out && @show  P
-    end
-
-    @show :conversion_within
-    for P in Ps
-        for Q in Ps
-            a,b,c,d,e = abcde(P)
-            ā,b̄,c̄,d̄,ē = abcde(Q)
-    
-            if a == ā && b == b̄ && c == c̄
-                if P != Hermite && Q != Hermite
-                    @show P,Q
-                    p = P(rand(1:4, 5))
-                    @test _convert_ccop(P, _convert_ccop(Q, p)) ≈ p
-                end
-            end
-        end
-    end
-
-    
-    for  (P,Q) in  (
-        (Hermite, Hermite),
-        (Laguerre{1/2}, Laguerre{3/2}),
-        (Gegenbauer{1/4}, Gegenbauer{3/4}),
-        (Bessel{1/4},  Bessel{3/4}),
-        (Jacobi{1/2,1/2}, Jacobi{3/4, 3/4}),
-        (Jacobi{1/2,1/2}, Jacobi{-1/2, -1/2}),
-                    )
-        @show  P,Q
-        for i in 2:6
-            p,q = basis(P,i), basis(Q,i)
-            @test convert(P,q)(x) ≈ q(x)
-            @test convert(Q,p)(x) ≈ p(x)
-        end
-    end
-
-    
-    @show :conversion_Polynomial
-    Q = Polynomial
-    for P in Ps
-        P ∈ (Hermite, # exclude Hermite, as ĉs are an issue
-             #ChebyshevHermite,
-             #Laguerre{0}, Laguerre{1},
-             #Gegenbauer{1/2}, Gegenbauer{2},
-             #Bessel{1}, Bessel{2},
-             #Jacobi{1,1/2},
-             #Jacobi{1/2,2},
-             #Jacobi{1/2,1/2},
-             #Jacobi{-1/2,1/2},
-             #Jacobi{1/2,-1/2},
-             #Jacobi{-1/2,-1/2},
-             ) && continue
-        @show P, Q
-        p = P([1,2,3,4,5])
-        q = Q([1,2,3,4,5])
-        @test convert(Q, p) ≈ p(x) || hasnan(p(x))
-        @test convert(P, q)(x) ≈ q
-    end
-
-    @show :Jacobi
-    for i in 1:5
-        α, β = 2*rand(2) .- 1
-        P = Jacobi{α,β}
-        Q = Polynomial
-        x = Q(:x)
-        
-        for n in 3:6
-            @show n
-            p,q = basis(P,n), x^n
-            @test convert(Q, convert(P, q)) ≈ q
-            @test convert(P, convert(Q, p)) ≈ p            
-            @test convert(Q, p) ≈ p(x)
-            @test convert(P, q)(x) ≈ q
-        end
-    end
-
-    @show :Jacobi_12
-    for (α,β) = ((1/2, 1/2),
-                 (1/2, -1/2),
-                 (-1/2, 1/2),
-                 (-1/2, -1/2)
-                 )
-        @show α,β
-
-        P = Jacobi{α,β}
-        Q = Polynomial
-        x = Q(:x)
-        
-        for n in 3:6
-            p,q = basis(P,n),x^n
-            @test convert(Q, convert(P, q)) ≈ q
-            @test convert(P, convert(Q, p)) ≈ p            
-            @test convert(Q, p) ≈ p(x) || hasnan(p(x))
-            @test convert(P, q)(x) ≈ q
-        end
-    end
-    
-end
-
 
 
 

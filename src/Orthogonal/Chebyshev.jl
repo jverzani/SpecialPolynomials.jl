@@ -1,3 +1,4 @@
+
 # Chebyshev Polynomials of first and second kind
 @register0 Chebyshev
 export Chebyshev
@@ -43,20 +44,20 @@ generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
 
-kn(::Type{<:Chebyshev}, n, ::Type{S}) where  {S} = iszero(n) ? one(S) : (2*one(S))^(n-1)
-k1k0(::Type{<:Chebyshev}, n, ::Type{S}) where  {S} = iszero(n) ? one(S) : 2*one(S)
-k1k_1(::Type{<:Chebyshev}, n, ::Type{S}) where  {S} = n==1 ? 2*one(S) : 4*one(S)
+kn(P::Type{<:Chebyshev}, n)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
+k1k0(P::Type{<:Chebyshev}, n)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
+k1k_1(P::Type{<:Chebyshev}, n) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
 
-# directly adding these gives a large speed up in polynomial evaluation
-#An(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = iszero(n) ? one(S) : 2*one(S)
-#Bn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = zero(S)
-#Cn(::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = one(S)
+# directly adding these gives a large (20x) speed up in polynomial evaluation
+An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
+Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
+Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
 
 # 
-Cn(::Type{<:Chebyshev}, ::Val{1}, ::Type{S}=Float64) where {S} = one(S)
-ĉn(::Type{<:Chebyshev}, ::Val{0}, ::Type{S}) where {S} = one(S)/4
-ĉn(::Type{<:Chebyshev}, ::Val{1}, ::Type{S}) where {S} = Inf
-γn(P::Type{<:Chebyshev}, n::Int, ::Type{S}=Float64) where {S} = n==1 ? one(S)/2 : n*one(S)/4 *  k1k0(Chebyshev,n-1, S)
+Cn(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))
+ĉn(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P))/4
+ĉn(P::Type{<:Chebyshev}, ::Val{1}) = Inf
+γn(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4 *  k1k0(P,n-1)
 
 function ⊗(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
 
@@ -206,41 +207,41 @@ Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
 
 abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -3, 0))
 
-kn(::Type{<:ChebyshevU}, n, ::Type{S}) where  {S} = (2*one(S))^n
-k1k0(::Type{<:ChebyshevU}, n, ::Type{S}) where  {S} = 2*one(S)
-k1k_1(::Type{<:ChebyshevU}, n, ::Type{S}) where  {S} = 4 * one(S)
+kn(P::Type{<:ChebyshevU}, n) = (2 * one(eltype(P)))^n
+k1k0(P::Type{<:ChebyshevU}, n)  = 2 * one(eltype(P))
+k1k_1(P::Type{<:ChebyshevU}, n)  = 4 * one(eltype(P))
 
 
-# directly adding these gives a large speed up in polynomial evaluation
-An(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 2
-Bn(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 0
-Cn(::Type{<:ChebyshevU}, n::Int, ::Type{S}=Float64) where {S} = 1
+# directly adding these gives a 5x speed up in polynomial evaluation
+An(::Type{<:ChebyshevU}, n::Int) = 2
+Bn(::Type{<:ChebyshevU}, n::Int) = 0
+Cn(::Type{<:ChebyshevU}, n::Int) = 1
 # work around cancellation
-ĉn(::Type{<:ChebyshevU}, n::Int, ::Type{S}) where {S} = -one(S) /(4n+4) *  k1k0(ChebyshevU,n-1,S)
+ĉn(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4) *  k1k0(P,n-1)
 
-function ⊗(p1::ChebyshevU{T}, p2::ChebyshevU{S}) where {T,S}
+function ⊗(p::ChebyshevU{T}, q::ChebyshevU{S}) where {T,S}
 
-    isconstant(p1) &&  return p2 * p1[0]
-    isconstant(p2) &&  return p1 * p2[0]
-    p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
+    isconstant(p) &&  return q * p[0]
+    isconstant(q) &&  return p * q[0]
+    p.var != q.var && throw(ArgumentError("Polynomials must have same variable"))
 
-    M, N = degree(p1), degree(p2)
+    M, N = degree(p), degree(q)
     R = promote_type(T, S)
     out = zeros(R, M + N + 1)
 
     # use Um * Un = sum(U_{m-n+2k} k in 0:n) (wikipedia page)
-    for m in 0:degree(p1)
-        am = p1[m]
-        for n in 0:degree(p2)
-            bn = p2[n]
-            ambn = am * bn
-            for k in max(m,n)-min(m,n):2:m+n
-                out[k+1] += ambn
+    for i in 0:M
+        pᵢ = p[i]
+        for j in 0:N
+            qⱼ = q[j]
+            pᵢqⱼ = pᵢ*qⱼ
+            for k in max(i,j)-min(i,j):2:i+j
+                out[k+1] += pᵢqⱼ
             end
         end
     end
 
-    ChebyshevU(out, p1.var)
+    ChebyshevU(out, p.var)
 end
 
 

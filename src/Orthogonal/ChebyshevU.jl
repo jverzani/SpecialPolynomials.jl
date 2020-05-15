@@ -104,6 +104,7 @@ end
 
 
 function Base.:*(p1::ChebyshevU{T}, p2::ChebyshevU{S}) where {T,S}
+    
     p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
 
     M, N = length(p1)-1, length(p2) - 1

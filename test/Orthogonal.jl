@@ -1,8 +1,9 @@
 ## General test for orthogonal polynomials
 
 T = Float64
-Ps = (Chebyshev{T},
-      ChebyshevU{T},
+Ps = (
+    #Chebyshev{T},
+     # ChebyshevU{T},
       Laguerre{0, T},
       Laguerre{1/2, T},
       Hermite{T},
@@ -28,6 +29,18 @@ Ps = (Chebyshev{T},
             @test basis(P,n+1) ≈ (SP.An(P,n) * x + SP.Bn(P,n)) * basis(P,n) - SP.Cn(P,n)*basis(P,n-1)
         end
 
+        # leading term
+        x = variable(Polynomial)
+        for n = 0:5
+            @test basis(P,n)(x)[end] ≈ SP.kn(P,n)
+        end
+        for n = 0:5
+            @test SP.k1k0(P,n) ≈ SP.kn(P,n+1)/SP.kn(P,n)
+        end
+        for n = 1:5
+            @test SP.k1k_1(P,n) ≈ SP.kn(P,n+1)/SP.kn(P,n-1)
+        end
+        
         # basis
         x = variable(P)
         p0, p1, p2, p3, p4, p5, p6 = ps =  basis.(P,0:6)
@@ -59,7 +72,7 @@ end
 @testset "Structural equations" begin
     
     for P in filter(P -> !(P <: Hermite), Ps)
-        for i in 1:5
+        for i in 2:5
 
             ps = basis.(P, i+1:-1:i-1)
             dps = derivative.(ps)
@@ -76,27 +89,17 @@ end
 
             
             # σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
-#            if !(P <: Union{Chebyshev, ChebyshevU})
-                αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
-                @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
-#            else
-#                αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
-#                if i <= 2
-#                    @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
-#                else
-#                    @test_broken σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
-#                end
-#            end
-
+            αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
+            @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
                 
             # p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
             âs = SP.ân(P,i), SP.b̂n(P,i), SP.ĉn(P,i)
             @test pᵢ ≈ sum(a*dp for (a,dp) in zip(âs, dps))
             
             # x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^*
-            αᴵs = SP.αᴵn(P,i), SP.βᴵn(P,i), SP.γᴵn(P,i)
-            @test_broken x * dpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, dps))
-                
+            @test (a=a,b=b,c=c,d=d+2a,e=e+b)  == SP.abcdeᴵ(P)
+            αᴵs = SP.αᴵn(P,i-1), SP.βᴵn(P,i-1), SP.γᴵn(P,i-1) # note shift
+            @test x * dpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, dps))
         end
     end
 end
@@ -124,17 +127,9 @@ end
         end
     end
 
-    for P in filter(Q -> Q <: Jacobi, Ps)
-        for Q in filter(Q -> Q <: Jacobi, Ps)
-            P == Q && continue
-            p = P([1,2,3])
-            x = variable(Q)
-            @test_broken p(x) ≈ SP._convert_ccop(Q,  p) 
-        end
-    end
   
 
-    
+    x = variable(Polynomial)
     # Connections: groupings have same sigma = a⋅x² + b⋅x + c
     for Ps in ((Chebyshev, ChebyshevU, Gegenbauer{1/2}, Gegenbauer{1},
                 Jacobi{1/4, 1/4}, Jacobi{3/4, 3/4}),
@@ -142,11 +137,18 @@ end
                (Bessel{1/4}, Bessel{1/2}, Bessel{3/4})#, Bessel{2})
                )
 
+        
         for  P in Ps
             for Q in Ps
                 for n in 2:5
                     q = basis(Q, n)
-                    @test convert(Q, convert(P, q)) ≈ q
+                    # various ways to convert to P
+                    
+                    @test q(variable(P))(variable()) ≈ q(variable())  # evaluation
+                    @test SP._convert_ccop(P, q)(variable()) ≈ q(variable())  # structural  equations
+                    @test convert(P, convert(Polynomial, q))(variable()) ≈ q(variable()) # through Standard  basis
+                    @test convert(P, q)(x) ≈ q(x) 
+
                 end
             end
         end
@@ -161,18 +163,17 @@ end
 
     for P in Ps
         pNULL = zero(P)
-        p0 = P([1])
-        p1 = P([0,1])
-        p2 = P([0,0,1])
-        p3 = P([0,0,0,1])
-        p4 = P([0,0,0,0,1])
+        p0,p1,p2,p3,p4 = ps = basis.(P,0:4)
 
-        @test 1p0 + 2p1 + 3p2 + 4p3 + 5p4 ≈ P([1,2,3,4,5])
+        as =  [1,2,3,4,5]
+        @test sum(a*pᵢ for (a,pᵢ) in zip(as, ps)) ≈ P(as)
 
-        for p in (pNULL, p0, p1, p2, p3, p4)
-            for q in (pNULL, p0, p1, p2, p3, p4)
-                @test convert(Polynomial, p+q) ≈ convert(Polynomial, p) + convert(Polynomial, q)
-                @test convert(Polynomial, p*q) ≈ convert(Polynomial, p) * convert(Polynomial, q)                
+        x = variable(Polynomial)
+        for p in ps
+            for q in ps
+                for op in (+, *)
+                    @test op(p,q)(x) ≈ op(p(x),q(x))
+                end
             end
         end
 

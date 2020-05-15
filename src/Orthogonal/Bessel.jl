@@ -46,19 +46,22 @@ abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α
 # From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
 # kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
 # Koepf suggests kn = (n + α + 1)_n/2^n
-function kn(::Type{<:Bessel{α}}, n::Int) where {α}
-    one(α)*Pochhammer(n+α-1,n)/2^n
+function kn(P::Type{<:Bessel{α}}, n::Int) where {α}
+    one(eltype(P))/2^n * Pochhammer(n+α-1,n)
 end
-function k1k0(::Type{<:Bessel{α}}, k, ::Type{S}=Float64) where {S,α}
+function k1k0(::Type{P}, k) where {α, P<:Bessel{α}}
+    k < 0 && return zero(eltype(P))
     iszero(k) && return α/2
-    val = one(S)
+
+    val = one(eltype(P))
     val *=  (2k+α)*(2k+α-1)
     val /= (k+α-1)*2
     val
 end
-function k1k_1(P::Type{<:Bessel{α}}, k, ::Type{S}=Float64) where {S,α}
+function k1k_1(P::Type{<:Bessel{α}}, k) where {α}
     @assert k > 0
-    val = one(S)
+    
+    val = one(eltype(P))
     if k == 1
         val *= (α + 1)*(α + 2) # cancels  factor (α-1)(α-1)
         val /= 4
@@ -72,9 +75,9 @@ norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1)
 
 ## Overrides XXX fails wih 1 and 2
 #Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
-Bn(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where {α,S} = zero(S)
-Cn(::Type{<:Bessel{α}}, ::Val{1}, ::Type{S}) where {α,S} = -4/(α^2*(α + 1))
+Bn(P::Type{<:Bessel{2}}, ::Val{0}) where {α} = zero(eltype(P))
+Cn(P::Type{<:Bessel{α}}, ::Val{1}) where {α} = -one(eltype(P))*4/(α^2*(α + 1))
 
-b̂n(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = (one(S) * 2)/(n*(2n+2))
-b̂n(::Type{<:Bessel{2}}, ::Val{0}, ::Type{S}) where {S} = one(S) * Inf
+b̂n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
+b̂n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf
 #ĉn(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = one(S)/n/(2n-1)/(2n+1)

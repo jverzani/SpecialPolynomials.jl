@@ -46,10 +46,10 @@ end
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
 #kn =  1/2^n ⋅ choose(2n+α+β, n) = (2n+α+β)_n / (2^b  n!)
-function kn(::Type{<:Jacobi{α,β}}, n::Int, ::Type{S}=Float64) where {S,α,β}
+function kn(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     a = α+β+n+1
     nn = n
-    tot = one(n)/1
+    tot = one(eltype(P))/1
     for i in 0:n-1
         tot *= a/(2*nn)
         a += 1
@@ -60,24 +60,24 @@ function kn(::Type{<:Jacobi{α,β}}, n::Int, ::Type{S}=Float64) where {S,α,β}
     #(one(α)*one(β) * generalized_binomial(2n+α+β, n))/2^n
 end
 
-function k1k0(P::Type{<:Jacobi{α,β}}, n::Int, ::Type{S}=Float64) where {S,α,β}
+function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     γ = 2n + α + β
-    val = one(S)
+    val = one(eltype(P))
     if n == 0
         val *= (α+β)/2 + 1
     else
         num = (γ + 1) * (γ + 2)
         den = 2 * (n+1) * (γ - n + 1)
-        iszero(den) && return k1k0(P, Val(n), S)
+        iszero(den) && return k1k0(P, Val(n))
         val *= num / den
     end
     val
 end
-function k1k_1(P::Type{<:Jacobi{α,β}}, n, ::Type{S}=Float64) where {S,α, β}
+function k1k_1(P::Type{<:Jacobi{α,β}}, n) where {α, β}
     @assert n > 0
 
     γ = 2n + α + β
-    val = one(S)
+    val = one(eltype(P))
 
     if n == 1
         num = (α+β+3)*(α+β+4)
@@ -102,12 +102,17 @@ function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
 end
 
 # overrides
-Bn(::Type{<:Jacobi{α,β}}, ::Val{0}, ::Type{S}) where {α, β, S} = iszero(α+β) ? (α-β)/2 : (α-β)/(2(α+β+2))
-Cn(P::Type{<:Jacobi{α,β}}, ::Val{1}, ::Type{S}) where {α,β,S} = -((α - β)^2 - (α + β + 2)^2)*(α + β + 4)/(8*(α + β + 2)^2)
+Bn(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α, β} = iszero(α+β) ? (α-β)*one(eltype(P))/2 : (α-β)*one(eltype(P))/(2(α+β+2))
+Cn(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = -one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 2)^2*(α + β + 3))
+# function Cn(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β} 
+#     val = -n*(n + α + β)*(-4*n*(n + α + β) + 4*α + 4*β + (α - β)^2 - (α + β + 2)^2 + 4)/((2*n + α + β)^2*(2*n + α + β - 1)*(2*n + α + β + 1))
+#     val *= k1k_1(P, 1)
+#     val
+# end
 
-b̂n(P::Type{<:Jacobi{α,β}}, ::Val{0}, ::Type{S}) where {α,β,S} = one(S) * NaN
-ĉn(P::Type{<:Jacobi}, ::Val{0}, ::Type{S}) where {S} = zero(S)
-ĉn(P::Type{<:Jacobi{α,β}}, ::Val{1}, ::Type{S}) where {α,β,S} = one(S) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 1)*(α + β + 2)^2*(α + β + 3))
+b̂n(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α,β} = one(eltype(P)) * NaN
+ĉn(P::Type{<:Jacobi}, ::Val{0})  = zero(eltype(P))
+ĉn(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 1)*(α + β + 2)^2*(α + β + 3))
 
 # conversion through convert_ccop is FAILING
 Base.convert(::Type{P}, q::Jacobi) where {α, β, P <:Jacobi{α,β}}= q(variable(P))

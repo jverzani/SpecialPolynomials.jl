@@ -29,26 +29,26 @@ abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
 function kn(::Type{<:Hermite}, n::Int)
     2^n
 end
-function k1k0(::Type{<:Hermite}, k, ::Type{S}=Float64) where {S}
-    val = 2*one(S)
+function k1k0(P::Type{<:Hermite}, k)
+    val = 2*one(eltype(P))
     val
 end
-function k1k_1(P::Type{<:Hermite}, k, ::Type{S}=Float64) where {S}
+function k1k_1(P::Type{<:Hermite}, k)
     @assert k > 0
-    k  == 1  && return 2*one(S) #???
-    val = 4*one(S)
+    #k  == 1  && return 2*one(eltype(P)) #???
+    val = 4*one(eltype(P))
     return val
 end
 norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
 
 ## Overrides
 # Use override here, as we get  0/0 in  default  defn
-Bn(::Type{<:Hermite{T}}, n::Int, ::Type{S}=Float64) where {T,S} = zero(S)
-Cn(::Type{<:Hermite{T}}, n::Int, ::Type{S}) where {T,S} = 2*n*one(S)
+Bn(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
+Cn(P::Type{<:Hermite}, n::Int) = 2*n*one(eltype(P))
 
 # This is the issue
-b̂n(::Type{<:Hermite}, n::Int, ::Type{S}=Float64) where {M,S} = error("Don't call me")#zero(S)
-ĉn(::Type{<:Hermite}, n::Int, ::Type{S}=Float64) where {M,S} = error("Don't call me")#zero(S)
+b̂n(::Type{<:Hermite}, n::Int) where {M} = error("Don't call me")#zero(S)
+ĉn(::Type{<:Hermite}, n::Int) where {M} = error("Don't call me")#zero(S)
 
 ## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
@@ -152,10 +152,19 @@ end
 ##
 ## --------------------------------------------------
 ##
+@register0 dChebyshevHermite
+export dChebyshevHermite
+
+
 
 ## ChebyshevHermite
 @register0 ChebyshevHermite
 export ChebyshevHermite
+abcde(::Type{<:dChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
+
+kn(P::Type{<:dChebyshevHermite}, n::Int) =  n+1
+k1k0(P::Type{<:dChebyshevHermite}, n)  = (n+2)/(n+1)
+k1k_1(P::Type{<:dChebyshevHermite}, n) =  (n+2)/(n)
 
 
 
@@ -178,9 +187,9 @@ end
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
 abcde(::Type{<:ChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
 
-kn(::Type{<:ChebyshevHermite}, n::Int) = 1
-k1k0(::Type{<:ChebyshevHermite}, k, ::Type{S}=Float64) where {S} = one(S)
-k1k_1(P::Type{<:ChebyshevHermite}, k, ::Type{S}=Float64) where {S} =  one(S)
+kn(P::Type{<:ChebyshevHermite}, n::Int) =  one(eltype(P))
+k1k0(P::Type{<:ChebyshevHermite}, k)  = one(eltype(P))
+k1k_1(P::Type{<:ChebyshevHermite}, k) =  one(eltype(P))
 
 
 
