@@ -158,3 +158,55 @@ macro register2(name, parent)
 
     end
 end
+
+macro register3(name, parent)
+    poly = esc(name)
+    parent_type = esc(parent)
+    quote
+        struct $poly{α,β,γ,T,N} <: $parent_type{α,β,γ,T,N}
+            coeffs::Vector{T}
+            var::Symbol
+            
+            function $poly{α,β,γ,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,β,γ,T,N}
+                M = length(coeffs)
+                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
+                new{α,β,γ,T,N}(coeffs, Symbol(var))
+            end
+            
+            function $poly{α,β,γ,T}(coeffs::AbstractVector{S},  var::Polynomials.SymbolLike=:x) where {α,β,γ,T,S,M}
+                N = findlast(!iszero, coeffs)
+                if N ==  nothing
+                    new{α,β,γ,T,0}(T[], Symbol(var))
+                else
+                    cs = T[c  for c in coeffs[1:N]]
+                    new{α,β,γ,T,N}(cs,  Symbol(var))
+                end
+            end
+            
+            function $poly{α,β,γ}(coeffs::AbstractVector{T},  var::Polynomials.SymbolLike=:x) where {α,β,γ, T}
+                $poly{α,β,γ,T}(coeffs,  var)
+            end
+        end
+
+        Base.length(p::$poly{α,β,γ,T,N}) where {α,β,γ,T,N} = N
+        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+    
+        Base.convert(::Type{P}, q::Q) where {α,β,γ,T,P<:$poly{α,β,γ,T},Q<:$poly{α,β,γ,T}} = q
+        Base.convert(::Type{$poly{α,β,γ}}, q::Q) where {α,β,γ,T,Q<:$poly{α,β,γ,T}} = q
+        Base.promote(p::P, q::Q) where {α,β,γ,T,P<:$poly{α,β,γ,T},Q<:$poly{α,β,γ,T}} = (p,q)
+        Base.promote_rule(::Type{<:$poly{α,β,γ,T}}, ::Type{<:$poly{α,β,γ,S}}) where {α,β,γ,T,S} =
+            $poly{α,β,γ,promote_type(T, S)}
+        Base.promote_rule(::Type{<:$poly{α,β,γ,T}}, ::Type{S}) where {α,β,γ,T,S<:Number} = 
+            $poly{α,β,γ,promote_type(T,S)}
+
+        $poly{α,β,γ,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,β,γ,T} = $poly{α,βγ,}(T[n], var)
+        $poly{α,β,γ}(n::S, var::Polynomials.SymbolLike = :x) where {α,β,γ,S<:Number} = $poly{α,β,γ,S}(n,var)
+        $poly{α,β,γ,T}(var::Polynomials.SymbolLike=:x) where {α,β,γ, T} = variable($poly{α,β,γ,T}, var)
+        $poly{α,β,γ}(var::Polynomials.SymbolLike=:x) where {α,β,γ} = variable($poly{α,β,γ}, var)
+
+        Base.:*(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = ⊗(p,q)
+        Base.:+(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = ⊕(p,q)        
+        Base.divrem(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = _divrem(p,q)
+
+    end
+end

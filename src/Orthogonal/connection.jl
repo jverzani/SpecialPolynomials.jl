@@ -35,6 +35,13 @@
 ## For `AbstractCCOP` polynomials, Koepf and Schmersau present recursive formulas for the connection coefficients
 ## between Q and the standard basis, the standard and Q, and between P and Q when σ and σ̂ are the same. (This is the case when a polynomial system is parameterized, like Laguerre, Gegenbauer, Bessel, and  Jacobi.)
 
+ConvertibleTypes = Union{AbstractCOP, Polynomials.StandardBasisPolynomial,  FallingFactorial}
+kn(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P)))
+k1k0(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P)))
+knk_1(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P))) 
+                         
+
+
 ## If  the connection  coefficients for  (P,Q) satisfy c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ = 0 for some computable
 ##  values c₀,c₁,c₂ then this  will implement  `convert(Q,p::P)`
 function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
@@ -43,7 +50,7 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
     d = degree(p)
     T,S = eltype(one(Q)), eltype(p)  #
     R = promote_type(T,S)
-    
+
     as = zeros(R, 1+d)
 
     λⱼⱼ = one(R) #  kn(P,0,R)/kn(Q,0,R) = 1
@@ -51,12 +58,15 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
     for j in  0:d
 
         λ = λⱼⱼ
+
         λⱼⱼ *= k1k0(P,j) / k1k0(Q,j)
 
         pⱼ = p[j]
         iszero(pⱼ) && continue
 
         C̃ʲⱼ = one(R)
+        @show R,  C̃ʲⱼ, pⱼ, λ 
+
         as[1+j] += pⱼ * (λ * C̃ʲⱼ)
 
         C̃ⁱ⁺²ⱼ, C̃ⁱ⁺¹ⱼ = zero(R), C̃ʲⱼ  # for recursion starting  with C̃ʲ⁺¹ⱼ, C̃ʲⱼ
@@ -148,10 +158,6 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
 end
 
 ## With an explicit connectioni
-struct Connection{P,Q}
-    n::Int
-    k::Int
-end
 function connection(::Type{P}, q::Q) where
     {P <: Polynomials.AbstractPolynomial,
      Q<:Polynomials.AbstractPolynomial}
@@ -204,11 +210,6 @@ end
 
 ##  Linearization...
 
-struct Linearization{P,V}
-    l::Int
-    n::Int
-    m::Int
-end
 #Linearization{P}(l,m,n) where {P} = Linearization{P, Val{:diagonal}}(l,m,n)
 
 # function linearization_product_pq(p::P,  q::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}

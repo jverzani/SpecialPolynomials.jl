@@ -48,7 +48,6 @@ allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polyno
 
 """
 abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
-ConvertibleTypes = Union{AbstractCOP, Polynomials.StandardBasisPolynomial}
 
 
 ##
@@ -72,12 +71,12 @@ abcde(::Type{<:AbstractCOP}) = throw(MethodError())
 leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
 
 # Set defaults to be monic
-kn(::Type{P},  n) where{P <: ConvertibleTypes} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
+kn(::Type{P},  n) where{P <: AbstractCOP} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
 
 # k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i)
+k1k0(::Type{P},  i) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i)
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{P},  i) where {P<:ConvertibleTypes} =  kn(P,i+1)/kn(P,i-1)
+k1k_1(::Type{P},  i) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i-1)
 
 monic(p::P) where {T,N,P <: AbstractCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
 
@@ -124,21 +123,16 @@ Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
 Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 
 Polynomials.zero(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(eltype(P)[], var)
-Polynomials.zero(p::P) where {P <: AbstractCOP} = zero(P, p.var)
-
 Polynomials.one(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(ones(eltype(P),1), var)
-Polynomials.one(p::P) where {P <: AbstractCOP} = one(P, p.var)
-
 Polynomials.variable(P::Type{<:AbstractCOP},  var::Polynomials.SymbolLike=:x) = (basis(P,1,var) - Bn(P,0)) / An(P,0)
-Polynomials.variable(p::P) where {P <: AbstractCOP} = variable(P, p.var)
 
-function Polynomials.basis(::Type{P}, n::Int, var::Polynomials.SymbolLike=:x) where {P  <: AbstractCCOP}
+#  XXX var is keyword here (odd)
+function Polynomials.basis(::Type{P}, n::Int; var::Polynomials.SymbolLike=:x) where {P  <: AbstractCCOP}
     T = eltype(P)
     cs = zeros(T, n+1)
     cs[end] = one(T)
     ⟒(P)(cs, var)
 end
-Polynomials.basis(p::P, n::Int) where {P <: AbstractCCOP} = basis(P, n, p.var)
 
 
 ##
@@ -206,18 +200,24 @@ end
 ##
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
-function  An(P::Type{<:AbstractCCOP}, n::Int)
+function  An(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     _An(P, a,b,c,d,e ,n) *  k1k0(P, n)
 end
-            
-function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
-    one(eltype(P))
-end
 
-function Bn(P::Type{<:AbstractCCOP}, n::Int)
+function Bn(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     _Bn(P, a,b,c,d,e ,n) * k1k0(P,n)
+end
+
+function Cn(P::Type{<:AbstractCOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    _Cn(P, a,b,c,d,e,n) *  k1k_1(P, n)
+end
+
+
+function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
+    one(eltype(P))
 end
 
 
@@ -235,11 +235,6 @@ function _Bn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
     val
 end
 
-function Cn(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    _Cn(P, a,b,c,d,e,n) *  k1k_1(P, n)
-end
-
 function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
 
     S = eltype(P)
@@ -252,27 +247,21 @@ function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
     iszero(den) && return Cn(P, Val(n))
     
     val = one(S) * num  / den
-    
-        # oops, this is the discrete case
-#        val *= -((n-1)*(d+a*n-a)*(a*n*d-d*b-a*d+a^2*n^2-2a^2*n+4c*a+a^2+2e*a-b^2)-d*b*e+d^2*c+a*e^2)
-#        val *= (a*n+d-2a)*n
-#        val /=  (d-a+2a*n)*(d+2a*n-3a)*(2a*n-2a+d)^2
-#        val *= k1k_1(P, n, S)
 
     val
 end
 
 # an, bn, cn
 # x⋅pn = [an,bn,cn] ⋅ [p_{n+1},p_n,p_{n-1}]
-function an(P::Type{<:AbstractCCOP}, n::Int)
+function an(P::Type{<:AbstractCOP}, n::Int)
     1/An(P,n)
 end
 
-function bn(P::Type{<:AbstractCCOP}, n::Int)
+function bn(P::Type{<:AbstractCOP}, n::Int)
     -Bn(P,n)/An(P,n)
 end
 
-function cn(P::Type{<:AbstractCCOP}, n::Int)
+function cn(P::Type{<:AbstractCOP}, n::Int)
     Cn(P,n)/An(P,n)
 end
 
@@ -405,10 +394,10 @@ end
 ##
 ## Conversion
 
-function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCCOP} 
+function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP} 
     p(variable(Q, p.var))
 end
-function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynomials.StandardBasisPolynomial}
+function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCOP,  P <: Polynomials.StandardBasisPolynomial}
     _convert_ccop(Q, p)
 end
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
@@ -428,9 +417,9 @@ end
 ## --------------------------------------------------
 ##
 ## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
-## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCCOP} as an available signature
+## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
 ## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
-function ⊕(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
+function ⊕(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
@@ -445,7 +434,7 @@ function ⊕(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 
 end
 
-function ⊗(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
+function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
@@ -460,7 +449,7 @@ function ⊗(p::P, q::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
 #    convert(⟒(P){R}, convert(Polynomial, p) * convert(Polynomial, q))
 end
 
-function _divrem(num::P, den::Q) where {P <: AbstractCCOP, Q <: AbstractCCOP}
+function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(num) == eltype(den)
@@ -476,7 +465,7 @@ end
 
 function Polynomials.truncate(p::P;
                                rtol::Real = Base.rtoldefault(real(T)),
-                               atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}}
+                               atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
     ps = coeffs(p)
     max_coeff = maximum(abs, ps)
     thresh = max_coeff * rtol + atol
@@ -486,11 +475,11 @@ end
 
 Polynomials.truncate!(p::P;
                       rtol::Real = Base.rtoldefault(real(T)),
-                      atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}} = error("`truncate!` not defined")
+                      atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`truncate!` not defined")
 
 function Base.chop(p::P;
                    rtol::Real = Base.rtoldefault(real(T)),
-                   atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}}
+                   atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
     
     N == 0 && return p
     i = N-1
@@ -506,12 +495,12 @@ end
 
 Polynomials.chop!(p::P;
                   rtol::Real = Base.rtoldefault(real(T)),
-                  atol::Real = 0,) where {T,N,P<:AbstractCCOP{T,N}} = error("`chop!` not defined")
+                  atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`chop!` not defined")
 
 
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
 # find expression for p' in terms of p
-function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCCOP}
+function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
 
     R = eltype(one(eltype(p))/1)
     d = degree(p)
@@ -539,7 +528,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCCOP}
     
 end
 
-function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCCOP}
+function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
     
     T,S = eltype(p), typeof(C)
     R = promote_type(typeof(one(T) / 1), S)
@@ -579,5 +568,14 @@ end
 
 
 
+#  Structs for connection, linearization (connection.jl)
+struct Connection{P,Q}
+    n::Int
+    k::Int
+end
 
-
+struct Linearization{P,V}
+    l::Int
+    n::Int
+    m::Int
+end

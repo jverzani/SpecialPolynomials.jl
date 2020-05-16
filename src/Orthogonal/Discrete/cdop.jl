@@ -1,10 +1,42 @@
 # generic classical discrete orthogonal polynomial, CDOP
-abstract type AbstractCDOP{T,N} <: AbstractContinuousOrthogonalPolynomial{T} end
+abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
+
+# subtypes  to keep track of number of parameters
+# passed to  @registerN macros
+abstract type AbstractCDOP0{T,N} <: AbstractCDOP{T,N} end
+abstract type AbstractCDOP1{α,T,N} <: AbstractCDOP{T,N} end
+abstract type AbstractCDOP2{α, β,T,N} <: AbstractCDOP{T,N}  end
+abstract type AbstractCDOP3{α, β,γ,T,N} <: AbstractCDOP{T,N}  end
+
+# compose with FallingFactorial
+function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCDOP,  P <: AbstractCDOP}
+    T = eltype(P)
+    _convert_ccop(Q, _convert_ccop(FallingFactorial{T},  p))
+end
+    
+    
+⟒(P::Type{<:AbstractCDOP1{α}}) where {α} = constructorof(P){α}
+⟒(P::Type{<:AbstractCDOP2{α,β}}) where {α, β} = constructorof(P){α, β}
+⟒(P::Type{<:AbstractCDOP3{α,β,γ}}) where {α, β, γ} = constructorof(P){α, β, γ}
+
+
+Δₓ(p::AbstractCDOP) = p(variable(p)+1)-p(variable(p))
+∇ₓ(p::AbstractCDOP) = p(variable(p))-p(variable(p)-1)
 
 ## Structural Equations
-function  An(P::Type{<:Abstra    
-    num = (2b*n*(a*n+d-a)-e*(-d+2a))
-    den = (d+2a*n) * (d-2a+2a*n)
+## https://dlmf.nist.gov/18.22
+## we have σ⋅Δ∇p + τ⋅∇p + λp =  0
+## Using parameterization   of  above, τ = C, σ = A - C
+function _An(P::Type{<:AbstractCDOP}, a,b,c,d,e, n::Int)
+    one(eltype(P))
+end
+
+function _Bn(P::Type{<:AbstractCDOP}, a,b,c,d,e, n::Int)
+
+    S = eltype(P)
+    
+    num = n*(d + 2b) * (d + a*n - a) + e * (d - 2a)
+    den = (2a*n - 2a   + d )  *  (d + 2a*n)
 
     iszero(den) && return Bn(P, Val(n))  
     
@@ -13,30 +45,88 @@ function  An(P::Type{<:Abstra
     val
 end
 
-function Cn(P::Type{<:AbstractCDOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    _Cn(P, a,b,c,d,e,n) *  k1k_1(P, n)
-end
-
 function _Cn(P::Type{<:AbstractCDOP}, a,b,c,d,e, n::Int)
 
     S = eltype(P)
     
-    numa = (a*n+d-2a) * n * (4c*a-b^2) + 4a^2*c -a*b^2 + a*e^2 - 4*a*c*d
-    numa += d*b^2 - b*e*d + d^2*c
-    num = -numa * (a*n + d - 2a) * n
-    den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
+    num = one(S)
+    num *= (n - 1) * (d + a*n - a)
+    num *= a*n*d - d*b - a*d + a^2*n^2 - 2a^2*n + 4c*a + a^2 + 2e*a - b^2
+    num += -d*b*e + d^2*c + a*e^2
+    num *= (a*n +  d - 2a) * n
+    den = (d - a + 2a*n) * (d + 2a*n - 3a) * (2a*n - 2a + d)^2
 
     iszero(den) && return Cn(P, Val(n))
     
-    val = one(S) * num  / den
+    val = -one(S) * num  / den
     
-        # oops, this is the discrete case
-#        val *= -((n-1)*(d+a*n-a)*(a*n*d-d*b-a*d+a^2*n^2-2a^2*n+4c*a+a^2+2e*a-b^2)-d*b*e+d^2*c+a*e^2)
-#        val *= (a*n+d-2a)*n
-#        val /=  (d-a+2a*n)*(d+2a*n-3a)*(2a*n-2a+d)^2
-#        val *= k1k_1(P, n, S)
-
     val
 end
 
+
+# αn, βn,γn
+# σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
+function αn(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+
+    num = a * n
+    val = one(S) *  num
+    
+    val /= k1k0(P,n) 
+    return val
+end
+
+function βn(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+
+    num = -n *  (d  + a*n -  2) * (2*a*n*d - a*d - d*b + 2e*a - 2a^2*n +  2a^2*n^2)
+    den = (2a*n - 2a +  d) * (d + 2a*n)
+
+    iszero(den) &&  return βn(P, Val(n))
+
+    val = one(S) *  num  / den
+
+    return val
+end    
+
+
+function γn(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
+    num = (n - 1)  * (d + a*n  -a)
+    num *= a*n*d - d*b - a*d + a^2*n^2 - 2a^2*n + 4c*a + a^2 + 2e*a - b^2
+    num += -d*b*e + d^2*c + a*e^2
+    num *= (d + a*n -  a) *  (a*n + d - 2a)
+    den = (d - a + 2n) * (d + 2a*n - 3a) * (2a*n - 2a + d)^2
+    iszero(den) &&  return γn(P, Val(n))
+    
+    val = one(S) * num / den
+    val *= k1k0(P,n-1)
+    
+    return val
+end
+
+
+function abcdeᴵ(P::Type{<:AbstractCDOP}) 
+    a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
+    NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,d + e+ a + b))
+end
+
+
+function ⊗(p::P, q::Q) where {P <: AbstractCDOP, Q <: AbstractCDOP}
+
+    #@assert  ⟒(P) == ⟒(Q)
+    #@assert eltype(p) == eltype(q)
+
+    Polynomials.isconstant(p)  && return q * p[0]
+    Polynomials.isconstant(q)  && return p * q[0]    
+    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
+        
+    convert(⟒(P), convert(FallingFactorial, p) * convert(FallingFactorial, q))
+
+#    R = eltype(p)
+#    convert(⟒(P){R}, convert(Polynomial, p) * convert(Polynomial, q))
+end
