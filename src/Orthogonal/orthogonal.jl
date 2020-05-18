@@ -10,27 +10,29 @@ abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
 """
     AbstractCCOP{T,N}
 
+Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if it  is  a
+solution of a differential equation
 
-A classic continuous orthogonal polynomial (CCOP) is characterized by 5 coefficients: a,b,c,d,e where
+(a⋅x²+b⋅x+c) ⋅ y'' + (d⋅x + e) ⋅ y' + λᵢ⋅ y = 0.
 
-(a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
-
+A family is characterized by the 5 coefficients: a,b,c,d,e.
 Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
 
-From these several structural  equations are represented, for example
+From these  5  coefficients several structural  equations are represented. For example
 the three-point recusion.
 
 P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎
 
-comes from the structural equation
+Here `Aᵢ,Bᵢ,Cᵢ`  can be represented in formulas involving just  `a,b,c,d,e` and `i`.
+
+Rearraging   gives the structural equation
 
 x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
 
 
-Following Koepf  and  Schmersau, Representations of Orthogonal Polynomials, https://arxiv.org/pdf/math/9703217.pdf
-The other structure equations are
+The other structural equations are (equation  references are for Koepf  and  Schmerrsaus):
 
-x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
 σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
 p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
 x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^* 
@@ -45,6 +47,44 @@ Using Thms 2,4, and 5, connection coefficients,  C(n,m) satisfying
 P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n) are  found. These 
 allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polynomial)`,
 `convert(P{α…}, p::P(β…))` and through composition  `p*q`
+
+Subtypes of `AbstractCCOP` are  created through  the  `@registerN` macros, where `N` is the number  of  parameters used to describe the family.
+
+If non-monic versions are desired, then the  leading  term can be  specified through   `kn()`.  
+
+This is  sufficient for many cases, though the general  equations may need specializations when algebraic cancellation is required. 
+
+## Example
+
+For this example, the value of `Bn` at `0` needs help:
+
+```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
+julia> const SP=SpecialPolynomials
+SpecialPolynomials
+
+julia> SP.@register0 MonicLegendre SP.AbstractCCOP0
+
+julia> SP.abcde(::Type{<:MonicLegendre})  = (-1,0,1,-2,0)
+
+julia> SP.Bn(P::Type{<:MonicLegendre}, ::Val{0}) =  0
+
+julia> 𝐐  =  Rational{Int}
+Rational{Int64}
+
+julia> x = variable(Polynomial{𝐐})
+Polynomial(x)
+
+julia> [basis(MonicLegendre{𝐐}, i)(x) for i  in 0:5]
+6-element Array{Polynomial{Rational{Int64}},1}:
+ Polynomial(1//1)
+ Polynomial(x)
+ Polynomial(-1//3 + x^2)
+ Polynomial(-3//5*x + x^3)
+ Polynomial(3//35 - 6//7*x^2 + x^4)
+ Polynomial(5//21*x - 10//9*x^3 + x^5)
+```
 
 """
 abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end

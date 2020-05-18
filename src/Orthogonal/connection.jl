@@ -49,7 +49,7 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
 
     d = degree(p)
     T,S = eltype(one(Q)), eltype(p)  #
-    R = promote_type(T,S)
+    R = typeof(one(promote_type(T,S))/1)
 
     as = zeros(R, 1+d)
 
@@ -65,7 +65,6 @@ function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
         iszero(pⱼ) && continue
 
         C̃ʲⱼ = one(R)
-        @show R,  C̃ʲⱼ, pⱼ, λ 
 
         as[1+j] += pⱼ * (λ * C̃ʲⱼ)
 

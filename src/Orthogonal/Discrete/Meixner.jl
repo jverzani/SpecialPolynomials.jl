@@ -1,8 +1,10 @@
 @register2  Meixner AbstractCDOP2
 export  Meixner
 
-
 """
+    Meixner{γ,μ}
+
+
 """
 Meixner
 
@@ -19,5 +21,9 @@ function k1k0(P::Type{<:Meixner{γ,μ}}, n::Int) where {γ,μ}
 end
 function k1k_1(P::Type{<:Meixner{γ,μ}}, n::Int) where {γ,μ}
     (1 - 1/μ)^(n>0 ? 2 : 1)
+end
+
+function  classical_hypergeometric(P::Type{<:Meixner{γ,μ}}, n::Int,   x) where {γ,μ}
+    Pochhammer(γ,n) * pFq((-n, -x), γ, 1 - 1/μ)
 end
 

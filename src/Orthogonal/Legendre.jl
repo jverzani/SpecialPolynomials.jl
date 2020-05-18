@@ -44,10 +44,11 @@ julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 """
 Legendre
 
+abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
+
 basis_symbol(::Type{<:Legendre})  = "L"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
 
 kn(P::Type{<:Legendre}, n::Int)  = kn(Gegenbauer{1/2, eltype(P)}, n)
 k1k0(P::Type{<:Legendre}, n::Int) = k1k0(Gegenbauer{1/2, eltype(P)}, n)

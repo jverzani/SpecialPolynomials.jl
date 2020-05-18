@@ -22,3 +22,9 @@ function k1k_1(P::Type{<:Charlier{μ}}, n::Int)  where {μ}
     (-one(eltype(P))/μ)^m
 end
 
+function classical_hypergeometric(P::Type{<:Charlier{μ}}, n::Int, x) where {μ}
+    pFq((-n,-x),(),-1/μ)
+end
+
+    
+    

@@ -260,3 +260,70 @@ end
             
 
 end
+
+## CDOP
+
+@testset "Charlier" begin
+
+    x = variable()
+    for μ ∈ (1/4, 1/2, 1,2)
+        P = Charlier{μ}
+        @test basis(P,0)(x) ≈ one(x)
+        @test basis(P,1)(x) ≈ 1 - x/μ
+        @test basis(P,2)(x) ≈ (x^2  +  μ^2 - x *(1 + 2μ))/μ^2
+
+    end
+
+    for μ ∈ (1/4, 1/2, 1, 2)
+        P = Charlier{μ}
+        for i in 0:N
+            @test basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+        end
+    end
+
+end
+
+@testset  "Hahn"  begin
+
+
+
+end
+
+
+@testset "Krawchouk" begin
+
+    x = variable()
+    for p ∈ (1/4, 1/2, 1, 2)
+        for N ∈ (3,6)
+            P = Krawchouk{p,N}
+            @test basis(P,0)(x) ≈ one(x)
+            @test basis(P,1)(x) ≈ -N*p + x
+            @test basis(P,2)(x) ≈ 1/2*(N^2*p^2 + x*(2p + x - 1) - N*p(p+2x))
+        end
+
+    end
+
+    for p ∈ (1/4, 1/2, 1, 2)
+        for N ∈ (3,6)
+            P = Krawchouk{p,N}
+            for i in 0:N
+                @test basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+            end
+        end
+    end
+    
+end
+
+
+@testset  "Meixner" begin
+
+    for γ ∈ (1/4, 1/2, 3/4)
+        for μ ∈ (1/4, 1/2, 3/4)
+            P = Meixner{γ,μ}
+            for i in 0:4
+                @test basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+            end
+        end
+    end
+
+end

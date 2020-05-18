@@ -1,5 +1,33 @@
 # represent the   basis x^(mbar) = x⋅(x-1)⋯(x-m+1) ∈ Πm
+"""
+    FallingFactorial{T}
 
+Construct  a  polynomial with   respect to the basis `x⁰̲,  x¹̲, x²̲, …` where 
+`xⁱ̲ = x  ⋅  (x-1) ⋅  (x-2)  ⋯ (x-i+1)` is the falling Pochhammer  symbol.  See 
+[Falling factorial](https://en.wikipedia.org/wiki/Falling_and_rising_factorials)  for several  facts
+about this  polynomial basis.
+
+In [Koepf Schmersau](https://arxiv.org/pdf/math/9703217.pdf)
+connection coefficients between the falling factorial polynomial
+system and classical discrete orthogonal polynomials are given.
+
+## Examples
+
+```jldoctest
+julia> using SpecialPolynomials
+
+julia> p = basis(FallingFactorial, 3)
+FallingFactorial(1⋅x³̲)
+
+julia> x = variable(Polynomial)
+Polynomial(x)
+
+julia> p(x) ≈ x*(x-1)*(x-2)
+true
+
+```
+
+"""
 struct FallingFactorial{T <: Number} <: AbstractSpecialPolynomial{T}
     coeffs::Vector{T}
     var::Symbol
@@ -14,14 +42,25 @@ end
 Polynomials.@register FallingFactorial
 export  FallingFactorial
 
+# modified from  Polynomials.unicode_exponent
+function unicode_exponent(io, var, j)
+    print(io, var)
+    a = ("⁻","","","⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹")
+    for i in string(j)
+        print(io, a[Int(i)-44])
+    end
+end
+
+
 # show as 1⋅(x)₀ + 2⋅(x)₁ + 3⋅(x)₂
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: FallingFactorial}
     iszero(pj) && return false
     !first &&  print(io, " ")
     print(io, Polynomials.hasneg(T)  && Polynomials.isneg(pj) ? "- " :  (!first ? "+ " : ""))
     print(io, "$(abs(pj))⋅")
-    print(io,"($(var))")
-    unicode_subscript(io, j)
+#    print(io,"$(var)")
+    unicode_exponent(io, var, j)
+    print(io,"̲")
     return true
 end
 

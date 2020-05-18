@@ -48,6 +48,7 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
     return true
 end
 
+
 # function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {P <: AbstractSpecialPolynomial, T}
 #     iszero(pj) && return false
 #     !first &&  print(io, " ")
