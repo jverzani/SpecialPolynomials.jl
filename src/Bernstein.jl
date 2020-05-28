@@ -16,10 +16,10 @@ of type `T`.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = basis(Bernstein{3},  2)
-bernstein(1⋅β(3, 2)(x))
+Bernstein(1.0⋅β₃,₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(3*x^2 - 3*x^3)
+Polynomial(3.0*x^2 - 3.0*x^3)
 ```
 
 !!! Note

@@ -61,11 +61,11 @@ julia> using Polynomials, SpecialPolynomials
 julia> const SP=SpecialPolynomials
 SpecialPolynomials
 
-julia> SP.@register0 MonicLegendre SP.AbstractCCOP0
+julia> SP.@register0 MonicLegendre′ SP.AbstractCCOP0
 
-julia> SP.abcde(::Type{<:MonicLegendre})  = (-1,0,1,-2,0)
+julia> SP.:ϟ(::Type{<:MonicLegendre′}) = Legendre; SP.:ϟ(::Type{<:MonicLegendre′{T}}) where {T} = Legendre{T}
 
-julia> SP.Bn(P::Type{<:MonicLegendre}, ::Val{0}) =  0
+julia> SP.@register_monic MonicLegendre′
 
 julia> 𝐐  =  Rational{Int}
 Rational{Int64}
@@ -73,7 +73,7 @@ Rational{Int64}
 julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
-julia> [basis(MonicLegendre{𝐐}, i)(x) for i  in 0:5]
+julia> [basis(MonicLegendre′{𝐐}, i)(x) for i  in 0:5]
 6-element Array{Polynomial{Rational{Int64}},1}:
  Polynomial(1//1)
  Polynomial(x)

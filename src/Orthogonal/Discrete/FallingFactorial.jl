@@ -17,7 +17,7 @@ system and classical discrete orthogonal polynomials are given.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = basis(FallingFactorial, 3)
-FallingFactorial(1⋅x³̲)
+FallingFactorial(1.0⋅x³̲)
 
 julia> x = variable(Polynomial)
 Polynomial(x)

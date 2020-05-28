@@ -16,13 +16,13 @@ terms of the given variable `x`. `x` can be a character, symbol, or string.
 julia> using Polynomials, SpecialPolynomials
 
 julia> Chebyshev([1, 0, 3, 4])
-Chebyshev(1⋅T_0(x) + 3⋅T_2(x) + 4⋅T_3(x))
+Chebyshev(1⋅T₀(x) + 3⋅T₂(x) + 4⋅T₃(x))
 
 julia> Chebyshev([1, 2, 3, 0], :s)
-Chebyshev(1⋅T_0(s) + 2⋅T_1(s) + 3⋅T_2(s))
+Chebyshev(1⋅T₀(s) + 2⋅T₁(s) + 3⋅T₂(s))
 
 julia> one(Chebyshev)
-Chebyshev(1.0⋅T_0(x))
+Chebyshev(1.0⋅T₀(x))
 ```
 
 !!! note
@@ -402,13 +402,13 @@ polynomials of the second kind. These have weight function
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = ChebyshevU([1,2,3])
-ChebyshevU(1⋅U_0(x) + 2⋅U_1(x) + 3⋅U_2(x))
+ChebyshevU(1⋅U₀(x) + 2⋅U₁(x) + 3⋅U₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(-2 + 4*x + 12*x^2)
+Polynomial(-2 + 4*x + 12*x^2)
 
 julia> derivative(p)
-ChebyshevU(4.0⋅U_0(x) + 12.0⋅U_1(x))
+ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> roots(p)
 2-element Array{Float64,1}:

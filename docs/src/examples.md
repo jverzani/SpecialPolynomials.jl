@@ -22,16 +22,16 @@ For example, the Legendre polynomials are a collection of polynomials on `[-1,1]
 julia> using Polynomials, SpecialPolynomials
 
 julia> p0 = Legendre([1])
-Legendre(1⋅L_0(x))
+Legendre(1⋅P₀(x))
 
 julia> p1 = Legendre([0,1])
-Legendre(1⋅L_1(x))
+Legendre(1⋅P₁(x))
 
 julia> p2 = Legendre([0,0,1])
-Legendre(1⋅L_2(x))
+Legendre(1⋅P₂(x))
 
 julia> p3 = Legendre([0,0,0,1])
-Legendre(1⋅L_3(x))
+Legendre(1⋅P₃(x))
 ```
 
 The coefficients, e.g., `[0,0,0,1]` indicate a polynomial `0⋅p0 +
@@ -43,10 +43,10 @@ conversion to the standard basis. For example:
 ```jldoctest example
 julia> convert.(Polynomial, [p0,p1,p2,p3])
 4-element Array{Polynomial,1}:
- Polynomials.Polynomial(1)
- Polynomials.Polynomial(x)
- Polynomials.Polynomial(-1//2 + 3//2*x^2)
- Polynomials.Polynomial(-3//2*x + 5//2*x^3)
+ Polynomial(1)
+ Polynomial(1.0*x)
+ Polynomial(-0.5 + 1.5*x^2)
+ Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Polynomial instances are callable. We have, for example, to evaluate a polynomial at a set of points:
@@ -65,20 +65,20 @@ Conversion can also be achieved through polynomial evaluation, using a variable 
 
 ```jldoctest example
 julia> x = variable(Polynomial)
-Polynomials.Polynomial(x)
+Polynomial(x)
 
 julia> p3(x)
-Polynomials.Polynomial(-3//2*x + 5//2*x^3)
+Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Representation in another basis can be achieved this way:
 
 ```jldoctest example
 julia> u = variable(ChebyshevU)
-ChebyshevU(0.5⋅U_1(x))
+ChebyshevU(0.5⋅U₁(x))
 
 julia> p3(u)
-ChebyshevU(- 0.125⋅U_1(x) + 0.3125⋅U_3(x))
+ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
 For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible.
@@ -92,21 +92,21 @@ julia> h0,h1,h2,h3 = basis.(Hermite, 0:3);
 julia> x = variable();
 
 julia> h3(x)
-Polynomials.Polynomial(-12*x + 8*x^3)
+Polynomial(-12.0*x + 8.0*x^3)
 ```
 
 If the coefficients are known, they can be directly passed to the constructor:
 
 ```jldoctest example
 julia> Laguerre{0}([1,2,3])
-Laguerre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
+Laguerre{0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 ```
 
 Some polynomial types are parameterized. The parameters are passed as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
-Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x) + 3⋅J^(α, β)_2(x))
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 ```
 
 ----
@@ -121,21 +121,21 @@ julia> P = Legendre
 Legendre
 
 julia> p4,p5 = basis.(P, [4,5])
-2-element Array{Legendre{Int64},1}:
- Legendre(1⋅L_4(x))
- Legendre(1⋅L_5(x))
+2-element Array{Legendre{Float64,N} where N,1}:
+ Legendre(1.0⋅P₄(x))
+ Legendre(1.0⋅P₅(x))
  
 julia> wf, dom = SpecialPolynomials.weight_function(P), domain(P);
 
 julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
-(0.0, 0.0)
+(-1.3877787807814457e-17, 0.0)
 ```
 
 The unexported `innerproduct` will compute this as well, without the need to specifiy the domain or weight function, which can be gleaned from the type.
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
-0.0
+-1.3877787807814457e-17
 ```
 
 
@@ -176,13 +176,13 @@ Multiplication formulas may not be defined for each type, and a fall back may be
 
 ```jldoctest example
 julia> P = Jacobi{1/2, -1/2}
-Jacobi{0.5,-0.5,T} where T<:Number
+Jacobi{0.5,-0.5,T,N} where N where T
 
 julia> p,q = P([1,2]), P([-2,1])
-(Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x)), Jacobi(- 2⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x)))
+(Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q
-Jacobi(- 1.5⋅J^(α, β)_0(x) - 2.0⋅J^(α, β)_1(x) + 1.3333333333333333⋅J^(α, β)_2(x))
+Jacobi{0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 ```
 
 ### Derivatives and integrals
@@ -191,41 +191,41 @@ Classic orthogonal polynomials  have known integral and derivative formulas. Whe
 
 ```jldoctest example
 julia> P = ChebyshevU{Float64}
-ChebyshevU{Float64}
+ChebyshevU{Float64,N} where N
 
 julia> p = P([1,2,3])
-ChebyshevU(1.0⋅U_0(x) + 2.0⋅U_1(x) + 3.0⋅U_2(x))
+ChebyshevU(1.0⋅U₀(x) + 2.0⋅U₁(x) + 3.0⋅U₂(x))
 
 julia> dp = derivative(p)
-ChebyshevU(4.0⋅U_0(x) + 12.0⋅U_1(x))
+ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> convert.(Polynomial, (p, dp))
-(Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomials.Polynomial(4.0 + 24.0*x))
+(Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
 ```
 
 There is a default  method defined through conversion to  the standard basis. It is  used behind the  scenes  in the next example.
 
 ```jldoctest example
 julia> P = Jacobi{1//2, -1//2}
-Jacobi{1//2,-1//2,T} where T<:Number
+Jacobi{1//2,-1//2,T,N} where N where T
 
 julia> p,q = P([1,2]), P([-2,1])
-(Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x)), Jacobi(- 2⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x)))
+(Jacobi{1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q # as above, only with rationals for paramters
-Jacobi(- 3//2⋅J^(α, β)_0(x) - 2//1⋅J^(α, β)_1(x) + 4//3⋅J^(α, β)_2(x))
+Jacobi{1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
-Jacobi{1//2,1//2,T} where T<:Number
+Jacobi{1//2,1//2,T,N} where N where T
 
 julia> p = P([1,2,3])
-Jacobi(1⋅J^(α, β)_0(x) + 2⋅J^(α, β)_1(x) + 3⋅J^(α, β)_2(x))
+Jacobi{1//2,1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 
 julia> dp = derivative(p)
-Jacobi(3//1⋅J^(α, β)_0(x) + 10//1⋅J^(α, β)_1(x))
+Jacobi{1//2,1//2}(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
 
 julia> integrate(p)
-Jacobi(3//4⋅J^(α, β)_0(x) + 1//4⋅J^(α, β)_1(x) + 3//5⋅J^(α, β)_2(x) + 4//7⋅J^(α, β)_3(x))
+Jacobi{1//2,1//2}(0.375⋅Jᵅᵝ₀(x) + 0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
 
 julia> integrate(p, 0, 1)
 25//8
@@ -238,39 +238,40 @@ The `roots` function finds the roots of a polynomial.
 
 ```jldoctest example
 julia> p = Legendre([1,2,2,1])
-Legendre(1⋅L_0(x) + 2⋅L_1(x) + 2⋅L_2(x) + 1⋅L_3(x))
+Legendre(1⋅P₀(x) + 2⋅P₁(x) + 2⋅P₂(x) + 1⋅P₃(x))
 
 julia> rts = roots(p)
 3-element Array{Float64,1}:
  -1.0
- -0.2
+ -0.20000000000000007
   0.0
 
 julia> p.(rts)
 3-element Array{Float64,1}:
- 0.0
- 8.326672684688674e-17
- 0.0
+ -2.220446049250313e-16
+  0.0
+  0.0
 ```
  
  
 Here we see `fromroots` and `roots` are related, provided a monic polynomial is used:
  
 ```jldoctest example
+julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
+SpecialPolynomials
+
 julia> P = Jacobi{1/2,-1/2}
-Jacobi{0.5,-0.5,T} where T<:Number
+Jacobi{0.5,-0.5,T,N} where N where T
 
 
 julia> p = P([1,1,2,3])
-Jacobi(1⋅J^(α, β)_0(x) + 1⋅J^(α, β)_1(x) + 2⋅J^(α, β)_2(x) + 3⋅J^(α, β)_3(x))
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
 
 julia> q = SP.monic(p) # monic is not exported
-ERROR: UndefVarError: SP not defined
-Stacktrace:
- [1] top-level scope at none:1
+Jacobi{0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
 
 julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps())) 
-Polynomials.Polynomial(0.0)
+Jacobi{0.5,-0.5}(0.0)
 ```
  
 The roots are found from the eigenvalues of the companion matrix,
@@ -283,30 +284,30 @@ For orthogonal polynomials, the roots of the basis vectors are important for qua
 julia> using LinearAlgebra
 
 julia> p5 = basis(Legendre, 5)
-Legendre(1⋅L_5(x))
+Legendre(1.0⋅P₅(x))
 
 julia> roots(p5)
 5-element Array{Float64,1}:
- -0.9061798459386644
- -0.5384693101056832
-  0.5384693101056831
-  0.9061798459386636
+ -0.9061798459386636
+ -0.5384693101056829
+  0.538469310105683
+  0.9061798459386635
   0.0
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
 5-element Array{Float64,1}:
- -0.9061798459386641
+ -0.906179845938664
  -0.5384693101056831
-  2.6689322308431607e-17
+ -8.042985227174392e-17
   0.5384693101056834
-  0.9061798459386642
+  0.9061798459386639
 ```
 
 For higher degree, the difference comes out:
 
 ```jldoctest example
 julia> p50 = basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
-38
+34
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> sum
 50
@@ -317,7 +318,7 @@ The unexported `gauss_nodes_weights` function returns the nodes and weights. For
 
 ```jldoctest example
 julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
-([-0.9739065285171717, -0.8650633666889844, -0.6794095682990244, -0.4333953941292472, -0.14887433898163122, 0.14887433898163122, 0.4333953941292472, 0.6794095682990244, 0.8650633666889844, 0.9739065285171717], [0.06667134430868799, 0.14945134915058073, 0.21908636251598215, 0.2692667193099964, 0.2955242247147529, 0.2955242247147529, 0.2692667193099964, 0.21908636251598215, 0.14945134915058073, 0.06667134430868799])
+([-0.9739065285171717, -0.8650633666889845, -0.6794095682990244, -0.4333953941292472, -0.1488743389816312, 0.1488743389816312, 0.4333953941292472, 0.6794095682990244, 0.8650633666889845, 0.9739065285171717], [0.06667134430868804, 0.1494513491505808, 0.21908636251598188, 0.26926671930999635, 0.295524224714753, 0.295524224714753, 0.26926671930999635, 0.21908636251598188, 0.1494513491505808, 0.06667134430868804])
 ```
 
 !!! note
@@ -335,7 +336,7 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
 julia> p1 = fit(Polynomial,  xs, ys)
-Polynomials.Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
+Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
 
 julia> p2 = fit(Lagrange, xs, ys)
 Lagrange(1⋅ℓ^3_0(x) + 2⋅ℓ^3_1(x) + 2⋅ℓ^3_2(x) + 3⋅ℓ^3_3(x))
@@ -365,7 +366,7 @@ julia> p = fit(Newton, [1,2,3], x->x^2)
 Newton(1.0⋅p_0(x) + 3.0⋅p_1(x) + 1.0⋅p_2(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(1.0*x^2)
+Polynomial(1.0*x^2)
 ```
 
 Polynomial interpolation can demonstrate the Runge phenomenon if the
@@ -418,13 +419,13 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomials.Polynomial(1.5 + 0.4*x)
+Polynomial(1.5 + 0.4*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomials.Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
+Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
-Polynomials.Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)
+Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)
 ```
 
 For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial

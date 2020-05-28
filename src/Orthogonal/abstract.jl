@@ -138,12 +138,12 @@ macro register_monic(name)
         SpecialPolynomials.weight_function(P::Type{<:$monic}) = weight_function(ϟ(P))
         Polynomials.domain(P::Type{<:$monic}) = domain(ϟ(P))
         SpecialPolynomials.B̃n(P::Type{<:$monic}, n::Int) =  B̃n(ϟ(P),n)
-        SpecialPolynomials.B̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  B̃n(ϟ(P),v)
+        SpecialPolynomials.B̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  B̃n(ϟ(P),v)
         SpecialPolynomials.C̃n(P::Type{<:$monic}, n::Int) =  C̃n(ϟ(P),n)
-        SpecialPolynomials.C̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  C̃n(ϟ(P),v)
-        SpecialPolynomials.ẫn(P::Type{<:$monic}, v::Val{N}) where{N} =  ẫn(ϟ(P),v)
-        SpecialPolynomials.b̂̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  b̂̃n(ϟ(P),v)
-        SpecialPolynomials.ĉ̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  ĉ̃n(ϟ(P),v)
+        SpecialPolynomials.C̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  C̃n(ϟ(P),v)
+        SpecialPolynomials.ẫn(P::Type{<:$monic}, v::Val{N}) where {N} =  ẫn(ϟ(P),v)
+        SpecialPolynomials.b̂̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  b̂̃n(ϟ(P),v)
+        SpecialPolynomials.ĉ̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  ĉ̃n(ϟ(P),v)
     end
 end
 

@@ -18,14 +18,13 @@ julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
 julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
-
 6-element Array{Polynomial{Rational{Int64}},1}:
  Polynomial(1//1)
- Polynomial(1//1 + 1//4*x)
- Polynomial(1//1 + 3//2*x + 15//16*x^2)
- Polynomial(1//1 + 15//4*x + 105//16*x^2 + 315//64*x^3)
- Polynomial(1//1 + 7//1*x + 189//8*x^2 + 693//16*x^3 + 9009//256*x^4)
- Polynomial(1//1 + 45//4*x + 495//8*x^2 + 6435//32*x^3 + 96525//256*x^4 + 328185//1024*x^5)
+ Polynomial(1//1 + 3//4*x)
+ Polynomial(1//1 + 5//2*x + 35//16*x^2)
+ Polynomial(1//1 + 21//4*x + 189//16*x^2 + 693//64*x^3)
+ Polynomial(1//1 + 9//1*x + 297//8*x^2 + 1287//16*x^3 + 19305//256*x^4)
+ Polynomial(1//1 + 55//4*x + 715//8*x^2 + 10725//32*x^3 + 182325//256*x^4 + 692835//1024*x^5)
 ```
 
 """

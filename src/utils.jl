@@ -68,7 +68,7 @@ julia> pFq([1/4, 1/2], [3/4], 80/81; maxevals=2000) ≈ 9/5
 true
 
 julia> x = variable()
-Polynomials.Polynomial(x)
+Polynomial(x)
 
 julia> n = 5
 5

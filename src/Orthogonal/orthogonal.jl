@@ -10,6 +10,11 @@ abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolyn
 ##
 ## --------------------------------------------------
 ##
+function Polynomials.fromroots(P::Type{<:AbstractOrthogonalPolynomial}, roots::AbstractVector; var::Polynomials.SymbolLike = :x)
+    x = variable(P, var)
+    p =  prod(x - r for r in roots)
+    return truncate(p)
+end
 
 
 Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.SymbolLike=:x) =
@@ -44,7 +49,6 @@ function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
     Δ0 = cs[end - 1]
     Δ1 = cs[end]
     @inbounds for i in N-1:-1:2
-        @show cs[i-1]
         Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
     end
 
