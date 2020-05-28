@@ -82,6 +82,8 @@ end
 
 (ch::Hermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
 
+    
+
 ## Linearization
 ## leverage that of ChebyshevHermite
 # Function for multiplication using linearization defined below
@@ -282,6 +284,7 @@ Cn(::Type{<:ChebyshevHermite}, n) = -n
 norm2(::Type{<:ChebyshevHermite}, n) = sqrt(2pi) * gamma(n+1)
 
 (ch::ChebyshevHermite{T})(x::S) where {T,S} = orthogonal_polyval(ch, x)
+
 
 linearization_λ(::Type{<:ChebyshevHermite}, l, m, n) = 1    
 

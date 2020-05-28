@@ -1,13 +1,16 @@
-@register1  Charlier AbstractCDOP1
+@registerN  Charlier AbstractCDOP1 μ
 export  Charlier
 
 
 """
+    Charlier
+
+References: [Koekoek and Swarttouw §1.12](https://arxiv.org/pdf/math/9602214.pdf)
 """
 Charlier
 
 basis_symbol(::Type{<:Charlier{μ}}) where {μ} = "cᵘ"
-Polynomials.domain(::Type{<:Charlier{μ}}) where {μ} = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{<:Charlier{μ}}) where {μ} = Polynomials.Interval(0, Inf)
 abcde(::Type{<:Charlier{μ}})  where {μ} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,μ))
 
 function kn(P::Type{<:Charlier{μ}}, n::Int)  where {μ}

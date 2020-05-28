@@ -1,5 +1,5 @@
 ## Bessel
-@register1 Bessel AbstractCCOP1
+@registerN Bessel AbstractCCOP1 α
 
 
 """
@@ -17,7 +17,7 @@ Rational{Int64}
 julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
-julia> [basis(Bessel{1//2, 2//1, 𝐐}, i)(x) for i in 0:5]
+julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
 
 6-element Array{Polynomial{Rational{Int64}},1}:
  Polynomial(1//1)
@@ -42,7 +42,7 @@ abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α
 function kn(P::Type{<:Bessel{α}}, n::Int) where {α}
     one(eltype(P))/2^n * Pochhammer(n+α-1,n)
 end
-function k1k0(::Type{P}, k) where {α, P<:Bessel{α}}
+function k1k0(::Type{P}, k::Int) where {α, P<:Bessel{α}}
     k < 0 && return zero(eltype(P))
     iszero(k) && return α/2
 
@@ -51,7 +51,7 @@ function k1k0(::Type{P}, k) where {α, P<:Bessel{α}}
     val /= (k+α-1)*2
     val
 end
-function k1k_1(P::Type{<:Bessel{α}}, k) where {α}
+function k1k_1(P::Type{<:Bessel{α}}, k::Int) where {α}
     @assert k > 0
     
     val = one(eltype(P))
@@ -76,9 +76,10 @@ end
 
 ## Overrides XXX fails wih 1 and 2
 #Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
-Bn(P::Type{<:Bessel{2}}, ::Val{0}) where {α} = zero(eltype(P))
-Cn(P::Type{<:Bessel{α}}, ::Val{1}) where {α} = -one(eltype(P))*4/(α^2*(α + 1))
+B̃n(P::Type{<:Bessel{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
+#iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
+C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
 
-b̂n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
-b̂n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf
+b̂̃n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
+b̂̃n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf
 #ĉn(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = one(S)/n/(2n-1)/(2n+1)

@@ -16,8 +16,10 @@ using Memoize
 include("utils.jl")
 include("abstract.jl")
 
-include("Orthogonal/orthogonal.jl")
 include("Orthogonal/abstract.jl")
+include("Orthogonal/orthogonal.jl")
+include("Orthogonal/cop.jl")
+include("orthogonal/ccop.jl")
 
 include("Orthogonal/Bessel.jl")
 include("Orthogonal/Chebyshev.jl")
@@ -28,8 +30,9 @@ include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Gegenbauer.jl")
 include("Orthogonal/Jacobi.jl")
 include("Orthogonal/Legendre.jl")
-#include("Orthogonal/WeightFunction.jl")
+include("Orthogonal/WeightFunction.jl")
 
+include("Orthogonal/Discrete/discrete-orthogonal.jl")
 include("Orthogonal/Discrete/cdop.jl")
 include("Orthogonal/Discrete/FallingFactorial.jl")
 include("Orthogonal/Discrete/Hahn.jl")
@@ -40,7 +43,7 @@ include("Orthogonal/Discrete/DiscreteChebyshev.jl")
 
 
 include("Orthogonal/connection.jl")
-#include("Orthogonal/glaser-liu-rokhlin.jl")
+include("Orthogonal/glaser-liu-rokhlin.jl")
 
 #include("Orthogonal/Discrete/discrete-orthogonal.jl")
 #include("Orthogonal/Discrete/DiscreteChebyshev.jl")

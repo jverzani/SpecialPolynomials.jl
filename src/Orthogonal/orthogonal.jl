@@ -1,11 +1,11 @@
-## Abstract types
-##
+## Abstract  types for  orthogonal  polynomials
+
+## Has An(P), Bn(P), Cn(P)
 abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} end
 abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
+
 abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
-
-
 
 """
     AbstractCCOP{T,N}
@@ -86,145 +86,66 @@ julia> [basis(MonicLegendre{𝐐}, i)(x) for i  in 0:5]
  Polynomial(5//21*x - 10//9*x^3 + x^5)
 ```
 
+[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
+present an encyclopedia of formula characterizing families of
+orthogonal polynomials.
+
+
 """
 abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
 
 
-##
-## -----
-##
-## interface for a  given type
-
-basis_symbol(::Type{<:AbstractCOP}) = "P"
-Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf,  Inf)
-Base.extrema(P::Type{<:AbstractCOP}) = (first(domain(P)), last(domain(P)))
-
 """
-   abcde
+     AbstractCDOP{T,N}
 
-A named tuple returning  the  constants a,b,c,d,e  for a CCOP type with
-(a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
-"""
-abcde(::Type{<:AbstractCOP}) = throw(MethodError())
+Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
+solution of a differential equation
 
-# kn is the leading term (Section 3 table)
-leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
+(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0,
 
-# Set defaults to be monic
-kn(::Type{P},  n) where{P <: AbstractCOP} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
+where  `Δy(x) = y(x+1) - y(x)` and `∇y(x) = y(x) - y(x-1)`.
 
-# k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i)
-# k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{P},  i) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i-1)
+A family is characterized by the 5 coefficients: a,b,c,d,e.
+Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
 
-monic(p::P) where {T,N,P <: AbstractCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
+As in the classical coninuous orthogonal polynomial case
+[`AbstractCCOP`](@ref), from these 5 values the cofficients in the
+there-point recursion, and other structural equations can be
+represented. These allow polynomial multiplication, integration,
+differentiation, conversion, etc. to be defined generically.
 
+[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
+present an encyclopedia of formula characterizing families of
+orthogonal polynomials. 
 
-# subtypes  to keep track of number of parameters
-# passed to  @registerN macros
-abstract type AbstractCCOP0{T,N} <: AbstractCCOP{T,N} end
-abstract type AbstractCCOP1{α,T,N} <: AbstractCCOP{T,N} end
-abstract type AbstractCCOP2{α, β,T,N} <: AbstractCCOP{T,N}  end
+For example, on p29 they give  formula for Hahn polynomials through:
 
-## Display
-# show parameters in constructor's name
-function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,P<:AbstractCCOP1{α}}
-    print(io,"$(P.name){$(α)}(")
-    printpoly(io, p, mimetype)
-    print(io,")")
-end
-function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,β,P<:AbstractCCOP2{α,β}}
-    print(io,"$(P.name){$(α),$(β)}(")
-    printpoly(io, p, mimetype)
-    print(io,")")
-end
-
-# We want to  be able to strip  off T,N  or α,...,T,N
-# * constructorof(P{α,..,T,N}) =  P
-# * ⟒(P(α,...,T,N)) =  P(α...)
-⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
-⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α, β} = constructorof(P){α,  β}
-
-# Can't  change  N  here
-function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}
-
-    ## widen size...
-    idx < 0 &&  throw(ArgumentError("Negative index"))
-    val = T(value)
-    d = N - 1
-    if idx > d || (idx == d && iszero(value))
-        throw(ArgumentError("Polynomials of AbstractCCOP type have fixed size parameter, N, which  can't  be changed through  assignment. Make new polynomial  instance?"))
-    end
-    setindex!(p.coeffs, val,  idx+1)
-end
-
-Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
-Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
-
-Polynomials.zero(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(eltype(P)[], var)
-Polynomials.one(::Type{P},  var::Polynomials.SymbolLike=:x) where {P<:AbstractCOP} = ⟒(P)(ones(eltype(P),1), var)
-Polynomials.variable(P::Type{<:AbstractCOP},  var::Polynomials.SymbolLike=:x) = (basis(P,1,var) - Bn(P,0)) / An(P,0)
-
-#  XXX var is keyword here (odd)
-function Polynomials.basis(::Type{P}, n::Int; var::Polynomials.SymbolLike=:x) where {P  <: AbstractCCOP}
-    T = eltype(P)
-    cs = zeros(T, n+1)
-    cs[end] = one(T)
-    ⟒(P)(cs, var)
-end
-
-
-##
-## -----
-##
-##
-## -----
-##
-
-## abcde for each family
-## Families       a   b   c   d       e
-## Hermite        1   0   0  -2       0
-## Hermiteₑ       0   0   1  -1       0
-## ChebyshevT    -1   0   1  -1       0
-## ChebyshevU    -1   0   1  -3       0
-## Laguerre{α}    0   1   0  -1      α+1
-## Bessel{α}      1   0   0  α        2
-## Gegenbaeur{α} -1   0   1 -2(α+1)   0
-## Jacobi{α,β}   -1   0   1 -(α+β+2) β-α
-## standard
+`n(n+α+β+1)y(x) = B(x)y(x+1) -[B(x)+D(x)]y(x) + D(x)y(x-1)`,  with  explicit values  for  `B` and `D`. Reexpressing gives:
+`BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
+`σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
 
 
 """
-    Clenshaw evaluation of an orthogonal polynomial 
-"""
-function eval_ccop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
-    if @generated
-        
-        N == 0 && return zero(T) * zero(S)
-        N == 1 && return cs[1] * one(S)
-        #SS = eltype(one(S))
-        Δ0 = :(cs[N-1])
-        Δ1 = :(cs[N])
-        for i in N-1:-1:2
-            a = :(cs[i - 1] - c1 * Cn(P, i-1))
-            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1)))
-            Δ0 = :(a)
-            Δ1 = :(b)
-        end
-        c0 + c1* muladd(x, An(P,0), Bn(P,0))
-    else
-        clenshaw_eval(P, cs, x)
-    end
-end
+abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
 
-function clenshaw_eval(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {N, T,S}
+##
+## --------------------------------------------------
+##
 
 
+Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.SymbolLike=:x) =
+    (basis(P,1,var) - Bn(P,0)) / An(P,0)
+
+## Evaluation
+
+# from type, cs, x
+function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) where {T,S}
+
+    N = length(cs)
     N == 0 && return zero(T)*zero(S)
     N == 1 && return cs[1] * one(S)
 
-    #SS = eltype(one(S))
     Δ0 = cs[end - 1]
     Δ1 = cs[end]
     @inbounds for i in N-1:-1:2
@@ -233,380 +154,27 @@ function clenshaw_eval(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {N, T,S}
 
     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
 end
-    
 
-##
-## Structural  equations
-##
-# An, Bn,  Cn
-# p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
-function  An(P::Type{<:AbstractCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    _An(P, a,b,c,d,e ,n) *  k1k0(P, n)
-end
-
-function Bn(P::Type{<:AbstractCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    _Bn(P, a,b,c,d,e ,n) * k1k0(P,n)
-end
-
-function Cn(P::Type{<:AbstractCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    _Cn(P, a,b,c,d,e,n) *  k1k_1(P, n)
-end
-
-
-function _An(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
-    one(eltype(P))
-end
-
-
-function _Bn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
-
-    S = eltype(P)
-    
-    num = (2b*n*(a*n+d-a)-e*(-d+2a))
-    den = (d+2a*n) * (d-2a+2a*n)
-
-    iszero(den) && return Bn(P, Val(n))  
-    
-    val = one(S) * num / den
-    
-    val
-end
-
-function _Cn(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
-
-    S = eltype(P)
-    
-    numa = (a*n+d-2a) * n * (4c*a-b^2) + 4a^2*c -a*b^2 + a*e^2 - 4*a*c*d
-    numa += d*b^2 - b*e*d + d^2*c
-    num = -numa * (a*n + d - 2a) * n
-    den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
-
-    iszero(den) && return Cn(P, Val(n))
-    
-    val = one(S) * num  / den
-
-    val
-end
-
-# an, bn, cn
-# x⋅pn = [an,bn,cn] ⋅ [p_{n+1},p_n,p_{n-1}]
-function an(P::Type{<:AbstractCOP}, n::Int)
-    1/An(P,n)
-end
-
-function bn(P::Type{<:AbstractCOP}, n::Int)
-    -Bn(P,n)/An(P,n)
-end
-
-function cn(P::Type{<:AbstractCOP}, n::Int)
-    Cn(P,n)/An(P,n)
-end
-
-# αn, βn,γn
-# σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-function αn(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-
-    num = a * n
-    val = one(S) *  num
-    
-    val /= k1k0(P,n) 
-    return val
-end
-
-function βn(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-
-    num = -n*(a*n+d-a)*(2e*a-d*b)
-    den = (d+2*a*n)*(d-2a+2a*n)
-
-    iszero(den) &&  return βn(P, Val(n))
-
-    val = one(S) *  num  / den
-
-    return val
-end    
-
-
-function γn(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-    
-    num = ((n-1) * (a*n + d - a) * (4c*a - b^2) + a*e^2 + d^2*c - b*e*d)
-    num *= (a*n + d - a) * (a*n + d - 2a) * n
-    den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
-    iszero(den) &&  return γn(P, Val(n))
-    
-    val = one(S) * num / den
-    val *= k1k0(P,n-1)
-    
-    return val
-end
-
-
-
-# for integration formulas
-# ân, b̂n, ĉn
-# pn = [ân, b̂n, ĉn] ⋅ [p'_{n+1},p'_n,p'_{n-1}]
-function ân(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-    
-    val = one(S)
-    val /= n+1
-    val /= k1k0(P,n)
-    return val
-end
-
-function b̂n(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-    
-    num = (2e*a - d*b)
-    den = (d+2a*n)*(d-2a+2a*n)
-    iszero(den) && return b̂n(P, Val(n))
-        val = one(S) * num/ den
-    return val
-    
-end
-
-function ĉn(P::Type{<:AbstractCCOP}, n::Int)
-    a,b,c,d,e = abcde(P)
-    S = eltype(P)
-    
-    num = ((n-1)*(a*n+d-a)*(4c*a-b^2)+a*e^2+d^2*c-b*e*d)*a*n
-    den =  (d-2a+2a*n) * (d-2a+2a*n) * (2a*n-3a+d) * (2a*n-a+d)
-    iszero(den)  &&  return ĉn(P, Val(n))
-    val = one(S)  *  num / den
-    n > 0 && (val *= k1k0(P,n-1))
-    return val
-end
-
-"""
-    abcdeᴵ
-
-If P_n is a CCOP, then 
-
-x pᵢ = αᵢ p₍ᵢ₊₁₎ + βᵢ pᵢ + γᵢ p₍ᵢ₋₁₎.
-
-Sp will pᵢ' with this  choice of a,b,d,e derived from  those of  pᵢ. (Eqn  (13)
-"""
-function abcdeᴵ(P::Type{<:AbstractCCOP}) 
-    a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
-    NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,e+b))
-end
-
-
-# αᴵn, βᴵn, γᴵn  (α^*,...)
-# x⋅pn' = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1},p'_n,p'_{n-1}]
-function αᴵn(P::Type{<:AbstractCCOP}, n::Int)
-    n  = n - 1
-    a,b,c,d,e = abcdeᴵ(P)
-    Aᴵn = _An(P,a,b,c,d,e,n) * (n+2)/(n+1)*k1k0(P,n+1) # . *  k1k0(dP,n) = k(dP,n+1)/k(dP,n) = (n+2)kn(P,n+1)/((n+1)kn(P,n+1) = (n+2)/(n+1)*k1k0(P,n+1)
-    1/Aᴵn
-end
-
-function βᴵn(P::Type{<:AbstractCCOP}, n::Int)
-    n = n - 1
-    a,b,c,d,e = abcdeᴵ(P)
-    Aᴵn = _An(P,a,b,c,d,e,n) # * k1k0(dP,n)
-    Bᴵn = _Bn(P,a,b,c,d,e,n) # * k1k0(dP,n)
-   
-    - Bᴵn / Aᴵn 
-end
-
-function γᴵn(P::Type{<:AbstractCCOP}, n::Int)
-    n = n - 1
-    a,b,c,d,e = abcdeᴵ(P)
-    Aᴵn = _An(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n)
-    Cᴵn = _Cn(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n-1)
-    Cᴵn/Aᴵn * (n+1)/n * k1k0(P, n)     # k(dp,n)/k(dp,n-1) = (n+1)k(P,n+1)/(n k(P,n)) = (n+1)/n * k1k0(n)
-end
-
-
-##
-## --------------------------------------------------
-##
-## Conversion
-
-function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP} 
-    p(variable(Q, p.var))
-end
-function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCOP,  P <: Polynomials.StandardBasisPolynomial}
-    _convert_ccop(Q, p)
-end
-function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
-
-    a,b,c,d,e = abcde(P)
-    ā,b̄,c̄,d̄,ē = abcde(Q)
-    
-    if (a,b,c) == (ā,b̄,c̄)  &&  !(Q <: Hermite || P  <: Hermite)  # σ ==  σ̄   and not Hermite
-        _convert_ccop(Q, p)
-    else
-        T = eltype(Q)
-        convert(Q, convert(Polynomial{T}, p))
-    end
-end
-
-##
-## --------------------------------------------------
-##
-## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
-## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
-## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
-function ⊕(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
-
-    #@assert  ⟒(P) == ⟒(Q)
-    #@assert eltype(p) == eltype(q)
-
-    Polynomials.isconstant(p)  && return q + p[0]
-    Polynomials.isconstant(q)  && return p + q[0]    
-    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
-
-    d = max(degree(p), degree(q))
-    as = [p[i]+q[i] for i in 0:d]
-    return ⟒(P)(as, p.var)
-
-end
-
-function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
-
-    #@assert  ⟒(P) == ⟒(Q)
-    #@assert eltype(p) == eltype(q)
-
-    Polynomials.isconstant(p)  && return q * p[0]
-    Polynomials.isconstant(q)  && return p * q[0]    
-    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
-        
-    convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
-
-#    R = eltype(p)
-#    convert(⟒(P){R}, convert(Polynomial, p) * convert(Polynomial, q))
-end
-
-function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
-
-    #@assert  ⟒(P) == ⟒(Q)
-    #@assert eltype(num) == eltype(den)
-
-    p1 = convert(Polynomial, num)
-    p2 = convert(Polynomial, den)
-    q,r = divrem(p1, p2)
-    convert.(P, (q,r))
-
-end
-
-## Modifications needed due to `N` in the type parameter
-
-function Polynomials.truncate(p::P;
-                               rtol::Real = Base.rtoldefault(real(T)),
-                               atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
-    ps = coeffs(p)
-    max_coeff = maximum(abs, ps)
-    thresh = max_coeff * rtol + atol
-    map!(c->abs(c) <= thresh ? zero(T) : c, ps,ps)
-    ⟒(P){T}(ps, p.var)
-end
-
-Polynomials.truncate!(p::P;
-                      rtol::Real = Base.rtoldefault(real(T)),
-                      atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`truncate!` not defined")
-
-function Base.chop(p::P;
-                   rtol::Real = Base.rtoldefault(real(T)),
-                   atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
-    
-    N == 0 && return p
-    i = N-1
-    while i >= 0
-        val = p[i]
-        if !isapprox(val, zero(T); rtol = rtol, atol = atol)
-            break
-        end
-        i -= 1
-    end
-    ⟒(P)(coeffs(p)[1:i+1], p.var)
-end
-
-Polynomials.chop!(p::P;
-                  rtol::Real = Base.rtoldefault(real(T)),
-                  atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`chop!` not defined")
-
-
-# use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
-# find expression for p' in terms of p
-function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
-
-    R = eltype(one(eltype(p))/1)
-    d = degree(p)
-    order < 0 && throw(ArgumentError("order must  be non-negative"))
-    order == 0 && return ⟒(P){R}(coeffs(p), p.var)
-    d < order && return zero(⟒(P){R})
-    
-    as = zeros(R, d)
-    ps = R.(coeffs(p))
-    for n = d-1:-1:1
-        a,b,c = ân(P,n),b̂n(P,n),ĉn(P,n)
-        if !iszero(a)
-            pn = ps[1+n+1]
-            as[1+n] = pn/a
-            ps[1+n] -= pn*b/a
-            ps[1+n-1] -= pn*c/a
-        end
-    end
-    a,b,c = ân(P,0),b̂n(P,0),ĉn(P,0)
-    p1 = ps[1+1]
-    as[1+0] = p1/a
-
-    dp = ⟒(P)(as, p.var)
-    order == 1 ? dp : derivative(dp, order - 1)
-    
-end
-
-function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
-    
-    T,S = eltype(p), typeof(C)
-    R = promote_type(typeof(one(T) / 1), S)
-    Q = ⟒(P){R}
-    #if hasnan(p) || hasnan(C)
-    #    error("XXX nan")
-    #end
-    n = degree(p)
-    if n == 0
-        return Q([C, p[0]], p.var)
-    end
-    
-    as = zeros(R, n + 2)
-
-    # case d=0 we do by hand,  as
-    # P_0(x) = 1, so ∫P_o = x = variable(P)
-    c₀,c₁ = coeffs(variable(p))
-    pd = first(p.coeffs)
-    as[1] = pd*c₀
-    as[2] = pd*c₁
-    @inbounds for d in 1:n
-        pd = p.coeffs[d+1]
-        as[1 + d + 1] += pd * ân(Q, d)
-        as[1 + d]     += pd * b̂n(Q, d)
-        if  d > 0
-            as[1 + d - 1] += pd * ĉn(Q, d)
-        end
+# from instance, x
+function clenshaw_eval(p::AbstractOrthogonalPolynomial, x::S) where {S}
+
+    T, cs = eltype(p), coeffs(p)
+    N = length(cs)
+    N == 0 && return zero(T)*zero(S)
+    N == 1 && return cs[1] * one(S)
+
+    Δ0 = cs[end - 1]
+    Δ1 = cs[end]
+    @inbounds for i in N-1:-1:2
+        @show cs[i-1]
+        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(p, i-1), Δ0 + Δ1 * muladd(x, An(p,i-1),Bn(p,i-1))
     end
 
-    # adjust constant
-    ∫p = Q(as,  p.var)
-    ∫p[0] = R(C) - ∫p(0)
-    
-    return  ∫p
+    return Δ0 + Δ1 * muladd(x, An(p,0),  Bn(p,0))
 end
 
 
-
+## Connection/Linearization
 
 #  Structs for connection, linearization (connection.jl)
 struct Connection{P,Q}
@@ -619,3 +187,327 @@ struct Linearization{P,V}
     n::Int
     m::Int
 end
+
+
+## Collect facts
+
+"""
+    weight_function(p)
+    weight_function(::Type{P})
+
+For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) dt = 0` when n and m are not equal.
+
+"""
+weight_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
+weight_function(::P) where {P <: AbstractOrthogonalPolynomial} = weight_function(P)
+
+"""
+    generating_function(p)
+    generating_function(::Type{P})
+
+The generating function is a function defined by: `(t,x) -> sum(t^n Pn(x) for n in 0:oo)`.
+"""
+generating_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
+generating_function(::P) where {P <: AbstractOrthogonalPolynomial} = generating_function(P)
+
+ismonic(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
+
+# cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
+# Orthogonal polynomials have a three-point recursion formula
+# parameterized here through:
+# P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
+# also commonly  written as
+# An⋅x⋅P_n = -P_{n+1} + Bn⋅P_n + C_n P_{n-1}
+"""
+    An(::Type{P},n)
+    An(p::P, n)
+
+
+Orthogonal polynomials defined by a weight function satisfy a three point recursion formula of the form:
+
+`P_{n+1} = (A_n x + B_n) P_{n} - C_n P_{n-1}`
+
+If the polynomials are monic, this is usually parameterized as:
+
+`π_{n+1} = (x - α̃_n) π_n - β̃_n π_{n-1}`
+
+These functions are used through recursion when evaluating the polynomials, converting to `Polynomial` format, for constructing the Vandermonde matrix, for construction the Jacobi matrix, and elsewhere.
+"""
+An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
+
+"""
+    Bn(::Type{P},n)
+    Bn(p::P, n)
+
+cf. [`An()`](@ref)
+"""
+Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
+
+
+"""
+    Cn(::Type{P},n)
+    Cn(p::P, n)
+
+cf. [`An()`](@ref)
+"""
+Cn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
+An(p::P, n) where {P <: AbstractOrthogonalPolynomial} = An(P,n)
+Bn(p::P, n) where {P <: AbstractOrthogonalPolynomial} = Bn(P,n)
+Cn(p::P, n) where {P <: AbstractOrthogonalPolynomial} = Cn(P,n)
+
+
+## For monic polynomials, we have
+## π_{n+1} = (x - α̃(n)) π_{n} - β̃(n)π_{n-1}
+"""
+    π̃αn(::Type{P}, n)
+
+cf. [`An()`](@ref)
+"""
+π̃αn(P::Type{<:AbstractOrthogonalPolynomial}, n)        = - Bn(P,n) / An(P,n)
+
+"""
+    β̃n(::Type{P}, n)
+
+cf. [`An()`](@ref)
+"""
+function π̃βn(P::Type{<:AbstractOrthogonalPolynomial}, n)
+    iszero(n) &&  return innerproduct(P, one, one)
+    Cn(P,n)/An(P,n)/An(P, n-1)
+end
+
+
+"""
+    leading_term(::Type{P},n)
+
+Return leading term of `basis(P,n)` in the  standard basis. By default this is generated through the three-point recursion.
+"""
+function leading_term(::Type{P}, n::Int) where {P <: AbstractOrthogonalPolynomial}
+    n < 0 && throw(ArgumentError("n must be a non-negative integer"))
+    n == 0 && return one(eltype(P))
+    prod(An(P,i) for i in n-1:-1:0)
+end
+
+"""
+    monic(p::AbstractOrthogonalPolynomial)
+
+Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`. 
+"""
+function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
+    n = degree(p)
+    n == -1 && return ⟒(P)(0/one(eltype(p)))
+    p / (p[end]*leading_term(P, n))
+end
+
+
+# return the domain as a tuple, not an interval object
+function Base.extrema(::Type{P}) where {P <: AbstractOrthogonalPolynomial}
+    dom = domain(P)
+    first(dom), last(dom)
+end
+Base.extrema(p::P) where {P <: AbstractOrthogonalPolynomial} = extrema(P)
+
+
+
+##
+## Vandermonde matrix can be generated through the 3-point recursion formula
+##
+function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
+    {P <:  AbstractOrthogonalPolynomial,
+     T <: Number}
+    
+    A = Matrix{T}(undef, length(x), n + 1)
+    A[:, 1] .= P0(P, one(T))
+
+    if n > 0
+        A[:, 2] .= P1(P, x)
+        @inbounds for i in 1:n-1
+            A[:, i+2] .= A[:, i+1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i])
+        end
+    end
+    
+    return A
+    
+end
+
+# Jacobi matrix
+# roots(basis(P,n)) = eigvals(jacobi_matrix(P,n)), but this is more stable
+# https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
+"""
+    jacobi_matrix(::Type{P}, n)
+    jacobi_matrix(p::P, n)
+
+The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alpha_i` values, the off diagonal entries,
+the square root of the  `beta_i` values. This matrix has the properties that
+
+* the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of qa symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
+* the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
+
+See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster implementations.
+
+"""
+function jacobi_matrix(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+    LinearAlgebra.SymTridiagonal([π̃αn(P,i) for i in 0:n-1], [sqrt(π̃βn(P,i)) for i in 1:n-1])
+end
+jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix(P,n)
+
+##  Compute weights and nodes for quadrature
+"""
+    gauss_nodes_weights(::Type{P}, n)
+    gauss_nodes_weights(p::P, n)
+
+Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal type.
+
+For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
+
+For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
+
+!!! note
+    See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster, vastly more engineered implementations.
+
+"""
+function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+    J = jacobi_matrix(P, n)
+    eig = eigen(J, extrema(P)...)
+    # Is this necessary?
+    nm  = 1 #diag(eig.vectors * eig.vectors')
+    wts =  π̃βn(P,0) * (eig.vectors[1,:] ./ nm).^2
+    eig.values,  wts
+end
+gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
+
+# Trait to indicate if computation of nodes and weights is is O(n) or O(n^2)
+has_fast_gauss_nodes_weights(p::P)  where {P <: AbstractOrthogonalPolynomial} = has_fast_gauss_nodes_weights(P)
+has_fast_gauss_nodes_weights(::Type{P})  where {P <: AbstractOrthogonalPolynomial} = false
+
+
+##
+## --------------------------------------------------
+##
+
+## <f,g> = ∫ f⋅g⋅w dx
+function innerproduct(P::Type{<:Union{AbstractCCOP,AbstractContinuousOrthogonalPolynomial}}, f, g)
+    dom = domain(P)
+    a, b = first(dom), last(dom)
+    if !first(Polynomials.inclusivity(dom))
+        a += eps(float(one(a)))
+    end
+    if !last(Polynomials.inclusivity(dom))
+        b -= eps(float(one(b)))
+    end
+    fn = x -> f(x) * g(x) * weight_function(P)(x)
+    
+    return _quadgk(fn, a, b)
+end
+
+innerproduct(p::P, f, g) where {P <: AbstractContinuousOrthogonalPolynomial} =  innerproduct(P, f, g)
+
+## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
+Base.abs2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
+Base.abs2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(p, n)
+
+## Compute <p_i, p_i> = \| p \|^2
+## Slow default; generally should  be directly expressed for each type
+function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+    p = basis(P,n)
+    innerproduct(P, p, p)
+end
+norm2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
+
+
+"""
+    fit([Val(S)], P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x)
+
+    Find an approximating polynomial of degree `n` or less for a function `f`, that is returns `p(x) = ∑ᵢⁿ cᵢ Pᵢ(x)` for some coefficients `cᵢ`.
+
+Defaults to an interpolating polynomial. To specify others, use one of `Val(:interpolating)`, `Val(:lsq)` (least squares), or `Val(:series)` (trunated series expansion) as the first argument. See [`SpecialPolynomials.cks`](@ref) for some more detail.
+
+"""
+Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
+    fit(Val(:interpolating), P, f, n, var=var)
+
+"""
+    fit(val::Val{:interpolating}, P::Type{<:AbstractOrthogonalPolynomial}, f, deg::Int; var=:x)
+
+Fit `f` with an interpolating polynomial of degree `n` orless using nodes
+`x0,x1, ..., xn`, the  zeros of `P_{n+1} = basis(P, n+1)`. and `p(xᵢ)=f(xᵢ)`.
+"""
+Polynomials.fit(val::Val{:interpolating},
+                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
+                var=:x) =
+                    P(cks(val, P,f,n), var)
+
+"""
+    fit(Val(:lsq), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
+
+Fit `f` with `p(x)=∑ d_i P_i(x)` where `p` had degree `n` or less using least squares.
+"""
+Polynomials.fit(val::Val{:lsq},
+                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
+                var=:x) =
+                    P(cks(val, P,f,n), var)
+
+"""
+    fit(Val(:series), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
+
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncated sum `∑_0^n c̃_k P_k(x)` where `n` ischosen algorithmically and `c̃_k`is chosen using an efficient manner, not necessarily through the orthogonality condition, `<f,p_k>/<p_k,p_k>`.
+
+"""
+Polynomials.fit(val::Val{:series},
+                P::Type{<:AbstractOrthogonalPolynomial}, f;
+                var=:x,kwargs...) = 
+                    P(cks(val, P,f; kwargs...), var)
+
+
+"""
+    cks(::Val{:interpolating}, ::Type{P}, f, n::Int)
+
+Fit `f` with the interpolating polynomial using roots of P_{n+1}.
+
+Let xs,ws be the gauss nodes and weights of P (xs are the zeros of P_{n+1}).
+
+Then if we interpolate `f` at the `xs` to get `p`, then
+`p(xᵢ) = f(xᵢ)` and 
+
+`∑ p_n(xᵢ) p_m(xᵢ) wᵢ = K_m δ_{nm}` and
+
+`p(x) = ∑ᵢ cᵢ Pᵢ(x)`.
+
+Using this:
+`∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ =` 
+`∑ᵢ (∑_j c_j P_j(xᵢ)) P_k(xᵢ) wᵢ =`
+`∑_j c_j (K_k δ_{ik}) = c_k K_k`, So 
+`c_k = (1/K_k) ∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ`
+"""
+function cks(::Val{:interpolating}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+    
+    xs, ws = gauss_nodes_weights(P, n)
+    return [sum(f(xⱼ) * basis(P, k)(xⱼ) * wⱼ for (xⱼ,wⱼ) in zip(xs,ws)) / norm2(P,k) for k in 0:n]
+end
+
+
+"""
+    cks(::Val{:lsq}, ::Type{P}, f, n::Int)
+
+Fit `f` with a polynomial `∑ᵢⁿ cᵢ Pᵢ` chosen so `<f-p,f-p>_w` is as small as possible.
+ Using the normal equations, the coefficients are found to be `c_k = <f,P_k>_w / <P_k,P_k>_w.` 
+For some types an approximation to the inner product, `<f,P_k>_w` may be used.
+
+
+ref: http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION
+"""
+function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
+    [innerproduct(P, f, basis(P,k)) /norm2(P,k) for k in 0:n]
+end
+
+"""
+    cks(::Val{:series}, ::Type{P}, f, n::Int)
+
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this 
+tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients. 
+
+"""
+function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+    throw(MethodError())
+end
+

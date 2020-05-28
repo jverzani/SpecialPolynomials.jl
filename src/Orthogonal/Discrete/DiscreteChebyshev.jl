@@ -1,4 +1,4 @@
-@register2 DiscreteChebyshev AbstractCDOP2
+@registerN DiscreteChebyshev AbstractCDOP2 α β
 export DiscreteChebyshev
 
 """
@@ -21,6 +21,5 @@ function k1k_1(P::Type{<:DiscreteChebyshev{α,β}}, n::Int) where {α,β}
     α^2
     
 end
-
 
 

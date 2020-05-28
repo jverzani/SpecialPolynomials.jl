@@ -16,8 +16,6 @@ Ps = (
     Gegenbauer{1/2},
     Bessel{3/2}, # Bessel{1} is an issue
     Bessel{1/2}
-#      ,DiscreteChebyshev{12,T}
-#      ,Krawtchouk{12, 5/2, T}
       )
 
 @testset "Construction" begin
@@ -286,33 +284,46 @@ end
 # end
 
 
-# @testset "fitting" begin
+@testset "fitting" begin
 
-#     f(x) = exp(-x) * cospi(x)
+    f(x) = exp(-x) * cospi(x)
 
-#     for P in Ps
-#         P <: SP.AbstractOrthogonalPolynomial || continue
-#         dom = domain(P)
-#         (isinf(first(dom)) || isinf(last(dom))) && continue
-#         q = fit(P, f, 10)
-#         @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
-#     end
+    # Interpolating
+    for P in Ps
+        P <: SP.AbstractOrthogonalPolynomial || continue
+        dom = domain(P)
+        (isinf(first(dom)) || isinf(last(dom))) && continue
+        q = fit(P, f, 10)
+        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
+    end
 
-# end
+    # least squares
+    for P in (Chebyshev,)
+        q = fit(Val(:lsq), P, f, 10)
+        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= 1e-4
+    end
 
-# @testset "quadrature" begin
+    # series
+    for  P in  (Chebyshev,)
+        q = fit(Val(:series), P, f)
+        @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= sqrt(eps())
+    end
+        
+end
 
-#     f(x) = x^7
-#     n = 4
+@testset "quadrature" begin
 
-#     for P in Ps
-#         P <: SP.AbstractOrthogonalPolynomial || continue
-#         !all(isfinite.(extrema(P))) && continue
-#         q = sum(f(tau)*w for (tau, w)  in  zip(SP.gauss_nodes_weights(P,n)...))
-#         p = SP.innerproduct(P, f, one)
-#         @test abs(p - q)  <= sqrt(eps(T))
-#      end
+    f(x) = x^7
+    n = 4
 
-# end
+    for P in Ps
+        P <: SP.AbstractOrthogonalPolynomial || continue
+        !all(isfinite.(extrema(P))) && continue
+        q = sum(f(tau)*w for (tau, w)  in  zip(SP.gauss_nodes_weights(P,n)...))
+        p = SP.innerproduct(P, f, one)
+        @test abs(p - q)  <= 10sqrt(eps(T))
+     end
+
+end
 
 

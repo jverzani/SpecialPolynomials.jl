@@ -6,15 +6,11 @@
 
     T = Float64
 
-    for α in  (3/2, 1/2)  # fails  with  1  and 2
+    for α in  (3/2, 1/2, 1, 2)  
         P = Bessel{α,T}
         β =  2
-        
-        p0 = P([1])  # 1
-        p1 = P([0,1]) # x
-        p2 = P([0,0,1]) #
-        p3 = P([0,0,0,1]) #
-        p4 = P([0,0,0,0,1]) #
+
+        p0,p1,p2,p3,p4 = basis.(P, 0:4)
 
         # Krall and Frink
         for x in range(0, 1, length=5)
@@ -28,9 +24,9 @@
 
     
     x = variable(Polynomial)
-    for  α  ∈ (1/4,1/2,3/4)
+    for  α  ∈ (1/4,1/2,3/4, 1, 2)
         P =  Bessel{α}
-        for n in 2:5
+        for n in 0:5
             p  = basis(P,n)
             @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
         end
@@ -276,7 +272,7 @@ end
 
     for μ ∈ (1/4, 1/2, 1, 2)
         P = Charlier{μ}
-        for i in 0:N
+        for i in 0:5
             @test basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
         end
     end
@@ -285,6 +281,22 @@ end
 
 @testset  "Hahn"  begin
 
+    x  = variable()
+    for  α ∈  (1/4, 1/2)
+        for β  ∈ (1/4, 1/2)
+            𝐍  = 5
+
+            P = Hahn{α,β,𝐍}
+            for i in 1:𝐍
+                @test_broken basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+            end
+
+            P = HahnQ{α,β,𝐍}
+            for i in 1:𝐍
+                @test_broken basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+            end
+        end
+    end
 
 
 end
@@ -298,7 +310,7 @@ end
             P = Krawchouk{p,N}
             @test basis(P,0)(x) ≈ one(x)
             @test basis(P,1)(x) ≈ -N*p + x
-            @test basis(P,2)(x) ≈ 1/2*(N^2*p^2 + x*(2p + x - 1) - N*p(p+2x))
+            @test basis(P,2)(x) ≈ 1/2*(N^2*p^2 + x*(2p + x - 1) - N*p*(p+2x))
         end
 
     end
@@ -317,6 +329,7 @@ end
 
 @testset  "Meixner" begin
 
+    x = variable()
     for γ ∈ (1/4, 1/2, 3/4)
         for μ ∈ (1/4, 1/2, 3/4)
             P = Meixner{γ,μ}

@@ -44,9 +44,9 @@ generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
 
-kn(P::Type{<:Chebyshev}, n)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
-k1k0(P::Type{<:Chebyshev}, n)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
-k1k_1(P::Type{<:Chebyshev}, n) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
+kn(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
+k1k0(P::Type{<:Chebyshev}, n::Int)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
+k1k_1(P::Type{<:Chebyshev}, n::Int) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
 
 # directly adding these gives a large (20x) speed up in polynomial evaluation
 An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
@@ -54,10 +54,10 @@ Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
 
 # 
-Cn(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))
-ĉn(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P))/4
-ĉn(P::Type{<:Chebyshev}, ::Val{1}) = Inf
-γn(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4 *  k1k0(P,n-1)
+C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))
+ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P))/4
+ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
+γ̃n(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4
 
 function ⊗(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
 
@@ -164,7 +164,226 @@ function Base.divrem(num::Chebyshev{T}, den::Chebyshev{S}) where {T,S}
     return P(q_coeff, num.var), P(r_coeff, num.var)
 end
 
-## Fitting... still to take
+##
+## --------------------------------------------------
+##
+
+
+# nodes/weights for fitting a polynomial using Lagrange polynomial
+# cf. https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
+function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
+
+    xs = [cospi((j+1/2)/(n+1)) for j in 0:n]
+    ws = [(-1)^j*sinpi((j+1/2)/(n+1)) for j in 0:n]  # XX one loop
+
+    xs, ws
+end
+
+# noded for integrating against the weight function
+function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
+    xs = cos.(pi/2n * (2*(n:-1:1).-1))
+    ws = pi/n * ones(n)
+    xs, ws
+end
+has_fast_gauss_nodes_weights(::Type{<:Chebyshev}) = true
+
+##
+## fitting coefficients
+cks(val::Val{:interpolating},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:lsq},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:series},::Type{Chebyshev}, f) = cks(val, Chebyshev{Float64}, f)
+
+# march forward to compute ck; c0 needs division by 1/2, as used
+# ck = 2/(n+1) ∑ f(xⱼ) ⋅ T_j(xⱼ)
+# The xs are the same as used by `lagrange_barycentric_nodes_weights`, but
+# those weights refer to a different basis.
+function cks(::Val{:interpolating}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
+    R = float(T)
+    k = R(0):n
+    ks = (k .+ 1/2)/(n+1)
+    xks = cospi.(ks)
+    fs = f.(xks)
+    a = ones(R,n+1)
+    b = copy(xks)
+    cks = zeros(R, n+1)
+    cks[0+1] = dot(a, fs)/2
+    cks[1+1] = dot(b, fs)
+    for r = 2:n
+        for j in 1:n+1
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+        end
+        cks[r+1] = dot(b, fs)
+    end
+    (2/(n+1))*cks
+end
+
+## use discrete cosine  transformation to compute the ck.
+## (slower than rrecursion, though maybe a bit more accurate, as implemented)
+## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# dct(P::Type{Chebyshev{T}}, f, n::Int) where  {T} =  [_dct(T,f,k,n) for k in 0:n]
+# dct(::Type{Chebyshev}, f, n::Int) = dct(Chebyshev{Float64}, f,n)
+# function _dct(T, f, k::Int, n::Int)
+#     tot = zero(float(T))
+#     for j in 0:n
+#         θⱼ = (j+1/2)/(n+1)
+#         tot += f(cospi(θⱼ)) * cospi(k * θⱼ)
+#     end
+#     ck = (2/(n+1)) * tot
+#     ck
+# end
+
+
+# march forward to compute ck
+# https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# ck ≈ 2/n ∑'' f(xⱼ) ⋅ T_k(xⱼ)
+# xⱼ = cos(jπ/n)
+function cks(::Val{:lsq}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
+    R = float(T)
+    ks = (R(0):n)/n
+    xks = cospi.(ks)
+    fs = f.(xks)
+    fs[1],fs[end] = fs[1]/2, fs[end]/2  # handle end point ''s
+  
+    a = ones(R,n+1)
+    b = copy(xks)
+    out = zeros(R, n+1)
+
+    out[0+1] = dot(a, fs)/2
+    out[1+1] = dot(b, fs)
+
+    for r = 2:n
+        for j in 1:n+1
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+        end
+        out[r+1] = dot(b, fs)
+    end
+    (2/n)*out
+end
+
+## Fit to a series
+## use a heuristic to identify `n`
+# ref: https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# Chebyshev interpolation can be interpreted as an approximation to Chebyshev series
+# (or vice versa), provided that the coefficients decay fast and the discretization is accurate. In
+# other words, Chebyshev series can be a good approximation to near minimax approximations
+# (Chebyshev), which in turn are close to minimax approximations.
+function cks(::Val{:series}, P::Type{Chebyshev{T}}, f) where {T}
+
+    n = 3
+    thresh = 2^n * 10 * eps(T)
+    
+    p = fit(Val(:interpolating), P, f, 2^n)
+
+    while n < 10
+        if maximum(abs, coeffs(p)[end-2^(n-1):end]) <= thresh
+            break
+        end
+        p = fit(Val(:interpolating), P, f, 2^n)
+        n += 1
+        thresh *= 2
+    end
+
+    coeffs(chop(p, atol= thresh))
+
+end
+
+# ## Chebyshev interpolation of the second kind
+# ## uses -1, 1 and roots of U_{n-1}, 
+# ## (slower than recursion)
+# ## used discrete cosine  transformation to compute the ck:
+# ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
+# dct1(P::Type{ChebyshevU{T}}, f, n::Int) where  {T} =  [_dct1(T,f,k,n) for k in 0:n]
+# dct1(::Type{Chebyshev},f, n::Int) = dct1(Chebyshev{Float64}, f, n)
+
+# function _dct1(T, f, k::Int, n::Int)
+
+#     tot = zero(float(T))
+#     # j=0, n separate due to ∑''
+#     j=0
+#     θⱼ = j/n
+#     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
+    
+#     j = n
+#     θⱼ = j/n
+#     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
+    
+#     for j in 1:n-1
+#         θⱼ = j/n
+#         tot += f(cospi(θⱼ)) * cospi(k*θⱼ)
+#     end
+
+#     ck = (2/n) * tot
+#     ck
+    
+# end
+
+##
+## --------------------------------------------------
+##
+@register0 MonicChebyshev AbstractCCOP0
+export MonicChebyshev
+ϟ(::Type{<:MonicChebyshev}) = Chebyshev
+ϟ(::Type{<:MonicChebyshev{T}}) where {T} = Chebyshev{T}
+@register_monic(MonicChebyshev)
+C̃n(P::Type{<:MonicChebyshev}, ::Val{1}) = one(eltype(P))
+
+##
+##  --------------------------------------------------
+##
+## Contrib
+#=
+zseries =#
+
+function _c_to_z(cs::AbstractVector{T}) where {T}
+    n = length(cs)
+    U = typeof(one(T) / 2)
+    zs = zeros(U, 2n - 1)
+    zs[n:end] = cs ./ 2
+    return zs .+ reverse(zs)
+end
+
+function _z_to_c(z::AbstractVector{T}) where {T}
+    n = (length(z) + 1) ÷ 2
+    cs = z[n:end]
+    cs[2:n] *= 2
+    return cs
+end
+
+function _z_division(z1::AbstractVector{T}, z2::AbstractVector{S}) where {T,S}
+    R = eltype(one(T) / one(S))
+    length(z1)
+    length(z2)
+    if length(z2) == 1
+        z1 ./= z2
+        return z1, zero(R)
+    elseif length(z1) < length(z2)
+        return zero(R), R.(z1)
+    end
+    dlen = length(z1) - length(z2)
+    scl = z2[1]
+    z2 ./= scl
+    quo = Vector{R}(undef, dlen + 1)
+    i = 1
+    j = dlen + 1
+    while i < j
+        r = z1[i]
+        quo[i] = z1[i]
+        quo[end - i + 1] = r
+        tmp = r .* z2
+        z1[i:i + length(z2) - 1] .-= tmp
+        z1[j:j + length(z2) - 1] .-= tmp
+        i += 1
+        j -= 1
+    end
+
+    r = z1[i]
+    quo[i] = r
+    tmp = r * z2
+    z1[i:i + length(z2) - 1] .-= tmp
+    quo ./= scl
+    rem = z1[i + 1:i - 2 + length(z2)]
+    return quo, rem
+end
 
 ##
 ## --------------------------------------------------
@@ -207,9 +426,9 @@ Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
 
 abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -3, 0))
 
-kn(P::Type{<:ChebyshevU}, n) = (2 * one(eltype(P)))^n
-k1k0(P::Type{<:ChebyshevU}, n)  = 2 * one(eltype(P))
-k1k_1(P::Type{<:ChebyshevU}, n)  = 4 * one(eltype(P))
+kn(P::Type{<:ChebyshevU}, n::Int) = (2 * one(eltype(P)))^n
+k1k0(P::Type{<:ChebyshevU}, n::Int)  = 2 * one(eltype(P))
+k1k_1(P::Type{<:ChebyshevU}, n::Int)  = 4 * one(eltype(P))
 
 
 # directly adding these gives a 5x speed up in polynomial evaluation
@@ -217,7 +436,7 @@ An(::Type{<:ChebyshevU}, n::Int) = 2
 Bn(::Type{<:ChebyshevU}, n::Int) = 0
 Cn(::Type{<:ChebyshevU}, n::Int) = 1
 # work around cancellation
-ĉn(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4) *  k1k0(P,n-1)
+ĉ̃n(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4)
 
 function ⊗(p::ChebyshevU{T}, q::ChebyshevU{S}) where {T,S}
 
@@ -277,59 +496,27 @@ Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_
 #     return convert(ChebyshevU, q)
 # end
 
+##
+## --------------------------------------------------
+##
+## fitting
 
-
-## Contrib
-#=
-zseries =#
-
-function _c_to_z(cs::AbstractVector{T}) where {T}
-    n = length(cs)
-    U = typeof(one(T) / 2)
-    zs = zeros(U, 2n - 1)
-    zs[n:end] = cs ./ 2
-    return zs .+ reverse(zs)
-end
-
-function _z_to_c(z::AbstractVector{T}) where {T}
-    n = (length(z) + 1) ÷ 2
-    cs = z[n:end]
-    cs[2:n] *= 2
-    return cs
-end
-
-function _z_division(z1::AbstractVector{T}, z2::AbstractVector{S}) where {T,S}
-    R = eltype(one(T) / one(S))
-    length(z1)
-    length(z2)
-    if length(z2) == 1
-        z1 ./= z2
-        return z1, zero(R)
-    elseif length(z1) < length(z2)
-        return zero(R), R.(z1)
+## return xs ws
+function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevU}, n::Int)
+    xs = cospi.((0:n)/n)
+    ws = ones(eltype(P), n+1)
+    ws[1] /= 2
+    ws[end] /= 2
+    for i in  2:2:n+1
+        ws[i] *= -1
     end
-    dlen = length(z1) - length(z2)
-    scl = z2[1]
-    z2 ./= scl
-    quo = Vector{R}(undef, dlen + 1)
-    i = 1
-    j = dlen + 1
-    while i < j
-        r = z1[i]
-        quo[i] = z1[i]
-        quo[end - i + 1] = r
-        tmp = r .* z2
-        z1[i:i + length(z2) - 1] .-= tmp
-        z1[j:j + length(z2) - 1] .-= tmp
-        i += 1
-        j -= 1
-    end
-
-    r = z1[i]
-    quo[i] = r
-    tmp = r * z2
-    z1[i:i + length(z2) - 1] .-= tmp
-    quo ./= scl
-    rem = z1[i + 1:i - 2 + length(z2)]
-    return quo, rem
+    xs, ws
 end
+
+@register0 MonicChebyshevU AbstractCCOP0
+export MonicChebyshevU
+ϟ(::Type{<:MonicChebyshevU}) = ChebyshevU
+ϟ(::Type{<:MonicChebyshevU{T}}) where {T} = ChebyshevU{T}
+@register_monic(MonicChebyshevU)
+#C̃n(P::Type{<:MonicChebyshevU}, ::Val{1}) = one(eltype(P))
+

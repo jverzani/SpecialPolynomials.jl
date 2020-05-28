@@ -11,8 +11,8 @@ using Test
 #@testset "Laguerre{α}" begin include("GeneralizedLaguerre.jl") end
 #@testset "Gegenbauer{α}" begin include("Gegenbauer.jl") end
 
-#@testset "Lagrange" begin include("Lagrange.jl") end
-#@testset "Newton" begin include("Newton.jl") end
+@testset "Lagrange" begin include("Lagrange.jl") end
+@testset "Newton" begin include("Newton.jl") end
 
-#@testset "Bernstein" begin include("Bernstein.jl") end
+@testset "Bernstein" begin include("Bernstein.jl") end
 

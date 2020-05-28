@@ -771,7 +771,7 @@ Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
 """
     fit(val::Val{:interpolating}, P::Type{<:AbstractOrthogonalPolynomial}, f, deg::Int; var=:x)
 
-Fit `f` with an interpolating polynomial of degree `n` orless using nodes
+Fit `f` with an interpolating polynomial of degree `n` or less using nodes
 `x0,x1, ..., xn`, the  zeros of `P_{n+1} = basis(P, n+1)`. and `p(xᵢ)=f(xᵢ)`.
 """
 Polynomials.fit(val::Val{:interpolating},

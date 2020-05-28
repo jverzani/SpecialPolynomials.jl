@@ -58,11 +58,21 @@ norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 weight_function(::Type{<:Legendre})  = x -> one(x)
 generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
 
+# gauss nodes
+function gauss_nodes_weights(P::Type{<:Legendre}, n)
+    xs,  ws =  glaser_liu_rokhlin_gauss_nodes(basis(MonicLegendre,n))
+    λ = kn(P,n)^2
+    xs, ws/λ
+end
+has_fast_gauss_nodes_weights(::Type{<:Legendre}) = true
+
+
 
 # overrides
-Bn(P::Type{<:Legendre}, ::Val{0}) = Bn(Gegenbauer{1/2, eltype(P)}, Val(0))
-b̂n(P::Type{<:Legendre}, ::Val{0}) = b̂n(Gegenbauer{1/2, eltype(P)}, Val(0))
-ĉn(P::Type{<:Legendre}, ::Val{0}) = ĉn(Gegenbauer{1/2, eltype(P)}, Val(0))
+B̃n(P::Type{<:Legendre}, ::Val{0}) = B̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
+C̃n(P::Type{<:Legendre}, ::Val{0}) = zero(eltype(P))
+b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
+ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
 
 function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
@@ -86,4 +96,42 @@ function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
     end
 
 end
+
+##
+## --------------------------------------------------
+##
+
+# Monic
+@register0 MonicLegendre AbstractCCOP0
+export MonicLegendre
+ϟ(::Type{<:MonicLegendre}) = Legendre
+ϟ(::Type{<:MonicLegendre{T}}) where {T} = Legendre{T}
+@register_monic(MonicLegendre)
+
+## fast  gauss nodes
+pqr_symmetry(::Type{<:MonicLegendre}) = true
+pqr_weight(P::Type{<:MonicLegendre}, n, x, dπx) = (one(eltype(P)) * 2)/(1-x^2)/dπx^2
+
+##
+## --------------------------------------------------
+##
+# shifted,  P̃(x)=P(2x-1)
+@register0 ShiftedLegendre AbstractCCOP0
+ϟ(::Type{<:ShiftedLegendre})=Legendre
+ϟ(::Type{<:ShiftedLegendre{T}}) where {T} = Legendre{T}
+export ShiftedLegendre
+@register_shifted(ShiftedLegendre, 2, -1)
+
+B̃n(P::Type{<:ShiftedLegendre}, ::Val{0}) = -one(eltype(P))/2
+
+##
+## --------------------------------------------------
+##
+
+@register0 MonicShiftedLegendre AbstractCCOP0
+export MonicShiftedLegendre
+ϟ(::Type{<:MonicShiftedLegendre}) = ShiftedLegendre
+ϟ(::Type{<:MonicShiftedLegendre{T}}) where {T} = ShiftedLegendre{T}
+@register_monic(MonicShiftedLegendre)
+
 

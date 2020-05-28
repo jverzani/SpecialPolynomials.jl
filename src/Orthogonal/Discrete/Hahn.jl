@@ -1,14 +1,20 @@
-@register3 Hahn AbstractCDOP3
+@registerN Hahn AbstractCDOP3 α β 𝐍
 export Hahn
 
 """
+    Hahn
+
+References: [Koekoek and Swarttouw §1.5](https://arxiv.org/pdf/math/9602214.pdf)
+
+!!!  Note
+      This is not  correct; tests are broken
 """
 Hahn
 
 abcde(::Type{<:Hahn{α,β,𝐍}})  where {α,β,𝐍} = NamedTuple{(:a,:b,:c,:d,:e)}((1, -(β+𝐍+1), 0,  (α+β+2), -𝐍*(α+1)))
 
 basis_symbol(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} = "h⁽ᵅᵝ⁾" * "₍" * sprint(io -> unicode_subscript(io, 𝐍)) * "₎"
-Polynomials.domain(::Type{<:Hahn{α, β}}) where {α, β} = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{<:Hahn{α, β, 𝐍}}) where {α, β, 𝐍} = Polynomials.Interval(0,𝐍)
 
 #  p22 (α+β+2n,  n)
 function kn(P::Type{<:Hahn{α,β,𝐍}}, n::Int) where {α,β,𝐍}
@@ -27,7 +33,7 @@ end
 
 ##################################################
 
-@register3 HahnQ AbstractCDOP3
+@registerN HahnQ AbstractCDOP3  α β 𝐍
 export HahnQ
 
 """

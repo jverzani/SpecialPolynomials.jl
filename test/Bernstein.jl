@@ -17,9 +17,9 @@
 end
 
 @testset "Other Construction" begin
-    # Leading 0s are *not* trimmed
+    # Leading 0s are  trimmed
     p = Bernstein([1, 2, 0, 0])
-    @test p.coeffs == [1, 2,0,0]
+    @test p.coeffs == [1, 2]
 
     # Different type
     p = Bernstein{3, Float64}(ones(Int32, 4))
@@ -29,10 +29,10 @@ end
     @test p.coeffs == [30, 30]
 
     p = zero(Bernstein{1, Int})
-    @test p.coeffs == zeros(Int,1+1)
+    @test p.coeffs == Int[]
 
     p = zero(Bernstein{5, Int})
-    @test all(iszero,p.coeffs)
+    @test length(p.coeffs)  ==  0
 
     p = one(Bernstein{1, Int})
     @test p.coeffs == ones(Int,  2)
@@ -84,11 +84,10 @@ end
     # multiplication
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([3, 2, 1])
-    @test iszero(c1 * c2 - convert(Polynomial, c1) * convert(Polynomial,c2))
+    @test convert(Polynomial, c1 * c2) ≈ convert(Polynomial, c1) * convert(Polynomial,c2)
 
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([1, 2, 3, 4])
-    @test typeof(c1 * c2) <: Bernstein{5,Float64}
     p1, p2 = convert(Polynomial,c1), convert(Polynomial,c2)
     @test p1*p2 ≈ convert(Polynomial, c1 * c2)
 
@@ -98,7 +97,7 @@ end
     d, r = divrem(c1, c2)
     @test d.coeffs ≈ [-1.0]
     @test r.coeffs ≈ [4.0]
-    @test coeffs(d * c2 + r - c1) == zeros(3)
+    @test d * c2 + r ≈ c1
 
     c2 = Bernstein([0, 1, 2, 3])
     d, r = divrem(c2, c1)

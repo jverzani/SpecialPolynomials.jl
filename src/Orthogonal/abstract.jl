@@ -1,10 +1,10 @@
 ##
 ## --------------------------------------------------
 ##
-# Macros to register POLY{T},  POLY{α, T} and POLY{α, β, T}
+# Macros to register POLY{T},  POLY{αs..., T}
 #
 # We use `Vector{T}` with N =  d+1 to store  a degree d  polynomial - no trailing zeros permitted.
-#
+##
 macro register0(name, parent)
     poly = esc(name)
     parent_type = esc(parent)
@@ -14,9 +14,16 @@ macro register0(name, parent)
             var::Symbol
             function $poly{T,N}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {T, N}
                 M = length(coeffs)
-                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
                 new{T,N}(coeffs, Symbol(var))
+
             end
+            function $poly{T,N}(coeffs::NTuple{N,T}, var::Polynomials.SymbolLike=:x) where {T, N}
+                M = length(coeffs)
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
+                new{T,N}(collect(coeffs), Symbol(var))
+            end
+
             function $poly{T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {T,S}
                 N = findlast(!iszero, coeffs)
                 if N ==  nothing
@@ -35,18 +42,8 @@ macro register0(name, parent)
 
         Base.length(p::$poly{T,N}) where {T,N} = N
         (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
-    
-        Base.convert(::Type{P}, q::Q) where {T, P <:$poly{T}, Q <: $poly{T}} = q
-        Base.promote(p::P, q::Q) where {T, P <:$poly{T}, Q <: $poly{T}} = p,q
-        Base.promote_rule(::Type{<:$poly{T}}, ::Type{<:$poly{S}}) where {T,S} =
-            $poly{promote_type(T, S)}
-        Base.promote_rule(::Type{<:$poly{T}}, ::Type{S}) where {T,S<:Number} = 
-            $poly{promote_type(T,S)}
         
-        $poly{T}(n::Number, var::Polynomials.SymbolLike = :x) where {T} = $poly(T[n], var)
-        $poly(n::S, var::Polynomials.SymbolLike = :x) where {S<:Number} = $poly{S}(n,var)
-        $poly{T}(var::Polynomials.SymbolLike=:x) where {T} = variable($poly{T}, var)
-        $poly(var::Polynomials.SymbolLike=:x) = variable($poly, var)
+        Polynomials.@register $poly
 
         # work around N parameter in promote(p,q) usage in defaults
         Base.:*(p::$poly{T}, q::$poly{T}) where {T}  = ⊗(p,q)
@@ -55,158 +52,159 @@ macro register0(name, parent)
     end
 end
 
-macro register1(name,parent)
+# register macro for polynomial families with parameters
+# would be nice to consolidate, but ...
+macro registerN(name,  parent, params...)
     poly = esc(name)
     parent_type = esc(parent)
+    αs = tuple(esc.(params)...)
     quote
-        struct $poly{α,T,N} <: $parent_type{α,T,N}
+        struct $poly{$(αs...), T,N} <: $parent_type{$(αs...), T,N}
             coeffs::Vector{T}
             var::Symbol
-            
-            function $poly{α,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,T,N}
-                M =  length(coeffs)
-                (M  != N || iszero(coeffs[end])) &&  throw(ArgumentError("wrong  size")) 
-                new{α,T,N}(coeffs, Symbol(var))
+            function $poly{$(αs...), T,N}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {$(αs...), T, N}
+                M = length(coeffs)
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
+                new{$(αs...), T,N}(coeffs, Symbol(var))
             end
-            
-            function $poly{α,T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {α,T,S}
+
+            function $poly{$(αs...),T,N}(coeffs::NTuple{N,T}, var::Polynomials.SymbolLike=:x) where {$(αs...), T, N}
+                M = length(coeffs)
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
+                new{$(αs...),T,N}(collect(coeffs), Symbol(var))
+            end
+
+            function $poly{$(αs...),T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {$(αs...),T,S}
                 N = findlast(!iszero, coeffs)
                 if N ==  nothing
-                    new{α,T,0}(T[], Symbol(var))
+                    new{$(αs...),T,0}(T[], Symbol(var))
                 else
-                    new{α,T,N}(T.(coeffs[1:N]), Symbol(var))
+                    new{$(αs...),T,N}(T.(coeffs[1:N]), Symbol(var))
                 end
             end
-            
-            function $poly{α}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α, T}
-                $poly{α,T}(coeffs, var)
+
+            function $poly{$(αs...)}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {$(αs...), T}
+                $poly{$(αs...),T}(coeffs, var)
             end
+
         end
 
-        Base.length(p::$poly{α,T,N}) where {α,T,N} = N        
+        Base.length(p::$poly{$(αs...),T,N}) where {$(αs...),T,N} = N        
         (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p),  p.coeffs, x)
     
-        Base.convert(::Type{P}, q::Q) where {α,T, P<:$poly{α,T}, Q <: $poly{α,T}} = q
-        Base.convert(::Type{$poly{α}}, q::Q) where {α,T, Q <: $poly{α,T}} = q        
-        Base.promote(p::P, q::Q) where {α,T, P<:$poly{α,T}, Q <: $poly{α,T}} = p,q
-        Base.promote_rule(::Type{<:$poly{α,T}}, ::Type{<:$poly{α,S}}) where {α,T,S} =
-            $poly{α,promote_type(T, S)}
-        Base.promote_rule(::Type{<:$poly{α,T}}, ::Type{S}) where {α,T,S<:Number} = 
-            $poly{α,promote_type(T,S)}
+        Base.convert(::Type{P}, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = q
+        Base.convert(::Type{$poly{$(αs...)}}, q::Q) where {$(αs...),T, Q <: $poly{$(αs...),T}} = q        
+        Base.promote(p::P, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = p,q
+        Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{<:$poly{$(αs...),S}}) where {$(αs...),T,S} =
+            $poly{$(αs...),promote_type(T, S)}
+        Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{S}) where {$(αs...),T,S<:Number} = 
+            $poly{$(αs...),promote_type(T,S)}
 
-        $poly{α,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,T} = $poly{α}(T[n], var)
-        $poly{α}(n::S, var::Polynomials.SymbolLike = :x) where {α,S<:Number} = $poly{α,S}(n,var)
-        $poly{α,T}(var::Polynomials.SymbolLike=:x) where {α, T} = variable($poly{α,T}, var)
-        $poly{α}(var::Polynomials.SymbolLike=:x) where {α} = variable($poly{α}, var)
+        $poly{$(αs...),T}(n::Number, var::Polynomials.SymbolLike = :x) where {$(αs...),T} =
+            $poly{$(αs...)}(T[n], var)
+        $poly{$(αs...)}(n::S, var::Polynomials.SymbolLike = :x)        where {$(αs...), S<:Number} =
+            $poly{$(αs...),S}(n,var)
+        $poly{$(αs...),T}(var::Polynomials.SymbolLike=:x)              where {$(αs...), T} =
+            variable($poly{$(αs...),T}, var)
+        $poly{$(αs...)}(var::Polynomials.SymbolLike=:x)                where {$(αs...)} =
+            variable($poly{$(αs...)}, var)
 
         # work around N parameter in promote
-        Base.:*(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = ⊗(p,q)
-        Base.:+(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = ⊕(p,q)
-        Base.divrem(p::$poly{α,T}, q::$poly{α,T}) where {α,T}  = _divrem(p,q)
+        Base.:*(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p,q)
+        Base.:+(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p,q)
+        Base.divrem(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = _divrem(p,q)
 
+        
     end
 end
 
-macro register2(name, parent)
-    poly = esc(name)
-    parent_type = esc(parent)
-    quote
-        struct $poly{α,β,T,N} <: $parent_type{α,β,T,N}
-            coeffs::Vector{T}
-            var::Symbol
-            
-            function $poly{α,β,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,β,T,N}
-                M = length(coeffs)
-                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
-                new{α,β,T,N}(coeffs, Symbol(var))
-            end
-            
-            function $poly{α,β,T}(coeffs::AbstractVector{S},  var::Polynomials.SymbolLike=:x) where {α,β,T,S,M}
-                N = findlast(!iszero, coeffs)
-                if N ==  nothing
-                    new{α,β,T,0}(T[], Symbol(var))
-                else
-                    cs = T[c  for c in coeffs[1:N]]
-                    new{α,β,T,N}(cs,  Symbol(var))
-                end
-            end
-            
-            function $poly{α,β}(coeffs::AbstractVector{T},  var::Polynomials.SymbolLike=:x) where {α,β, T}
-                $poly{α,β,T}(coeffs,  var)
-            end
-        end
+## Delegation macros
+"""
+    ϟ(P) = Q; ϟ(P{T}) where {T} =   Q{T}
 
-        Base.length(p::$poly{α,β,T,N}) where {α,β,T,N} = N
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+Used to delegate methods of P to Q.  (upkoppa[tab])
+"""
+ϟ(P::Type{<:Polynomials.AbstractPolynomial}) = throw(ArgumentError("No default for  delegation"))
+
+## Make monic version
+macro register_monic(name)
+
+    monic=esc(name)
     
-        Base.convert(::Type{P}, q::Q) where {α,β,T,P<:$poly{α,β,T},Q<:$poly{α,β,T}} = q
-        Base.convert(::Type{$poly{α,β}}, q::Q) where {α,β,T,Q<:$poly{α,β,T}} = q
-        Base.promote(p::P, q::Q) where {α,β,T,P<:$poly{α,β,T},Q<:$poly{α,β,T}} = (p,q)
-        Base.promote_rule(::Type{<:$poly{α,β,T}}, ::Type{<:$poly{α,β,S}}) where {α,β,T,S} =
-            $poly{α,β,promote_type(T, S)}
-        Base.promote_rule(::Type{<:$poly{α,β,T}}, ::Type{S}) where {α,β,T,S<:Number} = 
-            $poly{α,β,promote_type(T,S)}
-
-        $poly{α,β,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,β,T} = $poly{α,β}(T[n], var)
-        $poly{α,β}(n::S, var::Polynomials.SymbolLike = :x) where {α,β,S<:Number} = $poly{α,β,S}(n,var)
-        $poly{α,β,T}(var::Polynomials.SymbolLike=:x) where {α,β, T} = variable($poly{α,β,T}, var)
-        $poly{α,β}(var::Polynomials.SymbolLike=:x) where {α,β} = variable($poly{α,β}, var)
-
-        Base.:*(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = ⊗(p,q)
-        Base.:+(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = ⊕(p,q)        
-        Base.divrem(p::$poly{α,β,T}, q::$poly{α,β,T}) where {α,β,T}  = _divrem(p,q)
-
+    quote
+        SpecialPolynomials.ismonic(::Type{<:$monic}) = true
+        SpecialPolynomials.abcde(P::Type{<:$monic})  = abcde(ϟ(P))
+        SpecialPolynomials.basis_symbol(P::Type{<:$monic})  = basis_symbol(ϟ(P)) * "̃"
+        SpecialPolynomials.weight_function(P::Type{<:$monic}) = weight_function(ϟ(P))
+        Polynomials.domain(P::Type{<:$monic}) = domain(ϟ(P))
+        SpecialPolynomials.B̃n(P::Type{<:$monic}, n::Int) =  B̃n(ϟ(P),n)
+        SpecialPolynomials.B̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  B̃n(ϟ(P),v)
+        SpecialPolynomials.C̃n(P::Type{<:$monic}, n::Int) =  C̃n(ϟ(P),n)
+        SpecialPolynomials.C̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  C̃n(ϟ(P),v)
+        SpecialPolynomials.ẫn(P::Type{<:$monic}, v::Val{N}) where{N} =  ẫn(ϟ(P),v)
+        SpecialPolynomials.b̂̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  b̂̃n(ϟ(P),v)
+        SpecialPolynomials.ĉ̃n(P::Type{<:$monic}, v::Val{N}) where{N} =  ĉ̃n(ϟ(P),v)
     end
 end
 
-macro register3(name, parent)
-    poly = esc(name)
-    parent_type = esc(parent)
+# P̃ = P(αx+β), so P̃'' = α^2P''(α x+ β); P̃' = αP'(αx+β)
+macro register_shifted(name, alpha, beta)
+    shifted = esc(name)
     quote
-        struct $poly{α,β,γ,T,N} <: $parent_type{α,β,γ,T,N}
-            coeffs::Vector{T}
-            var::Symbol
-            
-            function $poly{α,β,γ,T,N}(coeffs::Vector{T},  var::Polynomials.SymbolLike=:x) where {α,β,γ,T,N}
-                M = length(coeffs)
-                (M != N  || iszero(coeffs[end])) && throw(ArgumentError("wrong  size"))
-                new{α,β,γ,T,N}(coeffs, Symbol(var))
-            end
-            
-            function $poly{α,β,γ,T}(coeffs::AbstractVector{S},  var::Polynomials.SymbolLike=:x) where {α,β,γ,T,S,M}
-                N = findlast(!iszero, coeffs)
-                if N ==  nothing
-                    new{α,β,γ,T,0}(T[], Symbol(var))
-                else
-                    cs = T[c  for c in coeffs[1:N]]
-                    new{α,β,γ,T,N}(cs,  Symbol(var))
-                end
-            end
-            
-            function $poly{α,β,γ}(coeffs::AbstractVector{T},  var::Polynomials.SymbolLike=:x) where {α,β,γ, T}
-                $poly{α,β,γ,T}(coeffs,  var)
-            end
+        function SpecialPolynomials.abcde(P::Type{<:$shifted}) 
+            α,β = $alpha, $beta
+            oP = one(eltype(P))
+            a,b,c,d,e = abcde(ϟ(P))
+            ã = oP*a
+            b̃ = (oP * 2a*β)/α + (oP*b)/α
+            c̃ = (oP * (a*β^2 +b*β + c))/α^2
+            d̃ = oP *  d
+            ẽ = (oP * (d*β + e))/α
+            NamedTuple{(:a,:b,:c,:d,:e)}((ã, b̃, c̃, d̃, ẽ))
         end
+        
+        SpecialPolynomials.basis_symbol(P::Type{<:$shifted})  = basis_symbol(ϟ(P)) * "ˢ"
+        function  Polynomials.domain(P::Type{<:$shifted})
+            α,β = $alpha, $beta
+            a, b = extrema(ϟ(P))
+            Polynomials.Interval((a- β)/α, (b - β)/α)
+        end
+        function SpecialPolynomials.kn(P::Type{<:$shifted}, n::Int)
+            α,β = $alpha, $beta
+            α^n * kn(ϟ(P))
+        end
+        function SpecialPolynomials.k1k0(P::Type{<:$shifted}, n::Int)
+            α,β = $alpha, $beta
+            α * k1k0(ϟ(P), n)
+        end
+        function  SpecialPolynomials.k1k_1(P::Type{<:$shifted}, n::Int)
+            α,β = $alpha, $beta
+            α^2 * k1k_1(ϟ(P),n)
+        end
+        
+    end
+end
 
-        Base.length(p::$poly{α,β,γ,T,N}) where {α,β,γ,T,N} = N
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+# Weight Functions
+macro register_weight_function(W, P, ω)
+    W′ = esc(W)
+    P′ = esc(P)
+    ω′ = esc(ω)
     
-        Base.convert(::Type{P}, q::Q) where {α,β,γ,T,P<:$poly{α,β,γ,T},Q<:$poly{α,β,γ,T}} = q
-        Base.convert(::Type{$poly{α,β,γ}}, q::Q) where {α,β,γ,T,Q<:$poly{α,β,γ,T}} = q
-        Base.promote(p::P, q::Q) where {α,β,γ,T,P<:$poly{α,β,γ,T},Q<:$poly{α,β,γ,T}} = (p,q)
-        Base.promote_rule(::Type{<:$poly{α,β,γ,T}}, ::Type{<:$poly{α,β,γ,S}}) where {α,β,γ,T,S} =
-            $poly{α,β,γ,promote_type(T, S)}
-        Base.promote_rule(::Type{<:$poly{α,β,γ,T}}, ::Type{S}) where {α,β,γ,T,S<:Number} = 
-            $poly{α,β,γ,promote_type(T,S)}
+    quote
+        SpecialPolynomials.:ϟ(::Type{<:$W′}) =  $P′
+        SpecialPolynomials.weight_function(::Type{<:$W′}) =  $ω′
+        (ch::$W′)(x)  = clenshaw_eval(ch, x)
+    end
+end
 
-        $poly{α,β,γ,T}(n::Number, var::Polynomials.SymbolLike = :x) where {α,β,γ,T} = $poly{α,βγ,}(T[n], var)
-        $poly{α,β,γ}(n::S, var::Polynomials.SymbolLike = :x) where {α,β,γ,S<:Number} = $poly{α,β,γ,S}(n,var)
-        $poly{α,β,γ,T}(var::Polynomials.SymbolLike=:x) where {α,β,γ, T} = variable($poly{α,β,γ,T}, var)
-        $poly{α,β,γ}(var::Polynomials.SymbolLike=:x) where {α,β,γ} = variable($poly{α,β,γ}, var)
-
-        Base.:*(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = ⊗(p,q)
-        Base.:+(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = ⊕(p,q)        
-        Base.divrem(p::$poly{α,β,γ,T}, q::$poly{α,β,γ,T}) where {α,β,γ,T}  = _divrem(p,q)
-
+macro register_discrete_weight_function(W, xs, ws)
+    W′ = esc(W)
+    xs′ = esc(xs)
+    ws′ = esc(ws)
+    
+    quote
+        SpecialPolynomials.xs_ws(::Type{<:$W′}) = ($xs′, $ws′)
+        (p::$W′)(x)  = clenshaw_eval(p, x)
     end
 end

@@ -1,13 +1,18 @@
-@register2  Krawchouk AbstractCDOP2
+@registerN  Krawchouk AbstractCDOP2 p 𝐍
 export  Krawchouk
 
 
 """
+     Krawchouk
+
+Also spelled  Krawtchouk,  Kravhcuk,….
+
+References: [Koekoek and Swarttouw §1.10](https://arxiv.org/pdf/math/9602214.pdf)
 """
 Krawchouk
 
 basis_symbol(::Type{<:Krawchouk{p,𝐍}}) where {p,𝐍} = "kᵖ" * "₍" * sprint(io -> unicode_subscript(io, 𝐍)) * "₎"
-Polynomials.domain(::Type{<:Krawchouk{p}}) where {p} = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{<:Krawchouk{p,𝐍}}) where {p,𝐍} = Polynomials.Interval(0, 𝐍)
 abcde(::Type{<:Krawchouk{p,𝐍}})  where {p,𝐍} = NamedTuple{(:a,:b,:c,:d,:e)}((0, p-1, 0, 1, -p*𝐍))
 
 function kn(P::Type{<:Krawchouk}, n::Int) 
@@ -26,7 +31,7 @@ function classical_hypergeometric(P::Type{<:Krawchouk{p,N}}, n::Int, x) where {p
     monic * kn(P,n)
 end
 
-@register2 MonicKrawchouk AbstractCDOP2
+@registerN MonicKrawchouk AbstractCDOP2 p 𝐍
 export MonicKrawchouk
 abcde(::Type{<:MonicKrawchouk{p,𝐍}})  where {p,𝐍} = NamedTuple{(:a,:b,:c,:d,:e)}((0, p-1, 0, 1, -p*𝐍))
 

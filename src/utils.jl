@@ -117,32 +117,12 @@ end
 ## tuples
 @inline plus_1(as) = map(x->x+1, as)
         
-# function _pFq(as, bs, z; maxevals=1000)
-#     tot = one(z)
-#     aa = [a for a in as]
-#     bb = [b for b in bs]
-#     n = 1
     
-    
-#     acc = one(z)
-#     while n < maxevals
-#         a = isempty(aa) ? 1 : prod(aa)
-#         b = isempty(bb) ? 1 : prod(bb) 
-
-#         iszero(a) && return tot
-#         iszero(b) && return Inf  # check on b
-
-#         acc *= (a/b)*(z/n)
-#         tot += acc
-
-#         aa .+= 1
-#         bb .+= 1
-#         n += 1
-#     end
-
-#     tot
-# end
-    
+## Try to speed up  quadgk by not specializing on F
+mutable struct Wrapper
+    F
+end
+(F::Wrapper)(x) = F.F(x)
 
 _quadgk(f, a, b) = quadgk(Wrapper(f), a, b)[1]
 const ∫ = _quadgk

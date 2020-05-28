@@ -1,83 +1,106 @@
+##################################################
+
+const ∑ = sum
+
+function innerproduct(P::Type{<:AbstractDiscreteOrthogonalPolynomial}, f, g)
+    dom = domain(P)
+    fn = x -> f(x) * g(x) * weight_function(P)(x)
+    a, b = first(dom), last(dom)
+    if !isinf(a) && !isinf(b)
+        return ∑(fn(x)  for x in first(dom):last(dom))
+    else
+        ## what to do if infinite
+    end
+end
+
+
+
+##
+## --------------------------------------------------
+##
+
+
 """
     DiscreteWeightFunction
 
 For a discrete measure, `dλ = ∑ wᵢ δ(x - xᵢ)`, specified through two
 vectors, `xs` and `ws`, a collection of monic orthogonal polynomials is
 produced through Darboux's formula for `α_n` and `β_n` using the
-3-term recurrence defined by `π_{n+1} = (x-α_n)⋅π_n - β_n⋅π_{n-1}`
-and the discrete Stieltjes method.
+3-term recurrence defined by `π_{n+1} = (x-α_n)⋅π_n - β_n⋅π_{n-1}` (`An=1`, `Bn=-α_n`, `Cn=β_n`)
+and the discrete Stieltjes method [Guatschi §3.1](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf).
 
 # Example
 
-Discrete Chebyshev by its weight function
+Discrete Chebyshev by its weight function (uniform  on 0,1,…,N-1)
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
 
-julia> const SP = SpecialPolynomials
-SpecialPolynomials
+julia> const SP = SpecialPolynomials;
 
 julia> N = 9
 9
 
-julia> xs, ws = collect(0:N-1), ones(N);
+julia> xs, ws = collect(0:N-1), ones(N);   # w(x) = ∑ wⱼ⋅δ(x-xⱼ)
 
-julia> p = DiscreteWeightFunction(xs, ws, [0,0,1], :x)
-DiscreteWeightFunction(1⋅e_2(x))
+julia> SP.@register0 DWF DiscreteWeightFunction
 
-julia> [SP.beta.(p, 0:N-1) SP.beta.(DiscreteChebyshev{N,Float64}, 0:N-1)]
-9×2 Array{Real,2}:
- 9.0      9
- 6.66667  6.66667
- 5.13333  5.13333
- 4.62857  4.62857
- 4.12698  4.12698
- 3.53535  3.53535
- 2.83217  2.83217
- 2.01026  2.01026
- 1.06667  1.06667
+julia> SP.@register_discrete_weight_function(DWF, xs, ws)
+
+julia> [SP.Bn.(DWF, 0:N-1) SP.Cn.(DWF, 0:N-1)]
+
+9×2 Array{Float64,2}:
+ -4.0  9.0
+ -4.0  6.66667
+ -4.0  5.13333
+ -4.0  4.62857
+ -4.0  4.12698
+ -4.0  3.53535
+ -4.0  2.83217
+ -4.0  2.01026
+ -4.0  1.06667
+
+julia> i,j = 3,4; ## check  that ∫pᵢpⱼdw  = 0    for i,j=3,4
+
+julia> sum(basis(DWF,i)(x) *  basis(DWF,j)(x) * w for  (x,w) in zip(xs, ws))
+5.684341886080802e-14
+
+julia> ## Gogin, Hirvensalo (https://doi.org/10.1007/s10958-017-3410-8) characterization
+       D(k,N,x) =  sum((-1)^l * binomial(k+l,k) * binomial(N-l,k-l) *  SP.generalized_binomial(x,l) for l in 0:k)
+D (generic function with 1 method)
+
+julia> x = variable()
+Polynomial(x)
+
+julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
+
+julia> all(qs .* [p[end] for p  in ps] .≈ ps)
+true
 ```
 
-
 """
-struct DiscreteWeightFunction{S1, S2, R1, R2, T <: Number} <: AbstractWeightFunction{T}
-    xs::Vector{S1}
-    ws::Vector{S2}
-    αs::Vector{R1}
-    βs::Vector{R2}
-    coeffs::Vector{T}
-    var::Symbol
-    # no inner constructor here
-end
-
+abstract type AbstractDiscreteWeightFunction{T,N} <: AbstractDiscreteOrthogonalPolynomial{T} end
+abstract type DiscreteWeightFunction{T,N} <:  AbstractDiscreteWeightFunction{T,N} end
 export DiscreteWeightFunction
+basis_symbol(::Type{<:AbstractDiscreteWeightFunction}) = "W"
 
-function DiscreteWeightFunction(xs, ws, coeffs, var=:x)
-    N = length(xs)
-    N == length(ws) || throw(ArgumentError("Nodes and weights are vectors of the same length"))
-    αs, βs = discrete_stieltjes(xs, ws, N)
-    DiscreteWeightFunction(xs, ws, αs, βs, coeffs, var)
-end
+xs_ws(::Type{<:AbstractDiscreteWeightFunction}) = throw(ArgumentError("No default method"))
 
-(ch::DiscreteWeightFunction)(x::S) where {S} = orthogonal_polyval(ch, x)
-Polynomials.domain(::Type{<:DiscreteWeightFunction}) = Polynomials.Interval(-Inf, Inf)
-
-alpha(p::DiscreteWeightFunction, n) = n < 0 ? 0 : p.αs[n+1]
-beta(p::DiscreteWeightFunction, n) = p.βs[n+1]
-
-innerproduct(p::DiscreteWeightFunction, f, g) = ∑(wk * f(xk) * g(xk) for (xk, wk) in zip(p.xs, p.ws))
 
 # (Gautschi](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf), section 3.1
 # compute α_n = <tπ_n,π_n>/<π_n,π_n>, β_n = <π_n,π_n>/<π_{n-1},π_{n-1}>
 # wherer <p,q> = ∑_1^N w_k p(k) q(k)
-function discrete_stieltjes(xs, ws, n)
+function discrete_stieltjes(W::Type{<:AbstractDiscreteWeightFunction})
+
+    xs,ws = xs_ws(W)
+
     N  =  length(xs)
-    n > N &&  throw(ArgumentError("n ≤ N is required"))
+    n = N
 
     # k = 0 case
     πk_1, πk = zeros(N), ones(N)
     
-    βk = β0 = norm_k = sum(ws) # <π_0, π_0> = ∑ w_k 1 ⋅ 1
+    βk = β0 = norm_k = sum(ws)/1 # <π_0, π_0> = ∑ w_k 1 ⋅ 1
     αk = α0 = ∑(ws[k] * xs[k] for k in eachindex(ws)) / norm_k
     αs = [α0]
     βs = [β0]
@@ -102,21 +125,16 @@ function discrete_stieltjes(xs, ws, n)
 
     end
 
-    (αs, βs)
+    (-αs, βs)
 end
        
-        
-##################################################
+An(::Type{W}, n) where {W <: AbstractDiscreteWeightFunction} = one(eltype(W))
 
-const ∑ = sum
+Bn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stieltjes(W)[1][k+1]
+Cn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stieltjes(W)[2][k+1]
 
-function innerproduct(P::Type{<:DiscreteOrthogonalPolynomial}, f, g)
-    dom = domain(P)
-    fn = x -> f(x) * g(x) * weight_function(P)(x)
-    a, b = first(dom), last(dom)
-    if !isinf(a) && !isinf(b)
-        return ∑(fn(x)  for x in first(dom):last(dom))
-    else
-        ## what to do if infinite
-    end
-end
+(ch::DiscreteWeightFunction)(x::S) where {S} = orthogonal_polyval(ch, x)
+Polynomials.domain(::Type{<:DiscreteWeightFunction}) = Polynomials.Interval(-Inf, Inf)
+
+innerproduct(W::Type{<:AbstractDiscreteWeightFunction}, f, g) = ∑(wk * f(xk) * g(xk) for (xk, wk) in zip(xs_ws(W)...))
+

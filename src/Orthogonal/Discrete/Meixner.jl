@@ -1,15 +1,15 @@
-@register2  Meixner AbstractCDOP2
+@registerN  Meixner AbstractCDOP2 γ μ
 export  Meixner
 
 """
     Meixner{γ,μ}
 
-
+References: [Koekoek and Swarttouw §1.9](https://arxiv.org/pdf/math/9602214.pdf)
 """
 Meixner
 
 basis_symbol(::Type{<:Meixner{γ,μ}}) where {γ,μ} = "m⁽ᵞᵝ⁾" 
-Polynomials.domain(::Type{<:Meixner{γ, μ}}) where {γ, μ} = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{<:Meixner{γ, μ}}) where {γ, μ} = Polynomials.Interval(0, Inf)
 abcde(::Type{<:Meixner{γ,μ}})  where {γ,μ} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,μ-1,γ*μ))
 
 function kn(P::Type{<:Meixner{γ,μ}}, n::Int) where {γ,μ}

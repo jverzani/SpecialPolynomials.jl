@@ -1,38 +1,46 @@
-##################################################
-#  Implement  a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438.
-#
-# See https://github.com/JuliaApproximation/FastGaussQuadrature.jl for a more thorough, definitive treatment of finding gauss nodes  and weights.
+"""
+    glaser_liu_rokhlin_gauss_nodes(π::P, x0=pqr_start(P,degree(π));
+                                         symmetry=pqr_symmetry(P),
+                                         m=5)
+
+Find Gauss nodes and weights of the  basis  polynomial  `π = basis(P,n)`. The nodes  are the  roots of the  polynomial and the weights are computed  from known formulas.
+
+The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. This is  an  O(n)  method (whereas the method  basedon the Jacobi  matrix is O(n^2)). This method fits easily  into the framework  provided  through  the `AbstractCCOP` types.  The [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides even more efficient  algorithms and  pays attention to numerical  issues, examples of  which  can  be found in  [Hale and Townsend](https://core.ac.uk/download/pdf/9403469.pdf). The `FastGuassQuadrature` package is recommended for actual  use  of these values. 
+
 
 """
-    pqr(x)
-
-For an orthogonal  polynomial type satisfying the differential equation  `p(x)P''_n + q(x)P'_n + r(x)P_n=0`,
-return the function `(x,n) -> (p,q,r,dp, dq, dr).
+glaser_liu_rokhlin_gauss_nodes()
 
 """
-pqr(p::P) where {P} = throw(ArgumentError("pqr not defined for polynomials of type $P"))
+    pqr
 
+Compute  p,q,r,p',q',r' where p(x)y'' + q(x)y' + r(x)  = 0
 """
-   pqr_scale(p::P)
+function pqr(P::Type{<:AbstractCCOP}, n, x)
+    a,b,c,d,e = abcde(P)
 
-To scale a polynomial type so that π_n(x) = s_n(x) P_n(x) we need a function  to compute
-`s_{n+1}(x)/s_n(x)`, `s_{n+1}(x)/s_{n-1}(x)`, and the  two derivatives in `x`. This returns them.
-"""
-pqr_scale(p::P) where {P} = (x,n) -> (one(x), one(x), zero(x), zero(x))
+    p =  a*x^2 + b*x  +  c
+    dp = 2a*x + b
+    q = d*x +  e
+    dq = d
+    r  = -(a*n*(n-1)  + d*n)
+    dr = 0
+    (p,q,r,dp,dq,dr)
+end
 
 """
     pqr_start(p::P, n)
 
 A starting  value for finding the gauss nodes
 """
-pqr_start(p::P, n) where {P} = 0
+pqr_start(::Type{P}, n) where {P <: AbstractCCOP} = 0
 
 """
     pqr_symmetry(p::P)
 
 Boolean to specify if symmetry should apply to output
 """
-pqr_symmetry(p::P) where {P} = false
+pqr_symmetry(::Type{P}) where {P <: AbstractCCOP} = false
 
 """
     pqr_weight(p::P, x, dx)
@@ -41,13 +49,44 @@ Compute weight from x, dπx, x a node and dπx the derivative's value at the nod
 """
 pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 
+# We just use clenshaw to  evaluate  `p(x), dp(x)` for Newton's method,
+# but implementing the following can be more efficient
+# ## Evaluate basis(P,n)  and its  derivative using the three-point recursion representation
+# function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
+
+#     T = eltype(p)
+#     oS = one(x)
+#     R = eltype(one(T) * oS)
+    
+#     length(p) == 0 && return (zero(R), zero(R))
+#     d = length(p) - 1
+
+#     # P0,  P_{-1} case
+#     pn,  pn_1 = P0(P,x), zero(x)
+#     dpn, dpn_1  = dP0(P,x), zero(x)
+
+#     ptot = p[0]*P0(P,x)
+#     dptot  = p[0]*dP0(P,x)
+    
+    
+#     ## we compute  forward here, finding pi, dp_i,  p_{i+1}, dp_{i+1}, ...
+#     for i in 0:d-1
+#         an, bn, cn=  An(p,i), Bn(p,i), Cn(p,i)
+#         dpn_1, dpn = dpn,  an*pn + (an*x + bn)*dpn + cn*dpn_1
+#         pn_1,  pn =  pn, (an*x + bn)*pn + cn*pn_1
+#         ptot += p[i+1]*pn
+#         dptot += p[i+1]*dpn
+#     end
+#     return (ptot, dptot)
+# end
 
 
 # run Newton's method to find zero of p
-function newton(p::P, x0::S) where  {P <: AbstractOrthogonalPolynomial, S}
+function newton(p::P, x0::S) where  {P <: AbstractCCOP, S}
     maxsteps = 25
+    dp  = derivative(p)
     while maxsteps > 0
-        px, dpx = orthogonal_polyval_derivative(p, x0)
+        px, dpx = p(x0),  dp(x0) #orthogonal_polyval_derivative(p, x0)
         Δ = px/dpx
         isnan(Δ) && return (x0, dpx)
         if isinf(Δ)
@@ -55,7 +94,7 @@ function newton(p::P, x0::S) where  {P <: AbstractOrthogonalPolynomial, S}
             continue
         end
         x0 -= Δ
-        abs(px) <= 1e3*eps(S) && return  x0, orthogonal_polyval_derivative(p, x0)[2]
+        min(abs(Δ),abs(px)) <= sqrt(eps(S))/100 && return  x0, dp(x0)# orthogonal_polyval_derivative(p, x0)[2]
         maxsteps -= 1
     end
     @warn "Newton's method did not converge from $x0"
@@ -75,20 +114,27 @@ function RK(t0,  x0, F, h, n)
     x1
 end
 
+function prufer(Π::Type{P},n) where {P <: AbstractCCOP}
+    (θ, x) -> begin
+        dom = domain(Π)
+        a, b = first(dom)+eps(), last(dom)-eps()
+        x = clamp(x, a, b)
+        p,q,r,dp,dq,dr = pqr(Π, n, x)
+        -inv(sqrt(r/p) + (dr*p - dp*r + 2r*q)/(2r*p) * sin(2θ)/2)
+    end
+end
+
 ## Compute gauss node using  algorithm from  
 ## A Fast Algorithm for the Calculation of the Roots of Special Functions
 ## by Glaser, Liu, Rokhlin
 ## DOI: 10.1137/06067016X
-## specialized to the orthogonal polynomial case 
-function glaser_liu_rokhlin_gauss_nodes(π, x0=pqr_start(π,degree(π)); symmetry=pqr_symmetry(π), m=5)
+## specialized to the orthogonal polynomial case
+function glaser_liu_rokhlin_gauss_nodes(π::P, x0=pqr_start(P,degree(π));
+                                        symmetry=pqr_symmetry(P),
+                                        m=5) where {P <: AbstractCCOP}
+
     n = degree(π)
-    dom = domain(π)
-    a, b = first(dom)+eps(), last(dom)-eps()
-    F = (θ, x) -> begin
-        x = clamp(x, a, b)
-        p,q,r,dp,dq,dr = pqr(π)(x, n)
-        -inv(sqrt(r/p) + (dr*p - dp*r + 2r*q)/(2r*p) * sin(2θ)/2)
-    end
+    F = prufer(P, n)
     x = float(x0)
 
     # step 1 to get initial might be newton or might be RK
@@ -115,6 +161,6 @@ function glaser_liu_rokhlin_gauss_nodes(π, x0=pqr_start(π,degree(π)); symmetr
         end
     end
     # get weights 
-    weights = pqr_weight.(π, n, rts, dπrts)
+    weights = pqr_weight.(P, n, rts, dπrts)
     rts,  weights
 end

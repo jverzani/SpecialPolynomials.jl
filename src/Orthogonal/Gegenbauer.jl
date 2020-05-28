@@ -1,5 +1,5 @@
 ## Gegenbauer Polynomials
-@register1 Gegenbauer AbstractCCOP1
+@registerN Gegenbauer AbstractCCOP1 α
 export  Gegenbauer
 
 """
@@ -29,11 +29,11 @@ Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-
 abcde(::Type{<:Gegenbauer{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(2α+1),0))
 
 
-function kn(::Type{<:Gegenbauer{α}}, n::Int, ::Type{S}=Float64) where {α,S}
+function kn(::Type{<:Gegenbauer{α}}, n::Int) where {α,S}
     SpecialPolynomials.Pochhammer_factorial(α, n) * 2^n
 end
 
-function k1k0(P::Type{<:Gegenbauer{α}}, k) where {α}
+function k1k0(P::Type{<:Gegenbauer{α}}, k::Int) where {α}
     S = eltype(P)
     iszero(k) && return 2*one(S)*α
     val = one(S)
@@ -41,8 +41,10 @@ function k1k0(P::Type{<:Gegenbauer{α}}, k) where {α}
     val /= k + 1
     val
 end
-function k1k_1(P::Type{<:Gegenbauer{α}}, k) where {α}
+function k1k_1(P::Type{<:Gegenbauer{α}}, k::Int) where {α}
+    #iszero(k) && return k1k0(P,0)
     @assert k > 0
+    
     S = eltype(P)
     
     val = one(S)
@@ -75,15 +77,17 @@ end
 
 
 
-# overrides
+# overrides; big speedup if we avoid generating  from  a,b,c,d,e
 #An(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = 2*one(eltype(P))*(n+α)/(n+1)
 #Bn(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))
 #Cn(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = -(one(eltype(P)) *  (n - 1 + 2α))/(n+1)
 
-Bn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where  {α}  =  zero(eltype(P))
-Cn(P::Type{<:Gegenbauer{α}}, ::Val{1}) where  {α}  =  one(eltype(P))/2/(α+2)
-b̂n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2) 
-ĉn(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2) 
+
+B̃n(P::Type{<:Gegenbauer{α}}, ::Val{0}) where  {α}  =  zero(eltype(P))
+C̃n(P::Type{<:Gegenbauer{α}}, ::Val{1}) where  {α}  =  one(eltype(P))/2/(α+2)
+b̂̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2)
+b̂̃n(P::Type{<:Gegenbauer{α}}, ::Val{N}) where {α,N} = zero(eltype(P))# one(S) *  4/α/(α+2) 
+ĉ̃n(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2) 
 
 
 # # connection Cᵅ <--> Cᵝ

@@ -79,11 +79,14 @@ function Base.:+(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
     end
     ⟒(P)(as, p.var)
 end
-   
+
+#Base.:-(p::P) where {P <: AbstractSpecialPolynomial} = ⟒(P)(-coeffs(p), p.var)
+#Base.:-(p::P) where {T,N, P <: AbstractCOP{T,N}}  = (@show T, N; P(-coeffs(p), p.var))
+
 function Base.:*(p::P, c::S) where {P<:AbstractSpecialPolynomial, S<:Number}
     R = promote_type(eltype(p), S)
     as = R[a for a in coeffs(p)]
-     ⟒(P)(as * c, p.var)
+    ⟒(P)(as * c, p.var)
 end
 
 #function Base.:/(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
