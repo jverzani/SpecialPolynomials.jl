@@ -1,6 +1,6 @@
 # generic classical discrete orthogonal polynomial, CDOP
 
-
+abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
 """
      AbstractCDOP{T,N}
 
@@ -8,12 +8,12 @@ Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a fami
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
 solution of a differential equation
 
-(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0,
+`(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0`,
 
 where  `Δy(x) = y(x+1) - y(x)` and `∇y(x) = y(x) - y(x-1)`.
 
-A family is characterized by the 5 coefficients: a,b,c,d,e.
-Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
+A family is characterized by the 5 coefficients: `a,b,c,d,e`.
+Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e).`
 
 As in the classical coninuous orthogonal polynomial case
 [`AbstractCCOP`](@ref), from these 5 values the cofficients in the
@@ -33,7 +33,8 @@ For example, on p29 they give  formula for Hahn polynomials through:
 
 
 """
-abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
+AbstractCDOP
+
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros

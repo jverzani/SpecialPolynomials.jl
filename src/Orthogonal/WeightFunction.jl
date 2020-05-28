@@ -2,6 +2,12 @@
 ## Wheeler algorithm, https://authors.library.caltech.edu/86868/1/1.4822929.pdf
 ## algorithm not considered, just text
 
+abstract type AbstractWeightFunction{T,N} <: AbstractContinuousOrthogonalPolynomial{T} end
+# parent types for `@registerX` constructor
+abstract type WeightFunction{T,N} <: AbstractWeightFunction{T,N} end
+abstract type WeightFunction1{α,T,N} <: AbstractWeightFunction{T,N} end
+export WeightFunction, WeightFunction1
+
 """
     WeightFunction{T}
 
@@ -114,11 +120,7 @@ julia> [αs βs]
 ```
 
 """
-abstract type AbstractWeightFunction{T,N} <: AbstractContinuousOrthogonalPolynomial{T} end
-# parent types for `@registerX` constructor
-abstract type WeightFunction{T,N} <: AbstractWeightFunction{T,N} end
-abstract type WeightFunction1{α,T,N} <: AbstractWeightFunction{T,N} end
-export WeightFunction, WeightFunction1
+WeightFunction
 
 ## We need w, π
 ## w a function; π a *monic* system (ismonic(P) == true)

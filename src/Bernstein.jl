@@ -22,7 +22,7 @@ julia> convert(Polynomial, p)
 Polynomial(3.0*x^2 - 3.0*x^3)
 ```
 
-!!! Note
+!!! note
     [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) Offers a  more  performant version.
 
 """

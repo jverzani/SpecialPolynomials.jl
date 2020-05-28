@@ -6,8 +6,8 @@ export Hahn
 
 References: [Koekoek and Swarttouw §1.5](https://arxiv.org/pdf/math/9602214.pdf)
 
-!!!  Note
-      This is not  correct; tests are broken
+!!! note
+    This is not  correct; tests are broken
 """
 Hahn
 

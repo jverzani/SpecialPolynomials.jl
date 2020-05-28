@@ -2,7 +2,7 @@
 ## --------------------------------------------------
 ##
 ## Classic Continuos Orthogonal Polynomials
-
+abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
 """
     AbstractCCOP{T,N}
 
@@ -24,14 +24,16 @@ where `Aᵢ,Bᵢ,Cᵢ` can be represented in formulas involving just  `a,b,c,d,e
 
 Rearranging   gives the structural equation:
 
-x⋅p_n   = [an, bn, cn] ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
+`x⋅p_n   = [an, bn, cn] ⋅ [p_{n+1}, p_n, p_{n-1}]`     #  Eqn (7)
 
 
 The other structural equations are (equation  references are from Koepf and Schmersau):
 
-σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
-p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
-x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^* 
+`σ⋅p'_n  = [αn, βn, γn] ⋅  [p_{n+1}, p_n, p_{n-1}]` (Eqn (9), n ≥ 1)
+
+`p_n = [ân, b̂n, ĉn]  ⋅  [p'_{n+1}, p'_n, p'_{n-1}]` (Eqn (19))
+
+`x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}]` (Eqn  (14))
 
 Using (7), Clenshaw polynomial evaluation using the three  point recursion is defined.
 
@@ -89,7 +91,7 @@ orthogonal polynomials.
 
 
 """
-abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
+AbstractCCOP
 
 
 # subtypes  to keep track of number of parameters

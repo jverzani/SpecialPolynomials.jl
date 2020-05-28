@@ -66,7 +66,7 @@ julia> maximum(abs.(f(x) - p(x) for x in range(-1, 1, length=20))) <= 1e-14
 true
 ```
 
-!!! Note
+!!! note
     The above example  is  more directly  done through `fit(Chebyshev, f, 64)`, though  the resulting
     polynomial will reference a different  basis.
 

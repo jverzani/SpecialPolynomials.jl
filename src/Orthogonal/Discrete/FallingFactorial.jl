@@ -7,7 +7,7 @@ Construct  a  polynomial with   respect to the basis `x⁰̲,  x¹̲, x²̲, …
 [Falling factorial](https://en.wikipedia.org/wiki/Falling_and_rising_factorials)  for several  facts
 about this  polynomial basis.
 
-In [Koepf Schmersau](https://arxiv.org/pdf/math/9703217.pdf)
+In [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf)
 connection coefficients between the falling factorial polynomial
 system and classical discrete orthogonal polynomials are given.
 

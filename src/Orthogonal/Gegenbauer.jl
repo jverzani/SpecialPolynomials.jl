@@ -21,7 +21,7 @@ Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 ```
 
 """
-Gegenbaeur
+Gegenbauer
 
 basis_symbol(::Type{<:Gegenbauer{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1,1)

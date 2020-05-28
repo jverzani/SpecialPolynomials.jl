@@ -27,10 +27,11 @@ SpecialPolynomials.AbstractSpecialPolynomial
 ## Orthogonal Polynomials
 
 ```@docs
-SpecialPolynomials.AbstractOrthogonalPolynomial
+SpecialPolynomials.AbstractCCOP
+SpecialPolynomials.AbstractCDOP
 ```
 
-There are  several classic orthogonal polynomials available:
+There are  several classic continuous  orthogonal polynomials available:
 
 ```@docs
 Legendre
@@ -45,6 +46,8 @@ Bessel
 ShiftedLegendre
 ```
 
+There are  several classic discrete  orthogonal polynomials available:
+
 ```@docs
 Charlier
 Krawchouk
@@ -53,6 +56,8 @@ Hahn
 DiscreteChebyshev
 FallingFactorial
 ```
+
+Polynomial systems  can also be generated  through  an associated weight function.
 
 ```@docs
 WeightFunction
@@ -98,7 +103,7 @@ using Plots, Polynomials, SpecialPolynomials
 bs =[[220, 260], [220, 40], [35, 100],  [120, 140]]
 N = length(bs)-1
 
-ρ = sum(bᵢ.*basis(Bernstein{𝐍},i-1) for (i,bᵢ)  ∈ enumerate(bs))
+ρ = sum(bᵢ.*basis(Bernstein{N},i-1) for (i,bᵢ)  ∈ enumerate(bs))
 ts = range(0, stop=1, length=500)
 p =  plot(ρ[1].(ts), ρ[2].(ts), legend=false)
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])

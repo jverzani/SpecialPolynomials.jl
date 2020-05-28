@@ -19,6 +19,9 @@ end
 ## --------------------------------------------------
 ##
 
+abstract type AbstractDiscreteWeightFunction{T,N} <: AbstractDiscreteOrthogonalPolynomial{T} end
+abstract type DiscreteWeightFunction{T,N} <:  AbstractDiscreteWeightFunction{T,N} end
+export DiscreteWeightFunction
 
 """
     DiscreteWeightFunction
@@ -79,9 +82,8 @@ true
 ```
 
 """
-abstract type AbstractDiscreteWeightFunction{T,N} <: AbstractDiscreteOrthogonalPolynomial{T} end
-abstract type DiscreteWeightFunction{T,N} <:  AbstractDiscreteWeightFunction{T,N} end
-export DiscreteWeightFunction
+DiscreteWeightFunction
+
 basis_symbol(::Type{<:AbstractDiscreteWeightFunction}) = "W"
 
 xs_ws(::Type{<:AbstractDiscreteWeightFunction}) = throw(ArgumentError("No default method"))
