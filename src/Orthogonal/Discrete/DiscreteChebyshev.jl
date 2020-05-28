@@ -2,6 +2,7 @@
 export DiscreteChebyshev
 
 """
+    DiscreteChebyshev
 """
 DiscreteChebyshev
 

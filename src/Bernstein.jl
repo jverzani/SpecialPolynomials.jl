@@ -1,4 +1,4 @@
-abstract type AbstractBernstein{T} <: Polynomials.AbstractPolynomial{T} end
+abstract type AbstractBernstein{T} <: AbstractSpecialPolynomial{T} end
 
 """
 
@@ -21,6 +21,9 @@ bernstein(1⋅β(3, 2)(x))
 julia> convert(Polynomial, p)
 Polynomials.Polynomial(3*x^2 - 3*x^3)
 ```
+
+!!! Note
+    [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) Offers a  more  performant version.
 
 """
 struct Bernstein{𝐍, T} <: AbstractBernstein{T}
@@ -65,6 +68,24 @@ function Base.promote(p::P, q::Q) where {𝐍,T,P<:Bernstein{𝐍,T}, 𝐌,S,Q<:
     convert(PQ,p), convert(PQ,q)
 end
 
+# promote up
+function Base.convert(P::Type{<:Bernstein{𝐍}}, p::Bernstein{𝐌, S}) where {𝐍, 𝐌, S}
+    @assert  𝐍 >=  𝐌
+    𝐑 = 𝐍 -  𝐌
+    R = eltype(one(promote_type(eltype(P),S))/1)
+    cs = zeros(R, 𝐍 +  1)
+    for  j  in 0:𝐌
+        pⱼ = p[j]
+        iszero(pⱼ) &&  continue
+        for  i  in j:j+𝐑
+            cs[1+i] +=  pⱼ * binomial(𝐌,j) * binomial(𝐑, i-j) /  binomial(𝐍, i)
+        end
+    end
+    Bernstein{𝐍, R}(cs, p.var)
+    
+end
+
+
 function Base.convert(P::Type{<:Polynomials.StandardBasisPolynomial}, p::Bernstein{N,T}) where {N, T}
     x = variable(P)
     p(x)
@@ -93,22 +114,6 @@ function Base.convert(::Type{<:AbstractBernstein}, p::Polynomial{T}) where {T}
     convert(Bernstein{𝐍, T}, p)
 end
 
-# promote up
-function Base.convert(P::Type{<:Bernstein{𝐍}}, p::Bernstein{𝐌, S}) where {𝐍, 𝐌, S}
-    @assert  𝐍 >=  𝐌
-    𝐑 = 𝐍 -  𝐌
-    R = eltype(one(promote_type(eltype(P),S))/1)
-    cs = zeros(R, 𝐍 +  1)
-    for  j  in 0:𝐌
-        pⱼ = p[j]
-        iszero(pⱼ) &&  continue
-        for  i  in j:j+𝐑
-            cs[1+i] +=  pⱼ * binomial(𝐌,j) * binomial(𝐑, i-j) /  binomial(𝐍, i)
-        end
-    end
-    Bernstein{𝐍, R}(cs, p.var)
-    
-end
 
 
 Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
@@ -226,8 +231,11 @@ end
 # twoProd(x, y)  = x*y, 0
 
 
-
-
+# default in abstract.jl  assumes basis(P,0)=1
+function Base.:+(p::Bernstein{𝐍,T}, c::Number) where {𝐍, T}
+    u, v =  promote(p, c)
+    u+v
+end
 
 # default `+` calls promote(p1,p2) then dispatches to this.
 function Base.:+(p1::Bernstein{𝐍,T}, p2::Bernstein{𝐍,T}) where {𝐍, T}
@@ -273,17 +281,7 @@ function Polynomials.derivative(p::Bernstein{𝐍, T}, order::Integer = 1) where
     order ==  0 && return p
 
     cs = zeros(T, 𝐍)
-
-    # case  i=𝐍
-    cs[end] = 𝐍 * p[𝐍]
-    for i = 𝐍-1:-1:1
-        cs[1+i-1] += p[i] * 𝐍
-        cs[1+i] += -p[i] * 𝐍
-    end
-    # case i=0
-    cs[1] += -p[0] * 𝐍
-    
-    dp =  Bernstein{𝐍-1, T}(cs, p.var)
+    dp = Bernstein{𝐍-1, T}(𝐍 * diff(coeffs(p)), p.var)
     
     order > 1 ? derivative(dp, order-1) : dp
 end

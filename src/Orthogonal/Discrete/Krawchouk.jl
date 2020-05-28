@@ -33,7 +33,9 @@ end
 
 @registerN MonicKrawchouk AbstractCDOP2 p 𝐍
 export MonicKrawchouk
-abcde(::Type{<:MonicKrawchouk{p,𝐍}})  where {p,𝐍} = NamedTuple{(:a,:b,:c,:d,:e)}((0, p-1, 0, 1, -p*𝐍))
+ϟ(::Type{<:MonicKrawchouk{p,𝐍}}) where {p,𝐍} = Krawchouk{p,𝐍}
+ϟ(::Type{<:MonicKrawchouk{p,𝐍,T}}) where {p,𝐍,T} = Krawchouk{p,𝐍,T}
+@register_monic(MonicKrawchouk)
 
 function classical_hypergeometric(P::Type{<:MonicKrawchouk{p,N}}, n::Int, x) where {p,N}
     Pochhammer( -N,n) * p^n * pFq((-n, -x), -N, 1/p)

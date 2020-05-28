@@ -16,10 +16,10 @@ Jacobi(1⋅J^(α, β)_2(x))
 julia> convert(Polynomial, p)
 Polynomials.Polynomial(-0.375 + 0.75*x^2)
 
-julia> monic(p::Polynomial) = p/p[end];
+julia> monic(p) = (q=convert(Polynomial,p); q/q[end])
 
-julia> (monic ∘ convert).(Polynomial, (p, basis(Chebyshev, 2))) # scaled version of each other
-(Polynomials.Polynomial(-0.5 + 1.0*x^2), Polynomials.Polynomial(-0.5 + 1.0*x^2))
+julia> monic(p) ≈  monic(basis(Chebyshev, 2))
+
 ```
 
 """
@@ -41,7 +41,6 @@ function kn(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     end
     tot
     
-    #(one(α)*one(β) * generalized_binomial(2n+α+β, n))/2^n
 end
 
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
@@ -58,6 +57,7 @@ function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     end
     val
 end
+
 function k1k_1(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
     @assert n > 0
 
@@ -101,8 +101,6 @@ function  gauss_nodes_weights(P::Type{<:Jacobi{α,β}}, n)  where {α,β}
     end
 
 end
-
-has_fast_gauss_nodes_weights(::Type{<:Jacobi}) = true
 
 function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
 

@@ -14,7 +14,9 @@ glaser_liu_rokhlin_gauss_nodes()
 """
     pqr
 
-Compute  p,q,r,p',q',r' where p(x)y'' + q(x)y' + r(x)  = 0
+Compute  `p,q,r,p',q',r'` where `p(x)y'' + q(x)y' + r(x)  = 0`. Uses
+the `a,b,c,d,e` values characterizing the  system.
+
 """
 function pqr(P::Type{<:AbstractCCOP}, n, x)
     a,b,c,d,e = abcde(P)
@@ -49,7 +51,7 @@ Compute weight from x, dπx, x a node and dπx the derivative's value at the nod
 """
 pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 
-# We just use clenshaw to  evaluate  `p(x), dp(x)` for Newton's method,
+# We just use clenshaw to  evaluate  `p(x), dp(x)` for Newton's method below,
 # but implementing the following can be more efficient
 # ## Evaluate basis(P,n)  and its  derivative using the three-point recursion representation
 # function orthogonal_polyval_derivative(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}

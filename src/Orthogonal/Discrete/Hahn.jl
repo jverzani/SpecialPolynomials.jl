@@ -37,6 +37,9 @@ end
 export HahnQ
 
 """
+    HahnQ
+
+The Hahn polynomials with an alternate normalization.
 """
 HahnQ
 

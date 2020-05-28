@@ -158,7 +158,7 @@ end
                     # various ways to convert to P
                     
                     @test q(variable(P))(variable()) ≈ q(variable())  # evaluation
-                    @test SP._convert_ccop(P, q)(variable()) ≈ q(variable())  # structural  equations
+                    @test SP._convert_cop(P, q)(variable()) ≈ q(variable())  # structural  equations
                     @test convert(P, convert(Polynomial, q))(variable()) ≈ q(variable()) # through Standard  basis
                     @test convert(P, q)(x) ≈ q(x) 
 

@@ -1,39 +1,95 @@
-## common functionality for  CCOP classical  continuous orthogonal polynomials
-
-
-##
-## -----
-##
-## interface for a  given type
-
-basis_symbol(::Type{<:AbstractCOP}) = "P"
-Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf,  Inf)
-Base.extrema(P::Type{<:AbstractCOP}) = (first(domain(P)), last(domain(P)))
-
-"""
-   abcde
-
-A named tuple returning  the  constants a,b,c,d,e  for a CCOP type with
-(a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
-"""
-abcde(::Type{<:AbstractCOP}) = throw(MethodError())
-
-# kn is the leading term (Section 3 table)
-leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
-
-# Set defaults to be monic
-kn(::Type{P},  n::Int) where{P <: AbstractCOP} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
-
-# k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i)
-# k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i-1)
-
-monic(p::P) where {T,N,P <: AbstractCOP{T,N}} = N == 0 ? p : p/(kn(P,degree(p))*p[end])
-
 ##
 ## --------------------------------------------------
 ##
+## Classic Continuos Orthogonal Polynomials
+
+"""
+    AbstractCCOP{T,N}
+
+Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
+solution of the differential equation
+
+`(a⋅x²+b⋅x+c) ⋅ y'' + (d⋅x + e) ⋅ y' + λᵢ⋅ y = 0.`
+
+A family is characterized by the 5 coefficients: `a,b,c,d,e`.
+Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e)`.
+
+From these  5  coefficients several structural  equations are represented. For example
+the three-point recusion.
+
+`P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎`,
+
+where `Aᵢ,Bᵢ,Cᵢ` can be represented in formulas involving just  `a,b,c,d,e` and `i`.
+
+Rearranging   gives the structural equation:
+
+x⋅p_n   = [an, bn, cn] ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
+
+
+The other structural equations are (equation  references are from Koepf and Schmersau):
+
+σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
+p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
+x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^* 
+
+Using (7), Clenshaw polynomial evaluation using the three  point recursion is defined.
+
+Using (19), expressions for derivatives are found.
+
+Using  (19), expressions for integration are found (p7).
+
+Using Thms 2,4, and 5, connection coefficients, `C(n,m)` satisfying 
+`P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n)` are  found. These 
+allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polynomial)`,
+`convert(P{α…}, p::P(β…))` and through composition  `p*q`
+
+Subtypes of `AbstractCCOP` are  created through  the `@register0` or  `@registerN` macros, where the  `N`  one  is used  if parameters are  needed to describe the family.
+
+If non-monic versions are desired, then the  leading  term can be  specified through   `kn()`.  The `@register_monic` macro is useful  for creating  monic versios through  method delegation. Similarly, the `@register_shifted` macro is useful  to provide shifted versions.
+
+Registering a system, defining an  `abcde` method, and  optionally defining `kn`, `k1k0`,  and `k1k_1` methods is
+usually sufficient to define a new system, though the general  equations may need specializations when algebraic cancellation is required. 
+
+## Example
+
+For this example, the value of `Bn` at `0` needs help:
+
+```jldoctest
+julia> using Polynomials, SpecialPolynomials
+
+julia> const SP=SpecialPolynomials
+SpecialPolynomials
+
+julia> SP.@register0 MonicLegendre SP.AbstractCCOP0
+
+julia> SP.abcde(::Type{<:MonicLegendre})  = (-1,0,1,-2,0)
+
+julia> SP.Bn(P::Type{<:MonicLegendre}, ::Val{0}) =  0
+
+julia> 𝐐  =  Rational{Int}
+Rational{Int64}
+
+julia> x = variable(Polynomial{𝐐})
+Polynomial(x)
+
+julia> [basis(MonicLegendre{𝐐}, i)(x) for i  in 0:5]
+6-element Array{Polynomial{Rational{Int64}},1}:
+ Polynomial(1//1)
+ Polynomial(x)
+ Polynomial(-1//3 + x^2)
+ Polynomial(-3//5*x + x^3)
+ Polynomial(3//35 - 6//7*x^2 + x^4)
+ Polynomial(5//21*x - 10//9*x^3 + x^5)
+```
+
+[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
+present an encyclopedia of formula characterizing families of
+orthogonal polynomials.
+
+
+"""
+abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
 
 
 # subtypes  to keep track of number of parameters
@@ -42,6 +98,14 @@ abstract type AbstractCCOP0{T,N} <: AbstractCCOP{T,N} end
 abstract type AbstractCCOP1{α,T,N} <: AbstractCCOP{T,N} end
 abstract type AbstractCCOP2{α,β,T,N} <: AbstractCCOP{T,N}  end
 abstract type AbstractCCOP3{α,β,γ,T,N} <: AbstractCCOP{T,N}  end
+
+# We want to  be able to strip  off T,N  or α,...,T,N
+# * constructorof(P{α,..,T,N}) =  P
+# * ⟒(P(α,...,T,N)) =  P(α...)
+⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
+⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α, β} = constructorof(P){α, β}
+⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α, β,γ} = constructorof(P){α, β, γ}
+
 
 ## Display
 # show parameters in constructor's name
@@ -55,30 +119,6 @@ function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,β,P<:Abs
     printpoly(io, p, mimetype)
     print(io,")")
 end
-
-# We want to  be able to strip  off T,N  or α,...,T,N
-# * constructorof(P{α,..,T,N}) =  P
-# * ⟒(P(α,...,T,N)) =  P(α...)
-⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
-⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α, β} = constructorof(P){α,  β}
-⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α, β,γ} = constructorof(P){α,  β, γ}
-
-# Can't  change  N  here
-function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}
-
-    ## widen size...
-    idx < 0 &&  throw(ArgumentError("Negative index"))
-    val = T(value)
-    d = N - 1
-    if idx > d || (idx == d && iszero(value))
-        throw(ArgumentError("Polynomials of AbstractCCOP type have fixed size parameter, N, which  can't  be changed through  assignment. Make new polynomial  instance?"))
-    end
-    setindex!(p.coeffs, val,  idx+1)
-end
-
-Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
-Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
-
 
 
 
@@ -102,32 +142,11 @@ Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 ## standard
 
 
-"""
-    Clenshaw evaluation of an orthogonal polynomial 
-"""
-function eval_ccop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
-    if @generated
-        N == 0 && return zero(T) * zero(S)
-        N == 1 && return cs[1] * one(S)
-        #SS = eltype(one(S))
-        Δ0 = :(cs[N-1])
-        Δ1 = :(cs[N])
-        for i in N-1:-1:2
-            a = :(cs[i - 1] - Δ1 * Cn(P, i-1))
-            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1)))
-            Δ0 = :(a)
-            Δ1 = :(b)
-        end
-        Δ0 + Δ1* muladd(x, An(P,0), Bn(P,0))
-    else
-        clenshaw_eval(P, cs, x)
-    end
-end
-
 
 ##
 ## Structural  equations
 ##
+## Could move the AbstractCOP terms into `cop.jl`...
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
 An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n)
@@ -200,7 +219,7 @@ end
 
 # αn, βn,γn
 # σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-αn(P::Type{<:AbstractCCOP}, n::Int) = α̃n(P,n) / k1k0(P,n) 
+αn(P::Type{<:AbstractCOP}, n::Int) = α̃n(P,n) / k1k0(P,n) 
 function α̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -210,7 +229,7 @@ function α̃n(P::Type{<:AbstractCCOP}, n::Int)
     return val
 end
 
-βn(P::Type{<:AbstractCCOP}, n::Int) = β̃n(P, n)
+βn(P::Type{<:AbstractCOP}, n::Int) = β̃n(P, n)
 function β̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -338,8 +357,8 @@ end
 function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP} 
     p(variable(Q, p.var))
 end
-function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCOP,  P <: Polynomials.StandardBasisPolynomial}
-    _convert_ccop(Q, p)
+function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynomials.StandardBasisPolynomial}
+    _convert_cop(Q, p)
 end
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
 
@@ -347,7 +366,7 @@ function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: Abstrac
     ā,b̄,c̄,d̄,ē = abcde(Q)
     
     if (a,b,c) == (ā,b̄,c̄)  &&  !(Q <: Hermite || P  <: Hermite)  # σ ==  σ̄   and not Hermite
-        _convert_ccop(Q, p)
+        _convert_cop(Q, p)
     else
         T = eltype(Q)
         convert(Q, convert(Polynomial{T}, p))
@@ -415,6 +434,8 @@ end
 
 # assumes N >  M
 @generated  function ⊕′(p1::P, p2::Q) where {T,N,S,M, P<:AbstractCOP{T,N}, Q<:AbstractCOP{S,M}}
+
+    #@assert  ⟒(P) == ⟒(Q)
     R = promote_type(T,S)
 
     exprs = Any[nothing for i = 1:N]
@@ -555,9 +576,8 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
 
     # adjust constant
     ∫p = Q(as,  p.var)
-    ∫p[0] = R(C) - ∫p(0)
-    
-    return  ∫p
+    return ∫p + (R(C) - ∫p(0))
+
 end
 
 

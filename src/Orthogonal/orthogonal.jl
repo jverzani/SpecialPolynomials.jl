@@ -5,129 +5,7 @@ abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} en
 abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 
-abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
 
-"""
-    AbstractCCOP{T,N}
-
-Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
-for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if it  is  a
-solution of a differential equation
-
-(a⋅x²+b⋅x+c) ⋅ y'' + (d⋅x + e) ⋅ y' + λᵢ⋅ y = 0.
-
-A family is characterized by the 5 coefficients: a,b,c,d,e.
-Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
-
-From these  5  coefficients several structural  equations are represented. For example
-the three-point recusion.
-
-P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎
-
-Here `Aᵢ,Bᵢ,Cᵢ`  can be represented in formulas involving just  `a,b,c,d,e` and `i`.
-
-Rearraging   gives the structural equation
-
-x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
-
-
-The other structural equations are (equation  references are for Koepf  and  Schmerrsaus):
-
-σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
-p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
-x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^* 
-
-Using (7), Clenshaw polynomial evaluation using the three  point recursion is defined.
-
-Using (19), expressions for derivatives are found.
-
-Using  (19),  expressions   for  integration are  found  (p7).
-
-Using Thms 2,4, and 5, connection coefficients,  C(n,m) satisfying 
-P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n) are  found. These 
-allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polynomial)`,
-`convert(P{α…}, p::P(β…))` and through composition  `p*q`
-
-Subtypes of `AbstractCCOP` are  created through  the  `@registerN` macros, where `N` is the number  of  parameters used to describe the family.
-
-If non-monic versions are desired, then the  leading  term can be  specified through   `kn()`.  
-
-This is  sufficient for many cases, though the general  equations may need specializations when algebraic cancellation is required. 
-
-## Example
-
-For this example, the value of `Bn` at `0` needs help:
-
-```jldoctest
-julia> using Polynomials, SpecialPolynomials
-
-julia> const SP=SpecialPolynomials
-SpecialPolynomials
-
-julia> SP.@register0 MonicLegendre SP.AbstractCCOP0
-
-julia> SP.abcde(::Type{<:MonicLegendre})  = (-1,0,1,-2,0)
-
-julia> SP.Bn(P::Type{<:MonicLegendre}, ::Val{0}) =  0
-
-julia> 𝐐  =  Rational{Int}
-Rational{Int64}
-
-julia> x = variable(Polynomial{𝐐})
-Polynomial(x)
-
-julia> [basis(MonicLegendre{𝐐}, i)(x) for i  in 0:5]
-6-element Array{Polynomial{Rational{Int64}},1}:
- Polynomial(1//1)
- Polynomial(x)
- Polynomial(-1//3 + x^2)
- Polynomial(-3//5*x + x^3)
- Polynomial(3//35 - 6//7*x^2 + x^4)
- Polynomial(5//21*x - 10//9*x^3 + x^5)
-```
-
-[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
-present an encyclopedia of formula characterizing families of
-orthogonal polynomials.
-
-
-"""
-abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
-
-
-"""
-     AbstractCDOP{T,N}
-
-Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
-for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
-solution of a differential equation
-
-(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0,
-
-where  `Δy(x) = y(x+1) - y(x)` and `∇y(x) = y(x) - y(x-1)`.
-
-A family is characterized by the 5 coefficients: a,b,c,d,e.
-Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
-
-As in the classical coninuous orthogonal polynomial case
-[`AbstractCCOP`](@ref), from these 5 values the cofficients in the
-there-point recursion, and other structural equations can be
-represented. These allow polynomial multiplication, integration,
-differentiation, conversion, etc. to be defined generically.
-
-[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
-present an encyclopedia of formula characterizing families of
-orthogonal polynomials. 
-
-For example, on p29 they give  formula for Hahn polynomials through:
-
-`n(n+α+β+1)y(x) = B(x)y(x+1) -[B(x)+D(x)]y(x) + D(x)y(x-1)`,  with  explicit values  for  `B` and `D`. Reexpressing gives:
-`BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
-`σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
-
-
-"""
-abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
 
 ##
 ## --------------------------------------------------
@@ -156,7 +34,7 @@ function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) whe
 end
 
 # from instance, x
-function clenshaw_eval(p::AbstractOrthogonalPolynomial, x::S) where {S}
+function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
 
     T, cs = eltype(p), coeffs(p)
     N = length(cs)
@@ -167,10 +45,10 @@ function clenshaw_eval(p::AbstractOrthogonalPolynomial, x::S) where {S}
     Δ1 = cs[end]
     @inbounds for i in N-1:-1:2
         @show cs[i-1]
-        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(p, i-1), Δ0 + Δ1 * muladd(x, An(p,i-1),Bn(p,i-1))
+        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
     end
 
-    return Δ0 + Δ1 * muladd(x, An(p,0),  Bn(p,0))
+    return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
 end
 
 
@@ -189,7 +67,7 @@ struct Linearization{P,V}
 end
 
 
-## Collect facts
+## Collect facts  about  the orthogonal polynomial system
 
 """
     weight_function(p)
@@ -210,6 +88,19 @@ The generating function is a function defined by: `(t,x) -> sum(t^n Pn(x) for n 
 generating_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
 generating_function(::P) where {P <: AbstractOrthogonalPolynomial} = generating_function(P)
 
+
+"""
+    leading_term(::Type{P},n)
+
+Return leading term of `basis(P,n)` in the  standard basis. By default this is generated through the three-point recursion.
+"""
+function leading_term(::Type{P}, n::Int) where {P <: AbstractOrthogonalPolynomial}
+    n < 0 && throw(ArgumentError("n must be a non-negative integer"))
+    n == 0 && return one(eltype(P))
+    prod(An(P,i) for i in n-1:-1:0)
+end
+
+# is P a monic polynomial system?
 ismonic(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
 
 # cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
@@ -220,7 +111,6 @@ ismonic(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
 # An⋅x⋅P_n = -P_{n+1} + Bn⋅P_n + C_n P_{n-1}
 """
     An(::Type{P},n)
-    An(p::P, n)
 
 
 Orthogonal polynomials defined by a weight function satisfy a three point recursion formula of the form:
@@ -233,7 +123,7 @@ If the polynomials are monic, this is usually parameterized as:
 
 These functions are used through recursion when evaluating the polynomials, converting to `Polynomial` format, for constructing the Vandermonde matrix, for construction the Jacobi matrix, and elsewhere.
 """
-An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
+An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
 
 """
     Bn(::Type{P},n)
@@ -241,7 +131,7 @@ An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError()
 
 cf. [`An()`](@ref)
 """
-Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
+Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
 
 
 """
@@ -250,10 +140,7 @@ Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError()
 
 cf. [`An()`](@ref)
 """
-Cn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError())
-An(p::P, n) where {P <: AbstractOrthogonalPolynomial} = An(P,n)
-Bn(p::P, n) where {P <: AbstractOrthogonalPolynomial} = Bn(P,n)
-Cn(p::P, n) where {P <: AbstractOrthogonalPolynomial} = Cn(P,n)
+Cn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
 
 
 ## For monic polynomials, we have
@@ -277,17 +164,6 @@ end
 
 
 """
-    leading_term(::Type{P},n)
-
-Return leading term of `basis(P,n)` in the  standard basis. By default this is generated through the three-point recursion.
-"""
-function leading_term(::Type{P}, n::Int) where {P <: AbstractOrthogonalPolynomial}
-    n < 0 && throw(ArgumentError("n must be a non-negative integer"))
-    n == 0 && return one(eltype(P))
-    prod(An(P,i) for i in n-1:-1:0)
-end
-
-"""
     monic(p::AbstractOrthogonalPolynomial)
 
 Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`. 
@@ -299,12 +175,6 @@ function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
 end
 
 
-# return the domain as a tuple, not an interval object
-function Base.extrema(::Type{P}) where {P <: AbstractOrthogonalPolynomial}
-    dom = domain(P)
-    first(dom), last(dom)
-end
-Base.extrema(p::P) where {P <: AbstractOrthogonalPolynomial} = extrema(P)
 
 
 
@@ -375,17 +245,13 @@ function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolyno
 end
 gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
 
-# Trait to indicate if computation of nodes and weights is is O(n) or O(n^2)
-has_fast_gauss_nodes_weights(p::P)  where {P <: AbstractOrthogonalPolynomial} = has_fast_gauss_nodes_weights(P)
-has_fast_gauss_nodes_weights(::Type{P})  where {P <: AbstractOrthogonalPolynomial} = false
-
 
 ##
 ## --------------------------------------------------
 ##
 
 ## <f,g> = ∫ f⋅g⋅w dx
-function innerproduct(P::Type{<:Union{AbstractCCOP,AbstractContinuousOrthogonalPolynomial}}, f, g)
+function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g)
     dom = domain(P)
     a, b = first(dom), last(dom)
     if !first(Polynomials.inclusivity(dom))
@@ -399,7 +265,7 @@ function innerproduct(P::Type{<:Union{AbstractCCOP,AbstractContinuousOrthogonalP
     return _quadgk(fn, a, b)
 end
 
-innerproduct(p::P, f, g) where {P <: AbstractContinuousOrthogonalPolynomial} =  innerproduct(P, f, g)
+innerproduct(p::P, f, g) where {P <: AbstractOrthogonalPolynomial} =  innerproduct(P, f, g)
 
 ## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
 Base.abs2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
@@ -412,6 +278,10 @@ function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
     innerproduct(P, p, p)
 end
 norm2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
+
+##
+## --------------------------------------------------
+##
 
 
 """
@@ -508,6 +378,6 @@ tries to identify an `n` for which the series expansion is a good approximation 
 
 """
 function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
-    throw(MethodError())
+    throw(ArgumentError("No default method"))
 end
 

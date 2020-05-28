@@ -14,7 +14,7 @@ system and classical discrete orthogonal polynomials are given.
 ## Examples
 
 ```jldoctest
-julia> using SpecialPolynomials
+julia> using Polynomials, SpecialPolynomials
 
 julia> p = basis(FallingFactorial, 3)
 FallingFactorial(1⋅x³̲)
@@ -24,7 +24,6 @@ Polynomial(x)
 
 julia> p(x) ≈ x*(x-1)*(x-2)
 true
-
 ```
 
 """
@@ -86,12 +85,12 @@ Base.:*(p::FallingFactorial, q::FallingFactorial) = convert(FallingFactorial,  c
 function Base.convert(::Type{P}, q::Q) where {
     P <: FallingFactorial,
     Q <: AbstractCDOP}
-    _convert_ccop(P,q)
+    _convert_cop(P,q)
 end
 function Base.convert(::Type{P}, q::Q) where {
     P <: AbstractCDOP,
     Q <: FallingFactorial}
-    _convert_ccop(P,q)
+    _convert_cop(P,q)
 end
 
 ##  Koepf and Schmersa Thm 6 connection for P, Q=x^n̲

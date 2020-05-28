@@ -185,7 +185,6 @@ function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
     ws = pi/n * ones(n)
     xs, ws
 end
-has_fast_gauss_nodes_weights(::Type{<:Chebyshev}) = true
 
 ##
 ## fitting coefficients
@@ -465,20 +464,10 @@ end
 
 
 
-## σ_P = σ_Q:
-Base.convert(::Type{Q}, p::P) where {Q <: Chebyshev, P<: ChebyshevU} = _convert_ccop(Q,p)
-Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_ccop(Q,p)
+## σ_P = σ_Q:e
+Base.convert(::Type{Q}, p::P) where {Q <: Chebyshev, P<: ChebyshevU} = _convert_cop(Q,p)
+Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_cop(Q,p)
 
-
-## Why does default fail?
-# use T <--> U to take derivatives,  integrate
-# function Polynomials.derivative(p::ChebyshevU{T}, order::Integer = 1) where {T}
-#     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
-    
-#     q = convert(Chebyshev, p)
-#     return convert(ChebyshevU, derivative(q, order))
-
-# end
 
 # function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
 
@@ -518,5 +507,5 @@ export MonicChebyshevU
 ϟ(::Type{<:MonicChebyshevU}) = ChebyshevU
 ϟ(::Type{<:MonicChebyshevU{T}}) where {T} = ChebyshevU{T}
 @register_monic(MonicChebyshevU)
-#C̃n(P::Type{<:MonicChebyshevU}, ::Val{1}) = one(eltype(P))
+
 

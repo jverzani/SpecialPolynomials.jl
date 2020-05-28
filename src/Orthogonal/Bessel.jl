@@ -82,4 +82,3 @@ C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(�
 
 b̂̃n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
 b̂̃n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf
-#ĉn(::Type{<:Bessel{2}}, n::Int, ::Type{S}) where {S} = one(S)/n/(2n-1)/(2n+1)

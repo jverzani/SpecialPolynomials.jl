@@ -43,8 +43,11 @@ julia> convert(Polynomial, qq)
 Polynomials.Polynomial(1.0*x^2)
 ```
 
-Interpolating polynomials suffer from the Runge phenomenon unless  the nodes are well  chosen. For `P=Chebyshvev` and `P=ChebyshevU`, the function
-`SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)` will return a good choice of `n+1` points over `[-1,1]` along with precomputed weights.
+Interpolating polynomials suffer from the Runge phenomenon unless the
+nodes are well chosen. For `P=Chebyshvev` and `P=ChebyshevU`, the
+function `SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)`
+will return a good choice of `n+1` points over `[-1,1]` along with
+precomputed weights. 
 
 ```jldoctest Lagrange
 julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
@@ -62,6 +65,11 @@ julia> degree(p)
 julia> maximum(abs.(f(x) - p(x) for x in range(-1, 1, length=20))) <= 1e-14
 true
 ```
+
+!!! Note
+    The above example  is  more directly  done through `fit(Chebyshev, f, 64)`, though  the resulting
+    polynomial will reference a different  basis.
+
 """
 struct Lagrange{N, S<:Number, R <: Number, T <: Number} <: AbstractInterpolatingPolynomial{T}
     xs::Vector{S}

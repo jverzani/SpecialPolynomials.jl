@@ -63,6 +63,13 @@ end
 #     convert(P, convert(Polynomial, q))
 # end
 
+# return the domain as a tuple, not an interval object
+function Base.extrema(::Type{P}) where {P <: AbstractSpecialPolynomial}
+    dom = domain(P)
+    first(dom), last(dom)
+end
+Base.extrema(p::P) where {P <: AbstractSpecialPolynomial} = extrema(P)
+
 ## Polynomial operations
 
 # polynomial operations -p, p+c, p*c, p/c, p+q, p*q

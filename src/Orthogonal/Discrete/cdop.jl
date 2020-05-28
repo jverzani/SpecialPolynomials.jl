@@ -1,5 +1,40 @@
 # generic classical discrete orthogonal polynomial, CDOP
 
+
+"""
+     AbstractCDOP{T,N}
+
+Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
+solution of a differential equation
+
+(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0,
+
+where  `Δy(x) = y(x+1) - y(x)` and `∇y(x) = y(x) - y(x-1)`.
+
+A family is characterized by the 5 coefficients: a,b,c,d,e.
+Let σ = (a⋅x²+b⋅x+c), τ = (d⋅x + e).
+
+As in the classical coninuous orthogonal polynomial case
+[`AbstractCCOP`](@ref), from these 5 values the cofficients in the
+there-point recursion, and other structural equations can be
+represented. These allow polynomial multiplication, integration,
+differentiation, conversion, etc. to be defined generically.
+
+[Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
+present an encyclopedia of formula characterizing families of
+orthogonal polynomials. 
+
+For example, on p29 they give  formula for Hahn polynomials through:
+
+`n(n+α+β+1)y(x) = B(x)y(x+1) -[B(x)+D(x)]y(x) + D(x)y(x-1)`,  with  explicit values  for  `B` and `D`. Reexpressing gives:
+`BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
+`σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
+
+
+"""
+abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
+
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
 abstract type AbstractCDOP0{T,N} <: AbstractCDOP{T,N} end
@@ -14,7 +49,7 @@ abstract type AbstractCDOP3{α, β,γ,T,N} <: AbstractCDOP{T,N}  end
 # compose with FallingFactorial
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCDOP,  P <: AbstractCDOP}
     T = eltype(P)
-    _convert_ccop(Q, _convert_ccop(FallingFactorial{T},  p))
+    _convert_cop(Q, _convert_cop(FallingFactorial{T},  p))
 end
     
     
@@ -65,7 +100,7 @@ end
 
 # αn, βn,γn
 # σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-αn(P::Type{<:AbstractCDOP}, n::Int) = α̃(P,n) / k1k0(P,n) 
+#αn(P::Type{<:AbstractCDOP}, n::Int) = α̃(P,n) / k1k0(P,n) 
 function α̃n(P::Type{<:AbstractCDOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -76,7 +111,7 @@ function α̃n(P::Type{<:AbstractCDOP}, n::Int)
     return val
 end
 
-function βn(P::Type{<:AbstractCDOP}, n::Int)
+function β̃n(P::Type{<:AbstractCDOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
 
@@ -91,7 +126,7 @@ function βn(P::Type{<:AbstractCDOP}, n::Int)
 end    
 
 
-γn(P::Type{<:AbstractCDOP}, n::Int) =  γ̃n(P,n) * k1k0(P,n-1)
+#γn(P::Type{<:AbstractCDOP}, n::Int) =  γ̃n(P,n) * k1k0(P,n-1)
 function γ̃n(P::Type{<:AbstractCDOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)

@@ -45,6 +45,7 @@ Polynomials.Polynomial(0.0)
 Laguerre
 
 basis_symbol(::Type{<:Laguerre{α}}) where {α} = "Lᵅ"
+basis_symbol(::Type{<:Laguerre{0}}) = "L"
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
 abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
@@ -79,8 +80,6 @@ function gauss_nodes_weights(P::Type{<:Laguerre{α}}, n) where {α}
 end
 
         
-has_fast_gauss_nodes_weights(::Type{<:Laguerre{α}})  where{α} = true
-
 ## Overrides
 
 # default  connection between Laguerre is popping out  0s

@@ -41,12 +41,17 @@ Hermite
 ChebyshevHermite
 Gegenbauer
 Jacobi
+Bessel
 ShiftedLegendre
 ```
 
 ```@docs
+Charlier
+Krawchouk
+Meixner
+Hahn
 DiscreteChebyshev
-Krawtchouk
+FallingFactorial
 ```
 
 ```@docs
@@ -59,11 +64,10 @@ Some  non-exported methods define each:
 ```@docs
 SpecialPolynomials.weight_function
 SpecialPolynomials.generating_function
+SpecialPolynomials.abcde
 SpecialPolynomials.An
 SpecialPolynomials.Bn
 SpecialPolynomials.Cn
-SpecialPolynomials.alpha
-SpecialPolynomials.beta
 SpecialPolynomials.jacobi_matrix
 SpecialPolynomials.gauss_nodes_weights
 ```
@@ -93,10 +97,10 @@ Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve  (parameterized
 using Plots, Polynomials, SpecialPolynomials
 bs =[[220, 260], [220, 40], [35, 100],  [120, 140]]
 N = length(bs)-1
-ρ = Bernstein(bs) 
+
+ρ = sum(bᵢ.*basis(Bernstein{𝐍},i-1) for (i,bᵢ)  ∈ enumerate(bs))
 ts = range(0, stop=1, length=500)
-rs= ρ.(ts);
-p =  plot([r[1] for r in rs], [r[2] for r in rs], legend=false)
+p =  plot(ρ[1].(ts), ρ[2].(ts), legend=false)
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 savefig("bezier.svg"); nothing # hide
 ```

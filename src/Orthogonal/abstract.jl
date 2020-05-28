@@ -41,7 +41,7 @@ macro register0(name, parent)
         end
 
         Base.length(p::$poly{T,N}) where {T,N} = N
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p), p.coeffs, x)
+        (p::$poly)(x::S) where  {S} = eval_cop(typeof(p), p.coeffs, x)
         
         Polynomials.@register $poly
 
@@ -90,7 +90,7 @@ macro registerN(name,  parent, params...)
         end
 
         Base.length(p::$poly{$(αs...),T,N}) where {$(αs...),T,N} = N        
-        (p::$poly)(x::S) where  {S} = eval_ccop(typeof(p),  p.coeffs, x)
+        (p::$poly)(x::S) where  {S} = eval_cop(typeof(p),  p.coeffs, x)
     
         Base.convert(::Type{P}, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = q
         Base.convert(::Type{$poly{$(αs...)}}, q::Q) where {$(αs...),T, Q <: $poly{$(αs...),T}} = q        

@@ -12,13 +12,13 @@ Implements the [Legendre](https://en.wikipedia.org/wiki/Legendre_polynomials) po
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = Legendre([1,2,3])
-Legendre(1⋅L_0(x) + 2⋅L_1(x) + 3⋅L_2(x))
+Legendre(1⋅P_0(x) + 2⋅P_1(x) + 3⋅P_2(x))
 
 julia> convert(Polynomial, p)
 Polynomials.Polynomial(-1//2 + 2//1*x + 9//2*x^2)
 
 julia> p2m, p2m1 = basis.(Legendre, (8,9)) # evaluation P_{2m+k}(-1) =  (-1)^k
-(Legendre(1⋅L_8(x)), Legendre(1⋅L_9(x)))
+(Legendre(1⋅P_8(x)), Legendre(1⋅P_9(x)))
 
 julia> p2m(-1) == 1
 true
@@ -35,8 +35,8 @@ Polynomials.Polynomial(x)
 julia> derivative((x^2-1)^n, n) - 2^n *  factorial(n) * basis(Legendre, n)
 Polynomials.Polynomial(0//1)
 
-julia> p4, p5  =  basis.(Legendre, (4,5)) # verify  orthogonality  of  L4, L5
-(Legendre(1⋅L_4(x)), Legendre(1⋅L_5(x)))
+julia> p4, p5  =  basis.(Legendre, (4,5)) # verify  orthogonality  of  P₄,P₅
+(Legendre(1⋅P_4(x)), Legendre(1⋅P_5(x)))
 
 julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 0.0
@@ -46,7 +46,7 @@ Legendre
 
 abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
 
-basis_symbol(::Type{<:Legendre})  = "L"
+basis_symbol(::Type{<:Legendre})  = "P"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 
 
@@ -64,8 +64,6 @@ function gauss_nodes_weights(P::Type{<:Legendre}, n)
     λ = kn(P,n)^2
     xs, ws/λ
 end
-has_fast_gauss_nodes_weights(::Type{<:Legendre}) = true
-
 
 
 # overrides
@@ -115,8 +113,15 @@ pqr_weight(P::Type{<:MonicLegendre}, n, x, dπx) = (one(eltype(P)) * 2)/(1-x^2)/
 ##
 ## --------------------------------------------------
 ##
-# shifted,  P̃(x)=P(2x-1)
+
 @register0 ShiftedLegendre AbstractCCOP0
+"""
+    ShiftedLegendre
+
+Type for the shifted Legendre polynomials: `Pˢᵢ(x) =  Pᵢ(2x-1)` for `x ∈ [0,1]`.
+"""
+ShiftedLegendre
+
 ϟ(::Type{<:ShiftedLegendre})=Legendre
 ϟ(::Type{<:ShiftedLegendre{T}}) where {T} = Legendre{T}
 export ShiftedLegendre

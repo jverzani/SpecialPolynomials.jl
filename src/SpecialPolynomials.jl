@@ -21,10 +21,9 @@ include("Orthogonal/orthogonal.jl")
 include("Orthogonal/cop.jl")
 include("orthogonal/ccop.jl")
 
+
 include("Orthogonal/Bessel.jl")
 include("Orthogonal/Chebyshev.jl")
-#include("Orthogonal/ChebyshevT.jl")
-#include("Orthogonal/ChebyshevU.jl")
 include("Orthogonal/Hermite.jl")
 include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Gegenbauer.jl")
@@ -41,13 +40,8 @@ include("Orthogonal/Discrete/Krawchouk.jl")
 include("Orthogonal/Discrete/Charlier.jl")
 include("Orthogonal/Discrete/DiscreteChebyshev.jl")
 
-
 include("Orthogonal/connection.jl")
 include("Orthogonal/glaser-liu-rokhlin.jl")
-
-#include("Orthogonal/Discrete/discrete-orthogonal.jl")
-#include("Orthogonal/Discrete/DiscreteChebyshev.jl")
-#include("Orthogonal/Discrete/Krawtchouk.jl")
 
 
 

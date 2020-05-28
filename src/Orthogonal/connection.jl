@@ -44,7 +44,7 @@ knk_1(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  Fall
 
 ## If  the connection  coefficients for  (P,Q) satisfy c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ = 0 for some computable
 ##  values c₀,c₁,c₂ then this  will implement  `convert(Q,p::P)`
-function _convert_ccop(::Type{Q}, p::P) where {P <:ConvertibleTypes,
+function _convert_cop(::Type{Q}, p::P) where {P <: ConvertibleTypes,
                                                Q <: ConvertibleTypes}
 
     d = degree(p)
@@ -241,31 +241,31 @@ end
 #
 # compute product using a linearization formula, as implemented in an `iterate` method for the type
 #
-@inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
+# @inline function linearization_product(pn::P,  pm::Q) where {P <: AbstractOrthogonalPolynomial, Q <: AbstractOrthogonalPolynomial}
 
 
-    Polynomials.isconstant(pn) && return pm * pn[0]
-    Polynomials.isconstant(pm) && return pn * pm[0]
-    pn.var == pm.var || throw(ArgumentError("bases must match"))
+#     Polynomials.isconstant(pn) && return pm * pn[0]
+#     Polynomials.isconstant(pm) && return pn * pm[0]
+#     pn.var == pm.var || throw(ArgumentError("bases must match"))
     
-    ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial type must match"))
-    PP = promote_type(P,Q)
+#     ⟒(P) == ⟒(Q) || throw(ArgumentError("Base polynomial type must match"))
+#     PP = promote_type(P,Q)
 
-    n,m = length(pn)-1, length(pm)-1 # n,m = degree(pn), degree(pm)
-    T,S = eltype(pn), eltype(pm)
-    R = eltype(one(T)*one(S)/1)
-    cs = zeros(R, n+m+1)
+#     n,m = length(pn)-1, length(pm)-1 # n,m = degree(pn), degree(pm)
+#     T,S = eltype(pn), eltype(pm)
+#     R = eltype(one(T)*one(S)/1)
+#     cs = zeros(R, n+m+1)
     
-    # pn*pm = ∑ a(l,m,n) H_l
-    # so ∑_l ∑_p ∑_q a(l,p,q) H_l
-    # can  use iterator to keep as simple sum
-    # `sum(pn[p] * pm[q] * val for (p,q,val) in Linearization{PP}(l,n,m))`
-    for l in 0:n+m
-        for (p,q,val) in Linearization{PP, R}(l,n,m)
-            cs[1+l] += pn[p] * pm[q] * val
-        end
-    end
-    ⟒(P)(cs, pn.var)
-end
+#     # pn*pm = ∑ a(l,m,n) H_l
+#     # so ∑_l ∑_p ∑_q a(l,p,q) H_l
+#     # can  use iterator to keep as simple sum
+#     # `sum(pn[p] * pm[q] * val for (p,q,val) in Linearization{PP}(l,n,m))`
+#     for l in 0:n+m
+#         for (p,q,val) in Linearization{PP, R}(l,n,m)
+#             cs[1+l] += pn[p] * pm[q] * val
+#         end
+#     end
+#     ⟒(P)(cs, pn.var)
+# end
 
 
