@@ -144,26 +144,26 @@ end
 end
 
 
-# @testset "Shifted Legendre" begin
+@testset "Shifted Legendre" begin
 
-#     T = Float64
-#     P = ShiftedLegendre{T}
+    T = Float64
+    P = ShiftedLegendre{T}
 
-#     p0 = P([1])  # 1
-#     p1 = P([0,1]) # x
-#     p2 = P([0,0,1]) #
-#     p3 = P([0,0,0,1]) #
-#     p4 = P([0,0,0,0,1]) #
+    p0 = P([1])  # 1
+    p1 = P([0,1]) # x
+    p2 = P([0,0,1]) #
+    p3 = P([0,0,0,1]) #
+    p4 = P([0,0,0,0,1]) #
 
-#     for x in range(0, 1, length=5)
-#         @test p0(x) ≈ 1
-#         @test p1(x) ≈ 2x - 1
-#         @test p2(x) ≈ 6x^2 - 6x + 1
-#         @test p3(x) ≈ 20x^3 - 30x^2+ 12x - 1
-#         @test p4(x) ≈ 70x^4 - 140x^3 + 90x^2 - 20x + 1
-#     end
+    for x in range(0, 1, length=5)
+        @test p0(x) ≈ 1
+        @test p1(x) ≈ 2x - 1
+        @test p2(x) ≈ 6x^2 - 6x + 1
+        @test p3(x) ≈ 20x^3 - 30x^2+ 12x - 1
+        @test p4(x) ≈ 70x^4 - 140x^3 + 90x^2 - 20x + 1
+    end
 
-# end
+end
 
 
 
@@ -287,13 +287,8 @@ end
             𝐍  = 5
 
             P = Hahn{α,β,𝐍}
-            for i in 1:𝐍
-                @test_broken basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
-            end
-
-            P = HahnQ{α,β,𝐍}
-            for i in 1:𝐍
-                @test_broken basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
+            for i in 0:𝐍
+                @test basis(P,i)(x) ≈  SP.classical_hypergeometric(P,i,x)
             end
         end
     end

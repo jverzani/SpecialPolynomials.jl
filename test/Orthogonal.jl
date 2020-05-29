@@ -16,17 +16,24 @@ Ps = (
     Gegenbauer{1/2},
     Bessel{3/2}, # Bessel{1} is an issue
     Bessel{1/2}
-      )
+)
+DPs =  (Charlier{1/2},
+        Meixner{1/2,1/2},
+        Krawchouk{1/2, 10},
+        Hahn{1/4,1/2,10}
+        )
+       
 
 @testset "Construction" begin
     
-    for P in Ps
+    for P in union(Ps,  DPs)
         x = variable(P)
         # basic recurrence
+
         for n in 1:6
             @test basis(P,n+1) ≈ (SP.An(P,n) * x + SP.Bn(P,n)) * basis(P,n) - SP.Cn(P,n)*basis(P,n-1)
         end
-
+                
         # leading term and ratios
         x = variable(Polynomial)
         for n = 0:5
@@ -84,7 +91,7 @@ end
 
 @testset "Structural equations" begin
     
-    for P in filter(P -> !(P <: Hermite), Ps)
+    for P in filter(P -> !(P <: Hermite), Ps) #  Hermite  has issues
         for i in 2:5
 
             ps = basis.(P, i+1:-1:i-1)
@@ -104,7 +111,7 @@ end
             # σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
             αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
             @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
-                
+            
             # p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
             âs = SP.ân(P,i), SP.b̂n(P,i), SP.ĉn(P,i)
             @test pᵢ ≈ sum(a*dp for (a,dp) in zip(âs, dps))
@@ -115,28 +122,59 @@ end
             @test x * dpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, dps))
         end
     end
+
+    for P  in  DPs
+        for i in  1:5
+            ps = basis.(P, i+1:-1:i-1)
+            dps  = SP.:∇ₓ.(ps)
+            Δps  = SP.:Δₓ.(ps)
+            pᵢ,dpᵢ,Δpᵢ = ps[2], dps[2], Δps[2]
+            
+            a,b,c,d,e = SP.abcde(P)
+            x = variable(P)
+            σ = a*x^2 + b*x + c
+
+            # x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
+            as= SP.an(P,i), SP.bn(P,i), SP.cn(P,i)
+            @test x*pᵢ ≈ sum(a*p for (a,p) in zip(as, ps))
+
+            αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
+            @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
+
+            
+            âs = SP.ân(P,i), SP.b̂n(P,i), SP.ĉn(P,i)  #  Eqn 20
+            @test pᵢ ≈ sum(a*dp for (a,dp) in zip(âs, Δps))
+
+            αᴵs = SP.αᴵn(P,i), SP.βᴵn(P,i), SP.γᴵn(P,i)   # Eqn (16)
+            @test x * Δpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, Δps))
+
+
+        end
+    end
+            
 end
         
 
 @testset "Conversion" begin
 
-    for P in Ps
-        ## convert to polynomial and back
-        Q = Polynomial
-        for _ in 1:10
-            ps = rand(1.0:8, 5)
-            p = P(ps)
-            @test convert(P, convert(Q, p)) ≈ p
-        end
-
+    for (PP,Q)  in ((Ps,Polynomial),
+                    (DPs, FallingFactorial))
+        for P in PP
+            for _ in 1:10
+                ps = rand(1.0:8, 5)
+                p = P(ps)
+                @test convert(P, convert(Q, p)) ≈ p
+            end
+        end            
     end
-    
     # through evaluation
-    for P in  Ps
-        for Q in Ps
-            p = P([1,2,3])
-            x = variable(Q)
-            @test p(x) ≈ convert(Q,  p)
+    for PP in (Ps, DPs)
+        for P in  PP
+            for Q in PP
+                p = P([1,2,3])
+                x = variable(Q)
+                @test p(x) ≈ convert(Q,  p)
+            end
         end
     end
 
@@ -147,9 +185,9 @@ end
     for Ps in ((Chebyshev, ChebyshevU, Gegenbauer{1/2}, Gegenbauer{1},
                 Jacobi{1/4, 1/4}, Jacobi{3/4, 3/4}),
                (Laguerre{0},  Laguerre{1/2}, Laguerre{1}),
-               (Bessel{1/4}, Bessel{1/2}, Bessel{3/4})#, Bessel{2})
+               (Bessel{1/4}, Bessel{1/2}, Bessel{3/4}, Bessel{2})
                )
-
+        
         
         for  P in Ps
             for Q in Ps
@@ -161,7 +199,7 @@ end
                     @test SP._convert_cop(P, q)(variable()) ≈ q(variable())  # structural  equations
                     @test convert(P, convert(Polynomial, q))(variable()) ≈ q(variable()) # through Standard  basis
                     @test convert(P, q)(x) ≈ q(x) 
-
+                    
                 end
             end
         end
@@ -174,7 +212,7 @@ end
 
     x = variable(Polynomial{Float64})
 
-    for P in Ps
+    for P in union(Ps, DPs)
         pNULL = zero(P)
         p0,p1,p2,p3,p4 = ps = basis.(P,0:4)
 
@@ -202,7 +240,7 @@ end
 
 @testset "Elementwise operations" begin
 
-    for P in Ps
+    for P in union(Ps, DPs)
         xs = [1,2,3,4]
         p = P(xs)
         @test -p == P(-xs)
@@ -215,22 +253,41 @@ end
 end
 
 # too slow
-# @testset "Orthogonality" begin
-#     n = 5
-#     for P in Ps
-#         @show P
-#         @time for i in 2:n
-#             for j in i+1:n
-#                 val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P,j))
-#                 @test abs(val)  <= 1e-4
-#             end
-#         end
-#     end
-# end
+@testset "Orthogonality" begin
+    n = 5
+    for P in Ps
+        a,b= extrema(P)
+        (isinf(a) ||  isinf(b))  && continue
+        for i in 2:n
+            for j in i+1:n
+                val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P,j))
+                @test abs(val)  <= 1e-4
+            end
+        end
+    end
+
+
+    for P  in (
+        Krawchouk{1/2, n},
+        Hahn{1/4,1/2,n})
+
+        for i in 2:n
+            for j in i+1:n
+                val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P,j))
+                @test abs(val)  <= 1e-12
+            end
+        end
+    end
+
+    
+        
+end
+
+
 
 @testset "divrem" begin
 
-    for P in Ps
+    for P in union(Ps, DPs)
         ps, qs = rand(1:6, 4),rand(1:6, 3)
         p, q = P(ps), P(qs)
         a, b =  divrem(p, q)
@@ -269,19 +326,33 @@ end
         end
     end
 
+    # special  case 𝐍  cases
+    𝐍 = 9
+    for P  in  (Krawchouk{1/2,𝐍}, Krawchouk{1/4,𝐍},
+                Hahn{1/2,1/2,𝐍}
+                )
+        for i  in 0:𝐍
+            p = basis(P,i)
+            (p(𝐍) - p(0)) <= 1e-12 &&  continue
+            @test sum(SP.∇ₓ(p)(j)  for j in 1:𝐍) ≈ p(𝐍) - p(0)
+            @test sum(SP.Δₓ(p)(j)  for j in 0:𝐍-1) ≈ p(𝐍) - p(0)
+        end
+    end
+
 end
 
-# @testset "roots" begin
+@testset "roots" begin
 
-#     for P in Ps
-#         for n in 6:2:12
-#             rts = roots(basis(P, n))
-#             evals = eigvals(SpecialPolynomials.jacobi_matrix(P, n))
-#             @test maximum(abs, sort(rts) - sort(evals)) <= 1e-6
-#         end
-#     end
+    for P in union(Ps, DPs)
+        P <: Bessel && continue
+        for n in 6:2:10
+            rts = roots(basis(P, n))
+            evals = eigvals(SP.jacobi_matrix(P, n))
+            @test maximum(abs, sort(rts) - sort(evals)) <= 1e-4
+        end
+    end
     
-# end
+end
 
 
 @testset "fitting" begin

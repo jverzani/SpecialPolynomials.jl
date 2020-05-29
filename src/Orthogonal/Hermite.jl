@@ -37,6 +37,8 @@ julia> [basis(ChebyshevHermite, i)(x) for i in 0:5]
  Polynomial(15.0*x - 10.0*x^3 + 1.0*x^5)
 ```
 
+!!! note
+    The Hermite family needs help, as the computed values for `Bn`,and,`Cn` are  both 0.
 """
 Hermite
 
@@ -46,18 +48,9 @@ Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
 
 abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
 
-function kn(::Type{<:Hermite}, n::Int)
-    2^n
-end
 function k1k0(P::Type{<:Hermite}, k::Int)
     val = 2*one(eltype(P))
     val
-end
-function k1k_1(P::Type{<:Hermite}, k::Int)
-    @assert k > 0
-    #k  == 1  && return 2*one(eltype(P)) #???
-    val = 4*one(eltype(P))
-    return val
 end
 
 norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
@@ -76,12 +69,13 @@ end
 
 
 ## Overrides
-# Use override here, as we get  0/0 in  default  defn
+# Use override here, as we get  An,Bn,Cn =  1, 0,0, otherwise
 An(P::Type{<:Hermite}, n::Int) = 2*one(eltype(P))
 Bn(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Hermite}, n::Int) = 2*n*one(eltype(P))
 
-# This is the issue
+β̃n(P::Type{<:Hermite},  n::Int) = zero(eltype(P))
+γ̃n(P::Type{<:Hermite},  n::Int) = zero(eltype(P))
 b̂̃n(P::Type{<:Hermite}, ::Val{N}) where {N} = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
 ĉ̃n(P::Type{<:Hermite}, ::Val{N}) where {N}  = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
 
@@ -121,52 +115,54 @@ function __hermite_lambda(n,k)
 end
 
 
-function Base.convert(P::Type{<:Hermite}, q::Polynomials.StandardBasisPolynomial)
-    d = degree(q)
-    R = eltype(one(eltype(1))/1)
-    ps = zeros(R, max(0,d)+1)
-    for i in 0:max(0,d)
-        ps[i+1] = sum(q[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
-    end
-    Hermite(ps, q.var)
-end
+#Base.convert(P::Type{<:Hermite}, q::Polynomials.StandardBasisPolynomial) = _convert_cop(P, q) 
 
-# compute n!/(2^n * (n-2j)! * j!)
-function _hermite_lambda(n,j)
-    tot = 1/1
-    for i in 1:j
-        tot  /=  2
-        tot *= n
-        n -= 1
-    end
-    for i in 1:j
-        tot /= i
-        tot *= n
-        n -= 1
-    end
-    tot
-end
+# function Base.convert(P::Type{<:Hermite}, q::Polynomials.StandardBasisPolynomial)
+#     d = degree(q)
+#     R = eltype(one(eltype(1))/1)
+#     ps = zeros(R, max(0,d)+1)
+#     for i in 0:max(0,d)
+#         ps[i+1] = sum(q[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
+#     end
+#     Hermite(ps, q.var)
+# end
 
-function Polynomials.derivative(p::P, order::Integer = 1) where {T, P <: Hermite{T}}
+# # compute n!/(2^n * (n-2j)! * j!)
+# function _hermite_lambda(n,j)
+#     tot = 1/1
+#     for i in 1:j
+#         tot  /=  2
+#         tot *= n
+#         n -= 1
+#     end
+#     for i in 1:j
+#         tot /= i
+#         tot *= n
+#         n -= 1
+#     end
+#     tot
+# end
 
-    order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
-    order == 0 && return p
-    hasnan(p) && return Hermite(T[NaN], p.var)
-    order > length(p) && return zero(P, p.var)
+# function Polynomials.derivative(p::P, order::Integer = 1) where {T, P <: Hermite{T}}
 
-    d = degree(p)
-    qs = zeros(T, d+1-order)
-    for i in order:d # Hn' =  2n Hn-1
-        qs[i+1-order] = prod(2*(1 + i - j) for j in 1:order)  * p[i]
-    end
+#     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
+#     order == 0 && return p
+#     hasnan(p) && return Hermite(T[NaN], p.var)
+#     order > length(p) && return zero(P, p.var)
 
-    q = Hermite(qs, p.var)
+#     d = degree(p)
+#     qs = zeros(T, d+1-order)
+#     for i in order:d # Hn' =  2n Hn-1
+#         qs[i+1-order] = prod(2*(1 + i - j) for j in 1:order)  * p[i]
+#     end
 
-
-end
-
+#     q = Hermite(qs, p.var)
 
 
+# end
+
+
+# 2x more performant
 function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
     # int H_n = 1/(n+1) H_{n+1}
     R = eltype(one(T)/1)

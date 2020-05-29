@@ -2,7 +2,7 @@
 
 abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
 """
-     AbstractCDOP{T,N}
+     AbstractCDOP{T,N} <: AbstractCOP{T,N}
 
 Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
@@ -31,9 +31,23 @@ For example, on p29 they give  formula for Hahn polynomials through:
 `BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
 `σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
 
+The above, is termed the eigevalue equation (e.g. [Goertz and Offner](https://arxiv.org/pdf/1609.07291.pdf)), as it can be reexpressed as 
+
+`Δ(D(x)⋅ω(x)⋅∇yᵢ(x) = λᵢ⋅ω(x)⋅yᵢ(x)`
+
+
+
 
 """
 AbstractCDOP
+
+## Implemented  families
+##                    a     b     c      d      e
+##                    -------------------------------
+## Charlier{μ}        0     1     0     -1      μ
+## Meixner{γ,μ}       0     1     0    μ-1     γ⋅μ
+## Krawchouk{p,𝐍}     0    p-1    0     1      p/𝐍
+## Hahn{α,β,𝐍}        1 -(β+𝐍+1)  0   α+β+2  -𝐍⋅(α+1)
 
 
 # subtypes  to keep track of number of parameters
@@ -47,16 +61,30 @@ abstract type AbstractCDOP3{α, β,γ,T,N} <: AbstractCDOP{T,N}  end
 ⟒(P::Type{<:AbstractCDOP2{α,β}}) where {α, β} = constructorof(P){α, β}
 ⟒(P::Type{<:AbstractCDOP3{α,β,γ}}) where {α, β, γ} = constructorof(P){α, β, γ}
 
+# for conversion to base case
+# \upstigma[tab]
+ϛ(P::Type{<:AbstractCDOP}) = FallingFactorial
+ϛ(P::Type{<:AbstractCDOP{T}}) where {T} = FallingFactorial{T}
+
+
 # compose with FallingFactorial
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCDOP,  P <: AbstractCDOP}
     T = eltype(P)
     _convert_cop(Q, _convert_cop(FallingFactorial{T},  p))
 end
     
-    
+
 
 Δₓ(p::AbstractCDOP) = p(variable(p)+1)-p(variable(p))
 ∇ₓ(p::AbstractCDOP) = p(variable(p))-p(variable(p)-1)
+
+
+function innerproduct(P::Type{<:AbstractCDOP}, f, g)
+    a, b = extrema(P)
+    (isinf(a) || isinf(b)) &&  throw(ArgumentError("Only defined for discrete polynomials  with a finite domain"))
+    ω  = weight_function(P)
+    sum(f(i)*g(i)*ω(i) for i in a:b)
+end
 
 ## Structural Equations
 ## https://dlmf.nist.gov/18.22
@@ -88,6 +116,7 @@ function C̃n(P::Type{<:AbstractCDOP}, a,b,c,d,e, n::Int)
     num *= (n - 1) * (d + a*n - a)
     num *= a*n*d - d*b - a*d + a^2*n^2 - 2a^2*n + 4c*a + a^2 + 2e*a - b^2
     num += -d*b*e + d^2*c + a*e^2
+    
     num *= (a*n +  d - 2a) * n
     den = (d - a + 2a*n) * (d + 2a*n - 3a) * (2a*n - 2a + d)^2
 
@@ -116,12 +145,12 @@ function β̃n(P::Type{<:AbstractCDOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
 
-    num = -n *  (d  + a*n -  2) * (2*a*n*d - a*d - d*b + 2e*a - 2a^2*n +  2a^2*n^2)
+    num = -n *  (d  + a*n -  a) * (2*a*n*d - a*d - d*b + 2e*a - 2a^2*n +  2a^2*n^2)
     den = (2a*n - 2a +  d) * (d + 2a*n)
 
     iszero(den) &&  return βn(P, Val(n))
 
-    val = one(S) *  num  / den
+    val = (one(S) *  num)  / den
 
     return val
 end    
@@ -131,12 +160,12 @@ end
 function γ̃n(P::Type{<:AbstractCDOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
-    
-    num = (n - 1)  * (d + a*n  -a)
-    num *= a*n*d - d*b - a*d + a^2*n^2 - 2a^2*n + 4c*a + a^2 + 2e*a - b^2
+
+    num = (n - 1)  * (d + a*n  - a)
+    num *= (a*n*d - d*b - a*d + a^2*n^2 - 2a^2*n + 4c*a + a^2 + 2e*a - b^2)
     num += -d*b*e + d^2*c + a*e^2
-    num *= (d + a*n -  a) *  (a*n + d - 2a)
-    den = (d - a + 2n) * (d + 2a*n - 3a) * (2a*n - 2a + d)^2
+    num *= (d + a*n -  a) *  (a*n + d - 2a) * n
+    den = (d - a + 2a*n) * (d + 2a*n - 3a) * (2a*n - 2a + d)^2
     iszero(den) &&  return γn(P, Val(n))
     
     val = one(S) * num / den
@@ -147,7 +176,44 @@ end
 
 function abcdeᴵ(P::Type{<:AbstractCDOP}) 
     a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
-    NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,d + e+ a + b))
+    NamedTuple{(:a,:b,:c,:d,:e)}((a, b, c, d + 2a, d + e + a + b))
+end
+
+
+function ẫn(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
+    val = one(S)
+    val /= n+1
+    return val
+end
+
+function b̂̃n(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
+    num = -2*a*n * (d + a*n - a) - d*b + a*d - d^2 +2e*a
+    den = (2a*n -  2a  +  d) * (d + 2a*n)
+    iszero(den) && return b̂̃n(P, Val(n))
+
+    val = one(S) * num/ den
+    return val
+    
+end
+
+function ĉ̃n(P::Type{<:AbstractCDOP}, n::Int)
+    a,b,c,d,e = abcde(P)
+    S = eltype(P)
+    
+    num = (n-1)*(d + a*n -a) * (a*n*d  -d*b  -a*d + a^2*n^2 -2a^2*n + 4c*a + a^2 +  2e*a - b^2)
+    num += -d*b*e + d^2*c +  a*e^2
+    num  *=  a*n
+    den = (d - a + 2a*n)  * (d + 2a*n -3a) * (2a*n - 2a  + d)^2
+    iszero(den)  &&  return ĉ̃n(P, Val(n))
+
+    val = (one(S)  *  num) / den
+    return val
 end
 
 

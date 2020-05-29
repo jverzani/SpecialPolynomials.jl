@@ -4,7 +4,7 @@
 ## Classic Continuos Orthogonal Polynomials
 abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
 """
-    AbstractCCOP{T,N}
+    AbstractCCOP{T,N} <:  AbstractCOP{T,N}
 
 Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
@@ -12,7 +12,7 @@ solution of the differential equation
 
 `(a⋅x²+b⋅x+c) ⋅ y'' + (d⋅x + e) ⋅ y' + λᵢ⋅ y = 0.`
 
-A family is characterized by the 5 coefficients: `a,b,c,d,e`.
+A family is characterized, up to choice of leading term, by the 5 coefficients: `a,b,c,d,e`.
 Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e)`.
 
 From these  5  coefficients several structural  equations are represented. For example
@@ -48,10 +48,16 @@ allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polyno
 
 Subtypes of `AbstractCCOP` are  created through  the `@register0` or  `@registerN` macros, where the  `N`  one  is used  if parameters are  needed to describe the family.
 
-If non-monic versions are desired, then the  leading  term can be  specified through   `kn()`.  The `@register_monic` macro is useful  for creating  monic versios through  method delegation. Similarly, the `@register_shifted` macro is useful  to provide shifted versions.
+If non-monic versions are desired, then the  leading  term can be  specified through `kn()` (which by default is defined by the  method `k1k0(P,i)`, the ratio of  `kᵢ₊₁/kᵢ`).  The `@register_monic` macro is useful  for creating  monic versions through  method delegation from the common non-monic systems. Similarly, the `@register_shifted` macro is useful  to provide shifted versions (cf. [`ShiftedLegendre`](@ref)).
 
-Registering a system, defining an  `abcde` method, and  optionally defining `kn`, `k1k0`,  and `k1k_1` methods is
-usually sufficient to define a new system, though the general  equations may need specializations when algebraic cancellation is required. 
+Registering a system, defining an `abcde` method, and optionally
+defining `k1k0` is usually sufficient to define a new system, though
+the general equations may need specializations when algebraic
+cancellation is required.
+
+The defaults for evaluation and multplication are generally an order
+of magnitude slower than a directly defined function. For some
+families this is done (e.g. `Chebyshev`,`ChebyshevU`, `Hermite`, `Laguerre`), but not all.
 
 ## Example
 
@@ -67,7 +73,7 @@ julia> SP.@register0 MonicLegendre′ SP.AbstractCCOP0
 
 julia> SP.:ϟ(::Type{<:MonicLegendre′}) = Legendre; SP.:ϟ(::Type{<:MonicLegendre′{T}}) where {T} = Legendre{T}
 
-julia> SP.@register_monic MonicLegendre′
+julia> SP.@register_monic MonicLegendre′  # use  ϟ to delegate methods
 
 julia> 𝐐  =  Rational{Int}
 Rational{Int64}
@@ -103,11 +109,15 @@ abstract type AbstractCCOP3{α,β,γ,T,N} <: AbstractCCOP{T,N}  end
 
 # We want to  be able to strip  off T,N  or α,...,T,N
 # * constructorof(P{α,..,T,N}) =  P
-# * ⟒(P(α,...,T,N)) =  P(α...)
+# * ⟒(P(α,...,T,N)) =  P(α...)  #  \upin[tab]
 ⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
 ⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α, β} = constructorof(P){α, β}
 ⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α, β,γ} = constructorof(P){α, β, γ}
 
+# for conversion to base case
+# \upstigma[tab]
+ϛ(P::Type{<:AbstractCCOP}) = Polynomial
+ϛ(P::Type{<:AbstractCCOP{T}}) where {T} = Polynomial{T}
 
 ## Display
 # show parameters in constructor's name
@@ -149,6 +159,7 @@ end
 ## Structural  equations
 ##
 ## Could move the AbstractCOP terms into `cop.jl`...
+
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
 An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n)
@@ -246,7 +257,7 @@ function β̃n(P::Type{<:AbstractCCOP}, n::Int)
     return val
 end    
 
-γn(P::Type{<:AbstractCCOP}, n::Int) = γ̃n(P,n) *  k1k0(P,n-1)
+γn(P::Type{<:AbstractCOP}, n::Int) = γ̃n(P,n) *  k1k0(P,n-1)
 function γ̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -266,7 +277,7 @@ end
 # for integration formulas
 # ân, b̂n, ĉn
 # pn = [ân, b̂n, ĉn] ⋅ [p'_{n+1},p'_n,p'_{n-1}]
-ân(P::Type{<:AbstractCCOP}, n::Int) = ẫn(P, n) / k1k0(P,n)
+ân(P::Type{<:AbstractCOP}, n::Int) = ẫn(P, n) / k1k0(P,n)
 function ẫn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -276,7 +287,7 @@ function ẫn(P::Type{<:AbstractCCOP}, n::Int)
     return val
 end
 
-b̂n(P::Type{<:AbstractCCOP}, n::Int) =  b̂̃n(P,n) 
+b̂n(P::Type{<:AbstractCOP}, n::Int) =  b̂̃n(P,n) 
 function b̂̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -290,7 +301,7 @@ function b̂̃n(P::Type{<:AbstractCCOP}, n::Int)
     
 end
 
-ĉn(P::Type{<:AbstractCCOP}, n::Int) = ĉ̃n(P,n) * k1k0(P,n-1)
+ĉn(P::Type{<:AbstractCOP}, n::Int) = ĉ̃n(P,n) * k1k0(P,n-1)
 function ĉ̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
@@ -320,16 +331,16 @@ end
 
 # αᴵn, βᴵn, γᴵn  (α^*,...)
 # x⋅pn' = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1},p'_n,p'_{n-1}]
-αᴵn(P::Type{<:AbstractCCOP}, n::Int) = α̃ᴵn(P,n) / k1k0(P,n)
-function α̃ᴵn(P::Type{<:AbstractCCOP}, n::Int)
+αᴵn(P::Type{<:AbstractCOP}, n::Int) = α̃ᴵn(P,n) / k1k0(P,n)
+function α̃ᴵn(P::Type{<:AbstractCOP}, n::Int)
     n  = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Aᴵn = Ãn(P,a,b,c,d,e,n) * (n+2)/(n+1)#*k1k0(P,n+1) # . *  k1k0(dP,n) = k(dP,n+1)/k(dP,n) = (n+2)kn(P,n+1)/((n+1)kn(P,n+1) = (n+2)/(n+1)*k1k0(P,n+1)
     1/Aᴵn
 end
 
-βᴵn(P::Type{<:AbstractCCOP}, n::Int) = β̃ᴵn(P::Type{<:AbstractCCOP}, n::Int)
-function β̃ᴵn(P::Type{<:AbstractCCOP}, n::Int)
+βᴵn(P::Type{<:AbstractCOP}, n::Int) = β̃ᴵn(P, n)
+function β̃ᴵn(P::Type{<:AbstractCOP}, n::Int)
     n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Ãᴵn = Ãn(P,a,b,c,d,e,n) 
@@ -338,8 +349,8 @@ function β̃ᴵn(P::Type{<:AbstractCCOP}, n::Int)
     - B̃ᴵn / Ãᴵn 
 end
 
-γᴵn(P::Type{<:AbstractCCOP}, n::Int)  = γ̃ᴵn(P,n) * k1k0(P, n-1) 
-function γ̃ᴵn(P::Type{<:AbstractCCOP}, n::Int)
+γᴵn(P::Type{<:AbstractCOP}, n::Int)  = γ̃ᴵn(P,n) * k1k0(P, n-1) 
+function γ̃ᴵn(P::Type{<:AbstractCOP}, n::Int)
     n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
     Ãᴵn = Ãn(P,a,b,c,d,e,n)  # * k(dP,n+1)/k(dP,n)
@@ -467,17 +478,6 @@ function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
 end
 
-function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
-
-    #@assert  ⟒(P) == ⟒(Q)
-    #@assert eltype(num) == eltype(den)
-
-    p1 = convert(Polynomial, num)
-    p2 = convert(Polynomial, den)
-    q,r = divrem(p1, p2)
-    convert.(⟒(P), (q,r))
-
-end
 
 ## Modifications needed due to `N` in the type parameter
 

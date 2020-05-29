@@ -2,6 +2,27 @@
 ## These are described by 5  values: a,.b.c.d.e
 
 abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
+
+Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
+                  Q::Type{<:AbstractCOP{S}}) where {T,S} =
+                      ϛ(Q){promote_type(T, S)}
+
+Base.promote_rule(P::Type{<:AbstractCOP{S}},
+                  Q::Type{<:Polynomials.AbstractPolynomial{T}}) where {T,S} =
+                      ϛ(P){promote_type(T, S)}
+
+function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
+
+    #@assert  ⟒(P) == ⟒(Q)
+    #@assert eltype(num) == eltype(den)
+
+    p1 = convert(ϛ(P), num)
+    p2 = convert(ϛ(Q), den)
+    q,r = divrem(p1, p2)
+    convert.(⟒(P), (q,r))
+
+end
+
 ##
 ## -----
 ##
@@ -23,12 +44,18 @@ abcde(::Type{<:AbstractCOP}) = throw(ArgumentError("No default method"))
 leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
 
 # Set defaults to be monic
-kn(::Type{P},  n::Int) where{P <: AbstractCOP} = one(eltype(one(P))) #  need one(P), as eltype(Polynomial{T}) != T
+# only need k1k0  to be defined
+# kn = prod(k1k0(i) for i in 0:n-1)  *  kn(P,0)
+# **Assume** basis(P,0) = 1, so kn(P,0)  = 1
+kn(::Type{P},  n::Int) where{P <: AbstractCOP} = iszero(n) ?  one(eltype(P)) : prod(k1k0(P,i) for i in  0:n-1)
 
 # k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i)
-# k₍ᵢ₊₁₎/k₍ᵢ₋₁₎
-k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP} =  kn(P,i+1)/kn(P,i-1)
+k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  one(eltype(P))
+# k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
+function k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP}
+    @assert i > 0
+    k1k0(P,i)*k1k0(P,i-1)
+end
 
 # Can't  change  N  here
 function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}

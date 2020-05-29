@@ -122,7 +122,7 @@ end
 """
     ϟ(P) = Q; ϟ(P{T}) where {T} =   Q{T}
 
-Used to delegate methods of P to Q.  (upkoppa[tab])
+Used to delegate methods of P to Q.  ([slash]upkoppa[tab])
 """
 ϟ(P::Type{<:Polynomials.AbstractPolynomial}) = throw(ArgumentError("No default for  delegation"))
 

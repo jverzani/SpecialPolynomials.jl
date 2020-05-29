@@ -27,6 +27,7 @@ SpecialPolynomials.AbstractSpecialPolynomial
 ## Orthogonal Polynomials
 
 ```@docs
+SpecialPolynomials.AbstractOrthogonalPolynomial
 SpecialPolynomials.AbstractCCOP
 SpecialPolynomials.AbstractCDOP
 ```

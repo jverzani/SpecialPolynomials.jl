@@ -5,6 +5,23 @@ abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} en
 abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
 
+"""
+    AbstractOrthogonalPolynomial{T}
+
+Type to represent systems of orthogonal polynomials. These polynomials have  several properties, including an accompanying inner product satsifying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
+
+In addition to methods inherited from the underlying `AbstractPolynomial`  type, orthogonal polynomial  types may have methods   `weight_function`, `generating_function`, `leading_term`, norm2`, `jacobi_matrix`, and `gauss_nodes_weights`,  though none are  exported.
+
+
+Subtypes of `AbstractCOP <: AbstractOrthogonalPolynomial` utilize the fact that the basis  polynomials  satisfy
+
+`(ax² + bx + c)yᵢ''(x) + (dx+e)yᵢ'(x) + λᵢyᵢ(x) = 0` (or a discrete analogue)
+
+where the structural relations are functions of `a,b,c,d,e`. These allow default definitions for polynomial evaluation,   addition, multiplication, differentiation, integration, and  conversion to and from  the `Polynomial` type (the `FallingFactorial` type in the discrete  c case),
+
+A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx +  Bᵢ)yᵢ -  Cᵢyᵢ₋₁`. For systems  specfied by  a  weight function, the  values of `Aᵢ`, `Bᵢ`, and `Cᵢ` can  be  generated, yielding formulas for polynomial evaluation, addition, and conversion to the `Polynomial`  type throughe evaluation.
+"""
+AbstractOrthogonalPolynomial
 
 
 ##
@@ -255,7 +272,7 @@ gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_n
 ##
 
 ## <f,g> = ∫ f⋅g⋅w dx
-function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g)
+function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol=sqrt(eps(float(eltype(P)))))
     dom = domain(P)
     a, b = first(dom), last(dom)
     if !first(Polynomials.inclusivity(dom))
@@ -266,7 +283,7 @@ function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g)
     end
     fn = x -> f(x) * g(x) * weight_function(P)(x)
     
-    return _quadgk(fn, a, b)
+    return quadgk(fn, a, b; atol=atol)[1]
 end
 
 innerproduct(p::P, f, g) where {P <: AbstractOrthogonalPolynomial} =  innerproduct(P, f, g)
