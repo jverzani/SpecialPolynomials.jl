@@ -8,16 +8,33 @@ This uses p22 of [](https://arxiv.org/pdf/math/9703217.pdf)  to define a two-par
 See  the example  in [`DiscreteWeightFunction`](@ref) for implementing  the [DiscreteChebyshev](https://en.wikipedia.org/wiki/Discrete_Chebyshev_polynomials)  polynomials  from Wikipedia.
 
 ```jldoctest
-using SpecialPolynomials
-import SpecialPolynomials: Δₓ, ∇ₓ
-α,β = 1/2, 1
-P  = DiscreteChebyshev{α,β}
-i = 5
-yᵢ = basis(P, i)
-x = variable(P)
-a,b,c,d,e = SpecialPolynomials.abcde(P)
-λᵢ  = -(a*i*(i-1)  + d*i)
-Δₓ(∇ₓ(yᵢ)) +  (α*x + β) * Δₓ(yᵢ) ≈ -λᵢ*yᵢ # p22: "are not orthogonal, but satisfy the difference equation..."
+julia> using Polynomials, SpecialPolynomials
+
+julia> import SpecialPolynomials: Δₓ, ∇ₓ
+
+julia> α,β = 1/2, 1
+(0.5, 1)
+
+julia> P  = DiscreteChebyshev{α,β}
+DiscreteChebyshev{0.5,1,T,N} where N where T
+
+julia> i = 5
+5
+
+julia> yᵢ = basis(P, i)
+DiscreteChebyshev(1.0⋅K⁽ᵅᵝ⁾₅(x))
+
+julia> x = variable(P)
+DiscreteChebyshev(- 2.0⋅K⁽ᵅᵝ⁾₀(x) + 2.0⋅K⁽ᵅᵝ⁾₁(x))
+
+julia> a,b,c,d,e = SpecialPolynomials.abcde(P)
+(a = 0, b = 0, c = 1, d = 0.5, e = 1)
+
+julia> λᵢ  = -(a*i*(i-1)  + d*i)
+-2.5
+
+julia> Δₓ(∇ₓ(yᵢ)) +  (α*x + β) * Δₓ(yᵢ) ≈ -λᵢ*yᵢ # p22: "are not orthogonal, but satisfy the difference equation..."
+true
 ```
 
 """

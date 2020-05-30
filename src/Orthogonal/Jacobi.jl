@@ -31,22 +31,9 @@ basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
 Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} = Polynomials.Interval(-1, 1, β >= 0, α >= 0)
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
-#kn =  1/2^n ⋅ choose(2n+α+β, n) = (2n+α+β)_n / (2^b  n!)
-function kn(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
-    a = α+β+n+1
-    nn = n
-    tot = one(eltype(P))/1
-    for i in 0:n-1
-        tot *= a/(2*nn)
-        a += 1
-        nn -= 1
-    end
-    tot
-    
-end
 
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
-    n == -1  &&  return kn(P,0)
+    n == -1  &&  return one(eltype(P))/1 
     γ = 2n + α + β
     val = one(eltype(P))
     if n == 0
@@ -60,28 +47,42 @@ function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     val
 end
 
-function k1k_1(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
-    @assert n > 0
-
-    γ = 2n + α + β
-    val = one(eltype(P))
-
-    if n == 1
-        num = (α+β+3)*(α+β+4)
-        den = 8
-    elseif n == 2
-        num = (α + β + 4) * (α + β + 5) * (α + β + 6)
-        den = 24 * (α + β + 2)
-    else
-        num = (γ - 1) * (γ - 0) * (γ + 1) * (γ + 2)
-        den = 4 * n * (n+1) * (n + α + β) * (n + α + β + 1)
+#kn =  1/2^n ⋅ choose(2n+α+β, n) = (2n+α+β)_n / (2^b  n!)
+function leading_term(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
+    a = α+β+n+1
+    nn = n
+    tot = one(eltype(P))/1
+    for i in 0:n-1
+        tot *= a/(2*nn)
+        a += 1
+        nn -= 1
     end
+    tot
     
-    iszero(den) && return k1k_1(P, Val(n), S)
-
-    val *= num /den
-    return val
 end
+
+# function k1k_1(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
+#     @assert n > 0
+
+#     γ = 2n + α + β
+#     val = one(eltype(P))
+
+#     if n == 1
+#         num = (α+β+3)*(α+β+4)
+#         den = 8
+#     elseif n == 2
+#         num = (α + β + 4) * (α + β + 5) * (α + β + 6)
+#         den = 24 * (α + β + 2)
+#     else
+#         num = (γ - 1) * (γ - 0) * (γ + 1) * (γ + 2)
+#         den = 4 * n * (n+1) * (n + α + β) * (n + α + β + 1)
+#     end
+    
+#     iszero(den) && return k1k_1(P, Val(n), S)
+
+#     val *= num /den
+#     return val
+# end
 
 weight_function(::Type{<:Jacobi{α, β}}) where {α, β} = x -> (1-x)^α *  (1+x)^β
 generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
@@ -121,7 +122,23 @@ function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
     2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
 end
 
-# overrides
+# # overrides
+# function B̃n(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
+#     val=one(eltype(P))
+#     if  iszero(n)
+#         return val * (α-β)/(α+β+2)
+#     end
+#     val *= (α - β)*(α + β)
+#     val /= (2*n + α + β)*(2*n + α + β + 2)
+#     val
+# end
+# function C̃n(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
+#     val=one(eltype(P))
+#     val *= -n*(n + α + β)*(-4*n*(n + α + β) + 4*α + 4*β + (α - β)^2 - (α + β + 2)^2 + 4)
+#     val /= (2*n + α + β)^2*(2*n + α + β - 1)*(2*n + α + β + 1)
+#     val
+# end
+
 B̃n(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α, β} = iszero(α+β) ? (α-β)*one(eltype(P))/2 : (α-β)*one(eltype(P))/(2(α+β+2))
 C̃n(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = -one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 2)^2*(α + β + 3))
 

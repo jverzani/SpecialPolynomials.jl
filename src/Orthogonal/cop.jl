@@ -3,9 +3,10 @@
 
 abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
 
-Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
-                  Q::Type{<:AbstractCOP{S}}) where {T,S} =
-                      ϛ(Q){promote_type(T, S)}
+function Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
+                           Q::Type{<:AbstractCOP{S}}) where {T,S}
+    ϛ(Q){promote_type(T, S)}
+end
 
 Base.promote_rule(P::Type{<:AbstractCOP{S}},
                   Q::Type{<:Polynomials.AbstractPolynomial{T}}) where {T,S} =

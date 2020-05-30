@@ -38,30 +38,18 @@ abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α
 # From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
 # kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
 # Koepf suggests kn = (n + α + 1)_n/2^n
-function kn(P::Type{<:Bessel{α}}, n::Int) where {α}
+function leading_term(P::Type{<:Bessel{α}}, n::Int) where {α}
     one(eltype(P))/2^n * Pochhammer(n+α-1,n)
 end
+
 function k1k0(::Type{P}, k::Int) where {α, P<:Bessel{α}}
-    k < 0 && return zero(eltype(P))
-    iszero(k) && return α/2
+    k < 0 && return zero(eltype(P))/1
+    iszero(k) && return (one(eltype(P))*α)/2
 
     val = one(eltype(P))
     val *=  (2k+α)*(2k+α-1)
     val /= (k+α-1)*2
     val
-end
-function k1k_1(P::Type{<:Bessel{α}}, k::Int) where {α}
-    @assert k > 0
-    
-    val = one(eltype(P))
-    if k == 1
-        val *= (α + 1)*(α + 2) # cancels  factor (α-1)(α-1)
-        val /= 4
-    else
-        val *= (2k+α-3) * (2k+α-2) * (2k+α-1) * (2k+α)
-        val /= 4 * (k+α-2) * (k+α-1)
-    end
-    return val
 end
 norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
 
@@ -73,11 +61,29 @@ function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
     pFq(as, bs, -x/2) #/ kn
 end
 
+
 ## Overrides XXX fails wih 1 and 2
+function  B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
+    val =  one(eltype(P))
+    (iszero(n) && α ==  2)  && return val
+    val *=  2*(α - 2)
+    val /= (2*n + α)*(2*n + α - 2)
+    val
+end
+
+function  C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
+    val = one(eltype(P))
+    n==1 && return -(val*4)/(α^2*(α + 1))
+    
+    val *=  -4*n*(n + α - 2)
+    val /=  (2*n + α - 3)*(2*n + α - 2)^2*(2*n + α - 1)
+    val
+end
+
 #Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
-B̃n(P::Type{<:Bessel{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
+#B̃n(P::Type{<:Bessel{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
 #iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
-C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
+#C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
 
 b̂̃n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
 b̂̃n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf

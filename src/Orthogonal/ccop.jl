@@ -10,7 +10,7 @@ Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a famil
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
 solution of the differential equation
 
-`(a⋅x²+b⋅x+c) ⋅ y'' + (d⋅x + e) ⋅ y' + λᵢ⋅ y = 0.`
+`(a⋅x²+b⋅x+c) ⋅ yᵢ'' + (d⋅x + e) ⋅ yᵢ' + λᵢ⋅ yᵢ = 0.`
 
 A family is characterized, up to choice of leading term, by the 5 coefficients: `a,b,c,d,e`.
 Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e)`.
@@ -24,7 +24,7 @@ where `Aᵢ,Bᵢ,Cᵢ` can be represented in formulas involving just  `a,b,c,d,e
 
 Rearranging   gives the structural equation:
 
-`x⋅p_n   = [an, bn, cn] ⋅ [p_{n+1}, p_n, p_{n-1}]`     #  Eqn (7)
+`x⋅p_n   = [an, bn, cn] ⋅ [p_{n+1}, p_n, p_{n-1}]`  (Eqn (7))
 
 
 The other structural equations are (equation  references are from Koepf and Schmersau):
@@ -41,12 +41,12 @@ Using (19), expressions for derivatives are found.
 
 Using  (19), expressions for integration are found (p7).
 
-Using Thms 2,4, and 5, connection coefficients, `C(n,m)` satisfying 
+Using their theorems 2,4, and 5, connection coefficients, `C(n,m)` satisfying 
 `P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n)` are  found. These 
 allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polynomial)`,
-`convert(P{α…}, p::P(β…))` and through composition  `p*q`
+`convert(P{α…}, p::P(β…))` and through composition polynomial  multiplication,  `p*q`.
 
-Subtypes of `AbstractCCOP` are  created through  the `@register0` or  `@registerN` macros, where the  `N`  one  is used  if parameters are  needed to describe the family.
+Subtypes of `AbstractCCOP` are  created through  the `@register0` or  `@registerN` macros, where the  `N`  macro  is used  if parameters are  needed to describe the family.
 
 If non-monic versions are desired, then the  leading  term can be  specified through `kn()` (which by default is defined by the  method `k1k0(P,i)`, the ratio of  `kᵢ₊₁/kᵢ`).  The `@register_monic` macro is useful  for creating  monic versions through  method delegation from the common non-monic systems. Similarly, the `@register_shifted` macro is useful  to provide shifted versions (cf. [`ShiftedLegendre`](@ref)).
 
@@ -71,7 +71,7 @@ SpecialPolynomials
 
 julia> SP.@register0 MonicLegendre′ SP.AbstractCCOP0
 
-julia> SP.:ϟ(::Type{<:MonicLegendre′}) = Legendre; SP.:ϟ(::Type{<:MonicLegendre′{T}}) where {T} = Legendre{T}
+julia> SP.:ϟ(::Type{<:MonicLegendre′}) = Legendre
 
 julia> SP.@register_monic MonicLegendre′  # use  ϟ to delegate methods
 
@@ -117,7 +117,6 @@ abstract type AbstractCCOP3{α,β,γ,T,N} <: AbstractCCOP{T,N}  end
 # for conversion to base case
 # \upstigma[tab]
 ϛ(P::Type{<:AbstractCCOP}) = Polynomial
-ϛ(P::Type{<:AbstractCCOP{T}}) where {T} = Polynomial{T}
 
 ## Display
 # show parameters in constructor's name

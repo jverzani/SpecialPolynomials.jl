@@ -77,6 +77,7 @@ Polynomial(x)
 julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
 
 
+
 julia> all(qs .* [p[end] for p  in ps] .≈ ps)
 true
 ```

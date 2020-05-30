@@ -15,7 +15,7 @@ where  `Δy(x) = y(x+1) - y(x)` and `∇y(x) = y(x) - y(x-1)`.
 A family is characterized by the 5 coefficients: `a,b,c,d,e`.
 Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e).`
 
-As in the classical coninuous orthogonal polynomial case
+As in the classical-continuous-orthogonal-polynomial case
 [`AbstractCCOP`](@ref), from these 5 values the cofficients in the
 there-point recursion, and other structural equations can be
 represented. These allow polynomial multiplication, integration,
@@ -25,7 +25,7 @@ differentiation, conversion, etc. to be defined generically.
 present an encyclopedia of formula characterizing families of
 orthogonal polynomials. 
 
-For example, on p29 they give  formula for Hahn polynomials through:
+For example, on p29 they give  formulas for Hahn polynomials through:
 
 `n(n+α+β+1)y(x) = B(x)y(x+1) -[B(x)+D(x)]y(x) + D(x)y(x-1)`,  with  explicit values  for  `B` and `D`. Reexpressing gives:
 `BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
@@ -64,7 +64,6 @@ abstract type AbstractCDOP3{α, β,γ,T,N} <: AbstractCDOP{T,N}  end
 # for conversion to base case
 # \upstigma[tab]
 ϛ(P::Type{<:AbstractCDOP}) = FallingFactorial
-ϛ(P::Type{<:AbstractCDOP{T}}) where {T} = FallingFactorial{T}
 
 
 # compose with FallingFactorial

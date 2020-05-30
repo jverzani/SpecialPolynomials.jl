@@ -135,19 +135,19 @@ The unexported `innerproduct` will compute this as well, without the need to spe
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
--1.3877787807814457e-17
+-1.543670556388031e-16
 ```
 
 
 
 ## Polynomial methods
 
-For each polynomial ttype, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible. 
+For each polynomial type, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible. 
 
 
 ### Arithemtic
 
-For example, basic arithmetic:
+For example, basic arithmetic operations  are defined:
 
 ```
 julia> P = ChebyshevU
@@ -187,7 +187,7 @@ Jacobi{0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.333333333333333
 
 ### Derivatives and integrals
 
-Classic orthogonal polynomials  have known integral and derivative formulas. When implemented, these allow a direct computation, as is donee here:
+The classic continuous orthogonal polynomials  have  the `derivative`  and `integrate` methods defined:
 
 ```jldoctest example
 julia> P = ChebyshevU{Float64}
@@ -201,11 +201,7 @@ ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> convert.(Polynomial, (p, dp))
 (Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
-```
 
-There is a default  method defined through conversion to  the standard basis. It is  used behind the  scenes  in the next example.
-
-```jldoctest example
 julia> P = Jacobi{1//2, -1//2}
 Jacobi{1//2,-1//2,T,N} where N where T
 
@@ -234,7 +230,7 @@ julia> integrate(p, 0, 1)
 
 ### Roots
 
-The `roots` function finds the roots of a polynomial.
+The `roots` function finds the roots of a polynomial 
 
 ```jldoctest example
 julia> p = Legendre([1,2,2,1])
@@ -303,7 +299,7 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
   0.9061798459386639
 ```
 
-For higher degree, the difference comes out:
+At higher degrees, the difference in  stability comes out:
 
 ```jldoctest example
 julia> p50 = basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
@@ -313,8 +309,10 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> s
 50
 ```
 
+(The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
 
-The unexported `gauss_nodes_weights` function returns the nodes and weights. For some types (`Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For many types (e.g., `Jacobie`, `Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
 
 ```jldoctest example
 julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
@@ -337,7 +335,12 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 
 julia> p1 = fit(Polynomial,  xs, ys)
 Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)
+```
 
+The `Lagrange` and `Newton` types represent the polynomial in
+convenient bases based on the nodes (`xs`):
+
+```jldoctest example
 julia> p2 = fit(Lagrange, xs, ys)
 Lagrange(1⋅ℓ^3_0(x) + 2⋅ℓ^3_1(x) + 2⋅ℓ^3_2(x) + 3⋅ℓ^3_3(x))
 
@@ -345,9 +348,7 @@ julia> p3 = fit(Newton, xs, ys)
 Newton(1.0⋅p_0(x) + 4.0⋅p_1(x) - 8.0⋅p_2(x) + 21.333333333333332⋅p_3(x))
 ```
 
-The `Lagrange` and `Newton` types represent the polynomial in
-convenient bases based on the nodes (`xs`). These all represent the
-same interpolating polynomial:
+These all represent the same interpolating polynomial:
 
 ```jldoctest example
 julia> [p1.(xs)-ys  p2.(xs)-ys p3.(xs)-ys]
@@ -383,7 +384,7 @@ approximation ..., but usually it is the best practical possibility
 for interpolation and certainly much better than equispaced
 interpolation"
 
-For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in this graphic:
+For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in the following graphic:
 
 ```example
 f(x) = exp(-x)*sinpi(x)
@@ -406,13 +407,8 @@ savefig("fitting.svg"); nothing # hide
 
 There are other criteria for fitting that can be used.
 
-least squares...
-series...
 
-XXXX
-
-
-If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won't  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Adding a value for the degree, illustrates:
+If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won't  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Fitting  ini the standard basis, a  degree  is specified, as follows:
 
 ```jldoctest example
 julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
@@ -483,6 +479,16 @@ savefig("wavy.svg"); nothing # hide
 ![](wavy.svg)
 
 
+For the  `Chebyshev` type, the  `Val(:series)` argument will fit a heuristically identify truncated series  to the function.
+
+```
+using Polynomials, SpecialPolynomials
+f(x) = sin(6x) + sin(60*exp(x))
+p  = fit(Val(:series), Chebyshev, f);
+degree(p)
+```
+
+
 !!! note
     The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
 
@@ -498,12 +504,7 @@ Chebyshev Polynomials of the second kind can be produced as follows:
 ```@example
 using Plots, Polynomials, SpecialPolynomials
 # U1, U2, U3, and U4:
-chebs = [
-  ChebyshevU([0, 1]),
-  ChebyshevU([0, 0, 1]),
-  ChebyshevU([0, 0, 0, 1]),
-  ChebyshevU([0, 0, 0, 0, 1]),
-]
+chebs = basis.(ChebyshevU, 1:4)
 colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
 itr = zip(chebs, colors)
 (cheb,col), state = iterate(itr)

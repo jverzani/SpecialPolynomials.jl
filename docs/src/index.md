@@ -24,7 +24,7 @@ represent polynomials, extending the `Polynomials` package.
 SpecialPolynomials.AbstractSpecialPolynomial
 ```
 
-## Orthogonal Polynomials
+## Orthogonal polynomials
 
 ```@docs
 SpecialPolynomials.AbstractOrthogonalPolynomial
@@ -32,7 +32,11 @@ SpecialPolynomials.AbstractCCOP
 SpecialPolynomials.AbstractCDOP
 ```
 
-There are  several classic continuous  orthogonal polynomials available:
+## Implemented polynomial  types
+
+### Classical continuous orthogonal polynomials
+
+There are  several classical continuous  orthogonal polynomials available:
 
 ```@docs
 Legendre
@@ -47,7 +51,9 @@ Bessel
 ShiftedLegendre
 ```
 
-There are  several classic discrete  orthogonal polynomials available:
+### Classical discrete orthogonal polynomials
+
+There are  several classical discrete  orthogonal polynomials available:
 
 ```@docs
 Charlier
@@ -58,14 +64,10 @@ DiscreteChebyshev
 FallingFactorial
 ```
 
-Polynomial systems  can also be generated  through  an associated weight function.
 
-```@docs
-WeightFunction
-DiscreteWeightFunction
-```
+----
 
-Some  non-exported methods define each:
+Some non-exported methods are available or define each of  the classical orthogonal polynomials:
 
 ```@docs
 SpecialPolynomials.weight_function
@@ -78,8 +80,19 @@ SpecialPolynomials.jacobi_matrix
 SpecialPolynomials.gauss_nodes_weights
 ```
 
+### Defining new types
 
-## Interpolating Polynomials
+A new polynomial system  of classical type can  be specified fairly  succinctly,  provided the 5 constants  for the  `abcde`  method are known.
+
+Polynomial systems  can also be generated  through  an associated weight function.
+
+```@docs
+WeightFunction
+DiscreteWeightFunction
+```
+
+
+### Interpolating polynomials
 
 ```@docs
 SpecialPolynomials.AbstractInterpolatingPolynomial
@@ -90,7 +103,7 @@ Lagrange
 Newton
 ```
 
-## Other Polynomials
+### Other polynomials
 
 ```@docs
 Bernstein
