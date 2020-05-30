@@ -169,17 +169,9 @@ macro register_shifted(name, alpha, beta)
             a, b = extrema(ϟ(P))
             Polynomials.Interval((a- β)/α, (b - β)/α)
         end
-        function SpecialPolynomials.kn(P::Type{<:$shifted}, n::Int)
-            α,β = $alpha, $beta
-            α^n * kn(ϟ(P))
-        end
         function SpecialPolynomials.k1k0(P::Type{<:$shifted}, n::Int)
             α,β = $alpha, $beta
             α * k1k0(ϟ(P), n)
-        end
-        function  SpecialPolynomials.k1k_1(P::Type{<:$shifted}, n::Int)
-            α,β = $alpha, $beta
-            α^2 * k1k_1(ϟ(P),n)
         end
         
     end

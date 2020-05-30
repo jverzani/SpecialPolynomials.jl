@@ -41,22 +41,34 @@ A named tuple returning  the  constants a,b,c,d,e  for a CCOP type with
 """
 abcde(::Type{<:AbstractCOP}) = throw(ArgumentError("No default method"))
 
-# kn is the leading term (Section 3 table)
-leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
+
+"""
+    k1k0
+
+Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis. This  function implement  `k₍ᵢ₊₁₎/kᵢ` for `i ≥  0`.
+
+With  the assumption that  `k₀ = 1`, the values `kᵢ` and `k₍ᵢ₊₁₎/k₍ᵢ₋₁₎` can  be generated.
+
+The default value  leads to monic polynomials.
+"""
+k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  one(eltype(P))
 
 # Set defaults to be monic
-# only need k1k0  to be defined
+# For non-monic subtypes of `AbstractCOP` only need k1k0  to be defined, as `kn` and `k1k_1` come for free
+
+# leading term (Section 3 table)  is kn
+leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
+
 # kn = prod(k1k0(i) for i in 0:n-1)  *  kn(P,0)
 # **Assume** basis(P,0) = 1, so kn(P,0)  = 1
 kn(::Type{P},  n::Int) where{P <: AbstractCOP} = iszero(n) ?  one(eltype(P)) : prod(k1k0(P,i) for i in  0:n-1)
 
-# k₍ᵢ₊₁₎/kᵢ
-k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  one(eltype(P))
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP}
     @assert i > 0
     k1k0(P,i)*k1k0(P,i-1)
 end
+
 
 # Can't  change  N  here
 function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}

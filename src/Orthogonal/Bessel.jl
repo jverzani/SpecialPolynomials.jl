@@ -35,12 +35,6 @@ Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
 
 abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α, 2))
 
-# From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
-# kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
-# Koepf suggests kn = (n + α + 1)_n/2^n
-function leading_term(P::Type{<:Bessel{α}}, n::Int) where {α}
-    one(eltype(P))/2^n * Pochhammer(n+α-1,n)
-end
 
 function k1k0(::Type{P}, k::Int) where {α, P<:Bessel{α}}
     k < 0 && return zero(eltype(P))/1
@@ -51,7 +45,15 @@ function k1k0(::Type{P}, k::Int) where {α, P<:Bessel{α}}
     val /= (k+α-1)*2
     val
 end
+
 norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
+
+# From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
+# kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
+# Koepf suggests kn = (n + α + 1)_n/2^n
+function leading_term(P::Type{<:Bessel{α}}, n::Int) where {α}
+    one(eltype(P))/2^n * Pochhammer(n+α-1,n)
+end
 
 weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
 generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")

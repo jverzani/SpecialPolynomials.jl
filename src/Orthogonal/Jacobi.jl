@@ -61,28 +61,6 @@ function leading_term(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     
 end
 
-# function k1k_1(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
-#     @assert n > 0
-
-#     γ = 2n + α + β
-#     val = one(eltype(P))
-
-#     if n == 1
-#         num = (α+β+3)*(α+β+4)
-#         den = 8
-#     elseif n == 2
-#         num = (α + β + 4) * (α + β + 5) * (α + β + 6)
-#         den = 24 * (α + β + 2)
-#     else
-#         num = (γ - 1) * (γ - 0) * (γ + 1) * (γ + 2)
-#         den = 4 * n * (n+1) * (n + α + β) * (n + α + β + 1)
-#     end
-    
-#     iszero(den) && return k1k_1(P, Val(n), S)
-
-#     val *= num /den
-#     return val
-# end
 
 weight_function(::Type{<:Jacobi{α, β}}) where {α, β} = x -> (1-x)^α *  (1+x)^β
 generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
@@ -122,23 +100,7 @@ function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
     2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
 end
 
-# # overrides
-# function B̃n(P::Type{<:Jacobi{α,β}}, n::Int) where {α, β}
-#     val=one(eltype(P))
-#     if  iszero(n)
-#         return val * (α-β)/(α+β+2)
-#     end
-#     val *= (α - β)*(α + β)
-#     val /= (2*n + α + β)*(2*n + α + β + 2)
-#     val
-# end
-# function C̃n(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
-#     val=one(eltype(P))
-#     val *= -n*(n + α + β)*(-4*n*(n + α + β) + 4*α + 4*β + (α - β)^2 - (α + β + 2)^2 + 4)
-#     val /= (2*n + α + β)^2*(2*n + α + β - 1)*(2*n + α + β + 1)
-#     val
-# end
-
+# overrides
 B̃n(P::Type{<:Jacobi{α,β}}, ::Val{0}) where {α, β} = iszero(α+β) ? (α-β)*one(eltype(P))/2 : (α-β)*one(eltype(P))/(2(α+β+2))
 C̃n(P::Type{<:Jacobi{α,β}}, ::Val{1}) where {α,β} = -one(eltype(P)) * ((α - β)^2 - (α + β + 2)^2)/((α + β + 2)^2*(α + β + 3))
 

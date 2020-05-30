@@ -44,9 +44,12 @@ generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 
 abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
 
-kn(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
 k1k0(P::Type{<:Chebyshev}, n::Int)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
-k1k_1(P::Type{<:Chebyshev}, n::Int) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
+
+#kn(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
+#k1k_1(P::Type{<:Chebyshev}, n::Int) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
+
+leading_term(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
 
 # directly adding these gives a large (20x) speed up in polynomial evaluation
 An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))

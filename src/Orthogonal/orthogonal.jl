@@ -55,22 +55,23 @@ function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) whe
     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
 end
 
-# from instance, x
-function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
+# # from instance, x
+# function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
 
-    T, cs = eltype(p), coeffs(p)
-    N = length(cs)
-    N == 0 && return zero(T)*zero(S)
-    N == 1 && return cs[1] * one(S)
+#     T, cs = eltype(p), coeffs(p)
+#     N = length(cs)
+#     N == 0 && return zero(T)*zero(S)
+#     N == 1 && return cs[1] * one(S)
 
-    Δ0 = cs[end - 1]
-    Δ1 = cs[end]
-    @inbounds for i in N-1:-1:2
-        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
-    end
+#     Δ0 = cs[end - 1]
+#     Δ1 = cs[end]
+#     @inbounds for i in N-1:-1:2
+#         Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
+#     end
 
-    return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
-end
+#     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
+# end
+
 
 
 ## Connection/Linearization
@@ -225,15 +226,12 @@ end
 # https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm
 """
     jacobi_matrix(::Type{P}, n)
-    jacobi_matrix(p::P, n)
 
 The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alpha_i` values, the off diagonal entries,
 the square root of the  `beta_i` values. This matrix has the properties that
 
-* the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of qa symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
+* the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of a symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
 * the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
-
-See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster implementations.
 
 """
 function jacobi_matrix(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
@@ -244,7 +242,6 @@ jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix
 ##  Compute weights and nodes for quadrature
 """
     gauss_nodes_weights(::Type{P}, n)
-    gauss_nodes_weights(p::P, n)
 
 Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal type.
 
@@ -264,14 +261,17 @@ function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolyno
     wts =  π̃βn(P,0) * (eig.vectors[1,:] ./ nm).^2
     eig.values,  wts
 end
-gauss_nodes_weights(p::P, n) where {P <: AbstractOrthogonalPolynomial} = gauss_nodes_weights(P, n)
 
 
 ##
 ## --------------------------------------------------
 ##
 
-## <f,g> = ∫ f⋅g⋅w dx
+"""
+      innerproduct(::Type{P}, f, g)
+
+Compute  `<f,g> = ∫ f⋅g⋅w dx` where  `w` is the weight function of the  type  `P`  and the integral is  taken  over  the domain of the type `P`.
+"""
 function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol=sqrt(eps(float(eltype(P)))))
     dom = domain(P)
     a, b = first(dom), last(dom)
@@ -286,11 +286,9 @@ function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol
     return quadgk(fn, a, b; atol=atol)[1]
 end
 
-innerproduct(p::P, f, g) where {P <: AbstractOrthogonalPolynomial} =  innerproduct(P, f, g)
 
 ## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
 Base.abs2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
-Base.abs2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(p, n)
 
 ## Compute <p_i, p_i> = \| p \|^2
 ## Slow default; generally should  be directly expressed for each type
@@ -298,7 +296,6 @@ function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
     p = basis(P,n)
     innerproduct(P, p, p)
 end
-norm2(p::P, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
 
 ##
 ## --------------------------------------------------

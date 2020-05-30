@@ -115,53 +115,6 @@ function __hermite_lambda(n,k)
 end
 
 
-#Base.convert(P::Type{<:Hermite}, q::Polynomials.StandardBasisPolynomial) = _convert_cop(P, q) 
-
-# function Base.convert(P::Type{<:Hermite}, q::Polynomials.StandardBasisPolynomial)
-#     d = degree(q)
-#     R = eltype(one(eltype(1))/1)
-#     ps = zeros(R, max(0,d)+1)
-#     for i in 0:max(0,d)
-#         ps[i+1] = sum(q[jj] * _hermite_lambda(jj, j-1) for (j, jj) in enumerate(i:2:d))
-#     end
-#     Hermite(ps, q.var)
-# end
-
-# # compute n!/(2^n * (n-2j)! * j!)
-# function _hermite_lambda(n,j)
-#     tot = 1/1
-#     for i in 1:j
-#         tot  /=  2
-#         tot *= n
-#         n -= 1
-#     end
-#     for i in 1:j
-#         tot /= i
-#         tot *= n
-#         n -= 1
-#     end
-#     tot
-# end
-
-# function Polynomials.derivative(p::P, order::Integer = 1) where {T, P <: Hermite{T}}
-
-#     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
-#     order == 0 && return p
-#     hasnan(p) && return Hermite(T[NaN], p.var)
-#     order > length(p) && return zero(P, p.var)
-
-#     d = degree(p)
-#     qs = zeros(T, d+1-order)
-#     for i in order:d # Hn' =  2n Hn-1
-#         qs[i+1-order] = prod(2*(1 + i - j) for j in 1:order)  * p[i]
-#     end
-
-#     q = Hermite(qs, p.var)
-
-
-# end
-
-
 # 2x more performant
 function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
     # int H_n = 1/(n+1) H_{n+1}

@@ -50,11 +50,14 @@ Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
 abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
 
-function kn(P::Type{<:Laguerre{α}}, n::Int)  where {α}
-    (-one(eltype(P)))^n/factorial(n) #Γ(1+n)
-end
 k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = k <= 0  ? -one(eltype(P)) : -one(eltype(P))/(k+1)
-k1k_1(P::Type{<:Laguerre{α}}, k::Int) where {α} =  k <= 0  ? zero(eltype(P)) : one(eltype(P))/(k+1)/k
+
+
+# function kn(P::Type{<:Laguerre{α}}, n::Int)  where {α}
+#     (-one(eltype(P)))^n/factorial(n) #Γ(1+n)
+# end
+
+#k1k_1(P::Type{<:Laguerre{α}}, k::Int) where {α} =  k <= 0  ? zero(eltype(P)) : one(eltype(P))/(k+1)/k
 
 function norm2(::Type{<:Laguerre{α}}, n) where{α}
     iszero(α) && return one(α)
