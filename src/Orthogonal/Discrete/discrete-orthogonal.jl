@@ -136,7 +136,6 @@ An(::Type{W}, n) where {W <: AbstractDiscreteWeightFunction} = one(eltype(W))
 Bn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stieltjes(W)[1][k+1]
 Cn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stieltjes(W)[2][k+1]
 
-(ch::DiscreteWeightFunction)(x::S) where {S} = orthogonal_polyval(ch, x)
 Polynomials.domain(::Type{<:DiscreteWeightFunction}) = Polynomials.Interval(-Inf, Inf)
 
 innerproduct(W::Type{<:AbstractDiscreteWeightFunction}, f, g) = ∑(wk * f(xk) * g(xk) for (xk, wk) in zip(xs_ws(W)...))
