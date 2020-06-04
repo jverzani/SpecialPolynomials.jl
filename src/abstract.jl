@@ -76,25 +76,25 @@ Base.extrema(p::P) where {P <: AbstractSpecialPolynomial} = extrema(P)
 
 # faster than +(promote(p,c)...); as that allocates twice
 # useful to define p + P(:θ) (mismatched symbols
-function Base.:+(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
-    R = promote_type(eltype(p), S)
-    as = R[a for a in coeffs(p)]
-    if length(as) >= 1
-        as[1] += c  # *assume* basis(P,0) = 1
-    else
-        push!(as, c)
-    end
-    ⟒(P)(as, p.var)
-end
+# function Base.:+(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
+#     R = promote_type(eltype(p), S)
+#     as = R[a for a in coeffs(p)]
+#     if length(as) >= 1
+#         as[1] += c  # *assume* basis(P,0) = 1
+#     else
+#         push!(as, c)
+#     end
+#     ⟒(P)(as, p.var)
+# end
 
 #Base.:-(p::P) where {P <: AbstractSpecialPolynomial} = ⟒(P)(-coeffs(p), p.var)
 #Base.:-(p::P) where {T,N, P <: AbstractCOP{T,N}}  = (@show T, N; P(-coeffs(p), p.var))
 
-function Base.:*(p::P, c::S) where {P<:AbstractSpecialPolynomial, S<:Number}
-    R = promote_type(eltype(p), S)
-    as = R[a for a in coeffs(p)]
-    ⟒(P)(as * c, p.var)
-end
+# function Base.:*(p::P, c::S) where {P<:AbstractSpecialPolynomial, S<:Number}
+#     R = promote_type(eltype(p), S)
+#     as = R[a for a in coeffs(p)]
+#     ⟒(P)(as * c, p.var)
+# end
 
 #function Base.:/(p::P, c::S) where {P <: AbstractSpecialPolynomial, S<:Number}
 #    as = copy(coeffs(p))

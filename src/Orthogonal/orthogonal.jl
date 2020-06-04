@@ -30,7 +30,6 @@ AbstractOrthogonalPolynomial
 function Polynomials.fromroots(P::Type{<:AbstractOrthogonalPolynomial}, roots::AbstractVector; var::Polynomials.SymbolLike = :x)
     x = variable(P, var)
     p =  prod(x - r for r in roots)
-    return truncate(p)
 end
 
 
@@ -306,6 +305,7 @@ end
     fit([Val(S)], P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x)
 
     Find an approximating polynomial of degree `n` or less for a function `f`, that is returns `p(x) = ∑ᵢⁿ cᵢ Pᵢ(x)` for some coefficients `cᵢ`.
+
 
 Defaults to an interpolating polynomial. To specify others, use one of `Val(:interpolating)`, `Val(:lsq)` (least squares), or `Val(:series)` (trunated series expansion) as the first argument. See [`SpecialPolynomials.cks`](@ref) for some more detail.
 

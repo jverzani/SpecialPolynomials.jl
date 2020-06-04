@@ -261,6 +261,7 @@ function Base.:+(p::Lagrange, c::Number)
     p + q
 end
 
+Base.:*(c::Number, p::Lagrange) = p*c
 function Base.:*(p::P, c::Number) where {P <: Lagrange}
     Lagrange(p.xs, c*coeffs(p), p.var)
 end

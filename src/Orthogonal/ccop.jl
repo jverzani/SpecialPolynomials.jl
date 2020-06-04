@@ -415,11 +415,11 @@ end
 #     ⟒(P){R,N}(p.coeffs .* c, p.var)
 # end
 
-function Base.:/(p::P, c::S) where {T,N,P<:AbstractCOP{T,N},S <: Number}
-    R = eltype(one(T)/one(S))
-    isinf(c)  && return zero(⟒(P){R})
-    ⟒(P){R,N}(p.coeffs ./ c, p.var)
-end
+# function Base.:/(p::P, c::S) where {T,N,P<:AbstractCOP{T,N},S <: Number}
+#     R = eltype(one(T)/one(S))
+#     isinf(c)  && return zero(⟒(P){R})
+#     ⟒(P){R,N}(p.coeffs ./ c, p.var)
+# end
 
 
 ##
@@ -472,7 +472,7 @@ function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
     Polynomials.isconstant(q)  && return p * q[0]    
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
-    # use connection for linearization
+    # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
     convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
 
 end

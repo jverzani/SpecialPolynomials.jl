@@ -180,6 +180,7 @@ function Base.:+(p::Newton{N,T,S}, c::Number) where {N,T,S}
     Newton(p.xs, tableau, p.var)
 end
 
+Base.:*(c::Number, p::Newton) = p*c
 function Base.:*(p::P, c::Number) where {P <: Newton}
     Newton(p.xs, c*p.tableau, p.var)
 end

@@ -30,7 +30,7 @@ Chebyshev(1.0⋅T₀(x))
 
 
 !!! note
-The sample chapter available onlinie of [Numerical Methods for Special Functions" by Amparo Gil, Javier Segura, and Nico Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) gives a very nice overview of these polynomials.
+    The sample chapter available online of [Numerical Methods for Special Functions" by Amparo Gil, Javier Segura, and Nico Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) gives a very nice overview of these polynomials.
 """
 Chebyshev
 
