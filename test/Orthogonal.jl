@@ -91,7 +91,8 @@ end
 
 @testset "Structural equations" begin
     
-    for P in filter(P -> !(P <: Hermite), Ps) #  Hermite  has issues
+    for P in Ps
+        P  <: Hermite  &&  continue #  Hermite  has issues
         for i in 2:5
 
             ps = basis.(P, i+1:-1:i-1)
