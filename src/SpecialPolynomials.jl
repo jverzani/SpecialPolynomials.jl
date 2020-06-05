@@ -19,7 +19,7 @@ include("abstract.jl")
 include("Orthogonal/abstract.jl")
 include("Orthogonal/orthogonal.jl")
 include("Orthogonal/cop.jl")
-include("orthogonal/ccop.jl")
+include("Orthogonal/ccop.jl")
 
 
 include("Orthogonal/Bessel.jl")
