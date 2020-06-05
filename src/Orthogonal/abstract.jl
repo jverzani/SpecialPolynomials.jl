@@ -89,12 +89,12 @@ macro registerN(name,  parent, params...)
 
         end
 
-        Base.length(p::$poly{$(αs...),T,N}) where {$(αs...),T,N} = N        
-        (p::$poly)(x::S) where  {S} = eval_cop(typeof(p),  p.coeffs, x)
+        Base.length(ch::$poly{$(αs...),T,N}) where {$(αs...),T,N} = N        
+        (ch::$poly)(x::S) where  {S} = eval_cop(typeof(ch),  ch.coeffs, x)
     
         Base.convert(::Type{P}, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = q
         Base.convert(::Type{$poly{$(αs...)}}, q::Q) where {$(αs...),T, Q <: $poly{$(αs...),T}} = q        
-        Base.promote(p::P, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = p,q
+        Base.promote(p1::P, p2::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = p1,p2
         Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{<:$poly{$(αs...),S}}) where {$(αs...),T,S} =
             $poly{$(αs...),promote_type(T, S)}
         Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{S}) where {$(αs...),T,S<:Number} = 
@@ -110,9 +110,9 @@ macro registerN(name,  parent, params...)
             variable($poly{$(αs...)}, var)
 
         # work around N parameter in promote
-        Base.:*(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p,q)
-        Base.:+(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p,q)
-        Base.divrem(p::$poly{$(αs...),T}, q::$poly{$(αs...),T}) where {$(αs...),T}  = _divrem(p,q)
+        Base.:*(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p1,p2)
+        Base.:+(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p1,p2)
+        Base.divrem(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = _divrem(p1,p2)
 
         
     end

@@ -133,7 +133,7 @@ end
     p3 = Legendre([0,0,0,1]) #
     p4 = Legendre([0,0,0,0,1]) #
 
-    for x in range(-1, 1, length=5)
+    for x in range(-1, stop=1, length=5)
         @test p0(x) ≈ 1
         @test p1(x) ≈ x
         @test p2(x) ≈ 1/2*(3x^2-1)
@@ -155,7 +155,7 @@ end
     p3 = P([0,0,0,1]) #
     p4 = P([0,0,0,0,1]) #
 
-    for x in range(0, 1, length=5)
+    for x in range(0, stop=1, length=5)
         @test p0(x) ≈ 1
         @test p1(x) ≈ 2x - 1
         @test p2(x) ≈ 6x^2 - 6x + 1
@@ -176,7 +176,7 @@ end
     p3 = P([0,0,0,1]) #
     p4 = P([0,0,0,0,1]) #
 
-    for x in range(0, 5, length=5)
+    for x in range(0, stop=5, length=5)
         @test p0(x) ≈ 1
         @test p1(x) ≈ -x + 1
         @test p2(x) ≈ 1/2*(x^2 - 4x + 2)
@@ -206,7 +206,7 @@ end
         p3 = P([0,0,0,1]) #
         p4 = P([0,0,0,0,1]) #
 
-        for x in range(-1, 1, length=5)
+        for x in range(-1, stop=1, length=5)
             @test p0(x) ≈ 1
             @test p1(x) ≈ 2α*x
             @test p2(x) ≈ -α + 2α*(1+α)*x^2
