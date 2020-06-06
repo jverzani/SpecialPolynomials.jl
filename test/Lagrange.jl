@@ -48,7 +48,7 @@ end
     p = Lagrange(xs, ys)
     @test all(p.(xs) == ys)   # shortcuts  for xs
     us = rand(5)
-    @test all(abs.(p.(us) - sin.(us)) .<= 1e-3)
+    @test all(abs.(p.(us) - sin.(us)) .<= 1e-1)
 
     xs, ws = SP.lagrange_barycentric_nodes_weights(Chebyshev, 64)
     ys = sin.(xs)
