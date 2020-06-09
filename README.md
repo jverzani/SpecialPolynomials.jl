@@ -1,5 +1,3 @@
-# SpecialPolynomials
-
 # Special Polynomials
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jverzani.github.io/SpecialPolynomials.jl/stable)
@@ -9,5 +7,5 @@
 A package providing various polynomial types (assuming different
 polynomial bases) beyond the standard basis polynomials in the
 `Polynomials` package. This package includes many classic orthogonal
-polynomials, the Lagrange and Newton interpolating polynomials, and
+polynomials, the Lagrange and Newton interpolating polynomials, and the
 Bernstein polynomials.
