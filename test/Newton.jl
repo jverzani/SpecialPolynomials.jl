@@ -34,7 +34,7 @@ end
     p = fit(Newton, xs, sin)
     @test p.(xs) ≈ sin.(xs)
     us = rand(5)
-    @test maximum(abs.([p(x) - sin(x) for x in us])) <= 1e-3
+    @test maximum(abs.([p(x) - sin(x) for x in us])) <= 1e-1
 
 end
 
