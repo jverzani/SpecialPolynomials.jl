@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · SpecialPolynomials</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">SpecialPolynomials</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Construction-1"><span>Construction</span></a></li><li><a class="tocitem" href="#Polynomial-methods-1"><span>Polynomial methods</span></a></li><li><a class="tocitem" href="#Fitting-1"><span>Fitting</span></a></li><li><a class="tocitem" href="#Plotting-1"><span>Plotting</span></a></li></ul></li><li><a class="tocitem" href="../">SpecialPolynomials.jl</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jverzani/SpecialPolynomials.jl/blob/master/docs/src/examples.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples-1"><a class="docs-heading-anchor" href="#Examples-1">Examples</a><a class="docs-heading-anchor-permalink" href="#Examples-1" title="Permalink"></a></h1><ul></ul><h2 id="Construction-1"><a class="docs-heading-anchor" href="#Construction-1">Construction</a><a class="docs-heading-anchor-permalink" href="#Construction-1" title="Permalink"></a></h2><p>This package provides several  types to represent  polynomials relative  to different  bases from the standard polynomial  basis, <code>1</code>,<code>x</code>,<code>x²</code>, <code>x³</code> etc.</p><p>For example, the Legendre polynomials are a collection of polynomials on <code>[-1,1]</code>. The first few may be seen through:</p><pre><code class="language-julia-repl">julia&gt; using Polynomials, SpecialPolynomials
+
+julia&gt; p0 = Legendre([1])
+Legendre(1⋅P₀(x))
+
+julia&gt; p1 = Legendre([0,1])
+Legendre(1⋅P₁(x))
+
+julia&gt; p2 = Legendre([0,0,1])
+Legendre(1⋅P₂(x))
+
+julia&gt; p3 = Legendre([0,0,0,1])
+Legendre(1⋅P₃(x))</code></pre><p>The coefficients, e.g., <code>[0,0,0,1]</code> indicate a polynomial <code>0⋅p0 + 0⋅p1 + 0⋅p2 + 1⋅p3</code>. The <code>show</code> method expresses these polynomials relative to their bases. More familiar expressions are seen by conversion to the standard basis. For example:</p><pre><code class="language-julia-repl">julia&gt; convert.(Polynomial, [p0,p1,p2,p3])
+4-element Array{Polynomial,1}:
+ Polynomial(1)
+ Polynomial(1.0*x)
+ Polynomial(-0.5 + 1.5*x^2)
+ Polynomial(-1.5*x + 2.5*x^3)</code></pre><p>Polynomial instances are callable. We have, for example, to evaluate a polynomial at a set of points:</p><pre><code class="language-julia-repl">julia&gt; p3.([1/4, 1/2, 3/4])
+3-element Array{Float64,1}:
+ -0.3359375
+ -0.4375
+ -0.0703125</code></pre><p>Conversion can also be achieved through polynomial evaluation, using a variable <code>x</code> in the <code>Polynomial</code> basis:</p><pre><code class="language-julia-repl">julia&gt; x = variable(Polynomial)
+Polynomial(x)
+
+julia&gt; p3(x)
+Polynomial(-1.5*x + 2.5*x^3)</code></pre><p>Representation in another basis can be achieved this way:</p><pre><code class="language-julia-repl">julia&gt; u = variable(ChebyshevU)
+ChebyshevU(0.5⋅U₁(x))
+
+julia&gt; p3(u)
+ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))</code></pre><p>For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the <code>Polynomial</code> type is possible.</p><p>For the basis functions, the <code>basis</code> function can be used:</p><pre><code class="language-julia-repl">julia&gt; h0,h1,h2,h3 = basis.(Hermite, 0:3);
+
+julia&gt; x = variable();
+
+julia&gt; h3(x)
+Polynomial(-12.0*x + 8.0*x^3)</code></pre><p>If the coefficients are known, they can be directly passed to the constructor:</p><pre><code class="language-julia-repl">julia&gt; Laguerre{0}([1,2,3])
+Laguerre{0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))</code></pre><p>Some polynomial types are parameterized. The parameters are passed as in this example:</p><pre><code class="language-julia-repl">julia&gt; Jacobi{1/2, -1/2}([1,2,3])
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))</code></pre><hr/><p>The polynomial types specified above are orthogonal, meaning the inner product of different basis vectors will be 0. For example:</p><pre><code class="language-julia-repl">julia&gt; using QuadGK
+
+julia&gt; P = Legendre
+Legendre
+
+julia&gt; p4,p5 = basis.(P, [4,5])
+2-element Array{Legendre{Float64,N} where N,1}:
+ Legendre(1.0⋅P₄(x))
+ Legendre(1.0⋅P₅(x))
+ 
+julia&gt; wf, dom = SpecialPolynomials.weight_function(P), domain(P);
+
+julia&gt; quadgk(x -&gt; p4(x) * p5(x) *  wf(x), first(dom), last(dom))
+(-1.3877787807814457e-17, 0.0)</code></pre><p>The unexported <code>innerproduct</code> will compute this as well, without the need to specifiy the domain or weight function, which can be gleaned from the type.</p><pre><code class="language-julia-repl">julia&gt; SpecialPolynomials.innerproduct(P, p4, p5)
+-1.543670556388031e-16</code></pre><h2 id="Polynomial-methods-1"><a class="docs-heading-anchor" href="#Polynomial-methods-1">Polynomial methods</a><a class="docs-heading-anchor-permalink" href="#Polynomial-methods-1" title="Permalink"></a></h2><p>For each polynomial type, this package implements as many of the methods for polynomials defined in <code>Polynomials</code>, as possible. </p><h3 id="Arithemtic-1"><a class="docs-heading-anchor" href="#Arithemtic-1">Arithemtic</a><a class="docs-heading-anchor-permalink" href="#Arithemtic-1" title="Permalink"></a></h3><p>For example, basic arithmetic operations  are defined:</p><pre><code class="language-none">julia&gt; P = ChebyshevU
+ChebyshevU
+
+julia&gt; p,q = P([1,2,3,4]), P([-2,0,1,2])
+(ChebyshevU(1⋅U_0(x) + 2⋅U_1(x) + 3⋅U_2(x) + 4⋅U_3(x)), ChebyshevU(- 2⋅U_0(x) + 1⋅U_2(x) + 2⋅U_3(x)))
+
+julia&gt; p + 1
+ChebyshevU(2⋅U_0(x) + 2⋅U_1(x) + 3⋅U_2(x) + 4⋅U_3(x))
+
+julia&gt; -p
+ChebyshevU(- 1⋅U_0(x) - 2⋅U_1(x) - 3⋅U_2(x) - 4⋅U_3(x))
+
+julia&gt; p + q
+ChebyshevU(- 1⋅U_0(x) + 2⋅U_1(x) + 4⋅U_2(x) + 6⋅U_3(x))
+
+julia&gt; p*q
+ChebyshevU(9⋅U_0(x) + 8⋅U_1(x) + 10⋅U_2(x) + 6⋅U_3(x) + 15⋅U_4(x) + 10⋅U_5(x) + 8⋅U_6(x))
+
+julia&gt; p^2
+ChebyshevU(30⋅U_0(x) + 40⋅U_1(x) + 51⋅U_2(x) + 44⋅U_3(x) + 41⋅U_4(x) + 24⋅U_5(x) + 16⋅U_6(x))</code></pre><p>Multiplication formulas may not be defined for each type, and a fall back may be used where the multiplication is done with respect to the standard basis and the answer re-represented:</p><pre><code class="language-julia-repl">julia&gt; P = Jacobi{1/2, -1/2}
+Jacobi{0.5,-0.5,T,N} where N where T
+
+julia&gt; p,q = P([1,2]), P([-2,1])
+(Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+
+julia&gt; p * q
+Jacobi{0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))</code></pre><h3 id="Derivatives-and-integrals-1"><a class="docs-heading-anchor" href="#Derivatives-and-integrals-1">Derivatives and integrals</a><a class="docs-heading-anchor-permalink" href="#Derivatives-and-integrals-1" title="Permalink"></a></h3><p>The classic continuous orthogonal polynomials  have  the <code>derivative</code>  and <code>integrate</code> methods defined:</p><pre><code class="language-julia-repl">julia&gt; P = ChebyshevU{Float64}
+ChebyshevU{Float64,N} where N
+
+julia&gt; p = P([1,2,3])
+ChebyshevU(1.0⋅U₀(x) + 2.0⋅U₁(x) + 3.0⋅U₂(x))
+
+julia&gt; dp = derivative(p)
+ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
+
+julia&gt; convert.(Polynomial, (p, dp))
+(Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
+
+julia&gt; P = Jacobi{1//2, -1//2}
+Jacobi{1//2,-1//2,T,N} where N where T
+
+julia&gt; p,q = P([1,2]), P([-2,1])
+(Jacobi{1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+
+julia&gt; p * q # as above, only with rationals for paramters
+Jacobi{1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+
+julia&gt; P = Jacobi{1//2, 1//2}
+Jacobi{1//2,1//2,T,N} where N where T
+
+julia&gt; p = P([1,2,3])
+Jacobi{1//2,1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
+
+julia&gt; dp = derivative(p)
+Jacobi{1//2,1//2}(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
+
+julia&gt; integrate(p)
+Jacobi{1//2,1//2}(0.375⋅Jᵅᵝ₀(x) + 0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
+
+julia&gt; integrate(p, 0, 1)
+25//8</code></pre><h3 id="Roots-1"><a class="docs-heading-anchor" href="#Roots-1">Roots</a><a class="docs-heading-anchor-permalink" href="#Roots-1" title="Permalink"></a></h3><p>The <code>roots</code> function finds the roots of a polynomial </p><pre><code class="language-julia-repl">julia&gt; p = Legendre([1,2,2,1])
+Legendre(1⋅P₀(x) + 2⋅P₁(x) + 2⋅P₂(x) + 1⋅P₃(x))
+
+julia&gt; rts = roots(p)
+3-element Array{Float64,1}:
+ -1.0
+ -0.20000000000000007
+  0.0
+
+julia&gt; p.(rts)
+3-element Array{Float64,1}:
+ -2.220446049250313e-16
+  0.0
+  0.0</code></pre><p>Here we see <code>fromroots</code> and <code>roots</code> are related, provided a monic polynomial is used:</p><pre><code class="language-julia-repl">julia&gt; using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
+SpecialPolynomials
+
+julia&gt; P = Jacobi{1/2,-1/2}
+Jacobi{0.5,-0.5,T,N} where N where T
+
+
+julia&gt; p = P([1,1,2,3])
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
+
+julia&gt; q = SP.monic(p) # monic is not exported
+Jacobi{0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
+
+julia&gt; fromroots(P, roots(q)) - q |&gt; u -&gt; truncate(u, atol=sqrt(eps())) 
+Jacobi{0.5,-0.5}(0.0)</code></pre><p>The roots are found from the eigenvalues of the companion matrix, which may be directly produced  by <code>companion</code>; the default is  to find  it after conversion to the standard basis.</p><p>For orthogonal polynomials, the roots of the basis vectors are important for quadrature. For larger values of <code>n</code>, the eigenvalues of the unexported <code>jacobi_matrix</code> also identify these roots, but the algorithm is more stable.</p><pre><code class="language-julia-repl">julia&gt; using LinearAlgebra
+
+julia&gt; p5 = basis(Legendre, 5)
+Legendre(1.0⋅P₅(x))
+
+julia&gt; roots(p5)
+5-element Array{Float64,1}:
+ -0.9061798459386636
+ -0.5384693101056829
+  0.538469310105683
+  0.9061798459386635
+  0.0
+
+julia&gt; eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
+5-element Array{Float64,1}:
+ -0.906179845938664
+ -0.5384693101056831
+ -8.042985227174392e-17
+  0.5384693101056834
+  0.9061798459386639</code></pre><p>At higher degrees, the difference in  stability comes out:</p><pre><code class="language-julia-repl">julia&gt; p50 = basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
+34
+
+julia&gt; eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|&gt; isreal |&gt; sum
+50</code></pre><p>(The roots of the classic orthogonal polynomials  are  all  real  and distinct.)</p><p>The unexported <code>gauss_nodes_weights</code> function returns the nodes and weights. For many types (e.g., <code>Jacobie</code>, <code>Legendre</code>, <code>Hermite</code>, <code>Laguerre</code>) it uses an <code>O(n)</code> algorithm of Glaser, Liu, and Rokhlin, for others the <code>O(n²)</code> algorithm through the Jacobi matrix.</p><pre><code class="language-julia-repl">julia&gt; xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
+([-0.9739065285171717, -0.8650633666889845, -0.6794095682990244, -0.4333953941292472, -0.1488743389816312, 0.1488743389816312, 0.4333953941292472, 0.6794095682990244, 0.8650633666889845, 0.9739065285171717], [0.06667134430868804, 0.1494513491505808, 0.21908636251598188, 0.26926671930999635, 0.295524224714753, 0.295524224714753, 0.26926671930999635, 0.21908636251598188, 0.1494513491505808, 0.06667134430868804])</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>For a broader and more robust implementation, the <a href="https://github.com/JuliaApproximation/FastGaussQuadrature.jl">FastGaussQuadrature</a> package provides <code>O(n)</code> algorithms for many classic orthogonal polynomial types.</p></div></div><h2 id="Fitting-1"><a class="docs-heading-anchor" href="#Fitting-1">Fitting</a><a class="docs-heading-anchor-permalink" href="#Fitting-1" title="Permalink"></a></h2><h3 id="Interpolation-1"><a class="docs-heading-anchor" href="#Interpolation-1">Interpolation</a><a class="docs-heading-anchor-permalink" href="#Interpolation-1" title="Permalink"></a></h3><p>For any set of points <code>(x0,y0), (x1,y1), ..., (xn, yn)</code> with unique <code>x</code> values,  there is a unique polynomial of degree <code>n</code> or less that <em>interpolates</em> these points, that is  <code>p(x_i) = y_i</code>. The  <code>fit</code> function will perform polynomial interpolation:</p><pre><code class="language-julia-repl">julia&gt; xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
+([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
+
+julia&gt; p1 = fit(Polynomial,  xs, ys)
+Polynomial(1.0000000000000002 + 8.66666666666669*x - 24.000000000000085*x^2 + 21.333333333333385*x^3)</code></pre><p>The <code>Lagrange</code> and <code>Newton</code> types represent the polynomial in convenient bases based on the nodes (<code>xs</code>):</p><pre><code class="language-julia-repl">julia&gt; p2 = fit(Lagrange, xs, ys)
+Lagrange(1⋅ℓ^3_0(x) + 2⋅ℓ^3_1(x) + 2⋅ℓ^3_2(x) + 3⋅ℓ^3_3(x))
+
+julia&gt; p3 = fit(Newton, xs, ys)
+Newton(1.0⋅p_0(x) + 4.0⋅p_1(x) - 8.0⋅p_2(x) + 21.333333333333332⋅p_3(x))</code></pre><p>These all represent the same interpolating polynomial:</p><pre><code class="language-julia-repl">julia&gt; [p1.(xs)-ys  p2.(xs)-ys p3.(xs)-ys]
+4×3 Array{Float64,2}:
+  2.22045e-16  0.0  0.0
+  1.33227e-15  0.0  0.0
+ -3.33067e-15  0.0  0.0
+ -8.88178e-15  0.0  0.0</code></pre><p>The <code>Lagrange</code> and <code>Newton</code>  methods allow a function to be specified  in place  of a set of <code>y</code> values:</p><pre><code class="language-julia-repl">julia&gt; p = fit(Newton, [1,2,3], x-&gt;x^2)
+Newton(1.0⋅p_0(x) + 3.0⋅p_1(x) + 1.0⋅p_2(x))
+
+julia&gt; convert(Polynomial, p)
+Polynomial(1.0*x^2)</code></pre><p>Polynomial interpolation can demonstrate the Runge phenomenon if the nodes are evenly spaced. For higher degree fitting, the choice of nodes can greatly effect the approximation of the interpolating polynomial to the function generating the <code>y</code> values.</p><p>For an orthogonal polynomial type, the zeros of the basis polynomial <code>p_{n+1}</code>, labeled <code>x_0, x_1, ..., x_n</code> are often used as nodes, especially for the Chebyshev nodes (of the first kind).   <a href="https://archive.siam.org/books/ot99/OT99SampleChapter.pdf">Gil, Segura, and Temme</a> say &quot;Interpolation with Chebyshev nodes is not as good as the best approximation ..., but usually it is the best practical possibility for interpolation and certainly much better than equispaced interpolation&quot;</p><p>For the orthogonal polynomial types, the default for <code>fit</code> for degree <code>n</code> will use the zeros of <code>P_{n+1}</code> to interpolate. We can see that some interpolation points lead to better fits than others, in the following graphic:</p><pre><code class="language-example">f(x) = exp(-x)*sinpi(x)
+plot(f, -1, 1, legend=false, color=:black, linewidth=3)
+p=fit(Val(:interpolating), Chebyshev, f, 3);  plot!(p, color=:blue)
+p=fit(Val(:interpolating), ChebyshevU, f, 3); plot!(p, color=:red)
+fit(Val(:interpolating), Legendre, f, 3);     plot!(p, color=:green)
+xs = [-0.5, 0.0, 0.5]
+p=fit(Newton, xs, f);
+ts = range(-1, 1, length=100);                plot!(ts, p.(ts), color=:brown)
+savefig(&quot;fitting.svg&quot;); nothing # hide</code></pre><p><img src="fitting.svg" alt/></p><h3 id="Polynomial-approximation-1"><a class="docs-heading-anchor" href="#Polynomial-approximation-1">Polynomial approximation</a><a class="docs-heading-anchor-permalink" href="#Polynomial-approximation-1" title="Permalink"></a></h3><p>There are other criteria for fitting that can be used.</p><p>If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won&#39;t  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Fitting  ini the standard basis, a  degree  is specified, as follows:</p><pre><code class="language-julia-repl">julia&gt; xs, ys =  [1,2,3,4], [2.0,3,1,4]
+([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
+
+julia&gt; p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
+Polynomial(1.5 + 0.4*x)
+
+julia&gt; p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
+Polynomial(4.000000000000018 - 2.100000000000017*x + 0.5000000000000026*x^2)
+
+julia&gt; p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
+Polynomial(-10.000000000000302 + 20.16666666666734*x - 9.500000000000297*x^2 + 1.3333333333333721*x^3)</code></pre><p>For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial <code>a0⋅p0 + a1⋅p1 + ⋅⋅⋅ + an⋅pn</code> where <code>ai=∫f⋅pi⋅w⋅dx / ∫pi^2⋅w⋅dx</code>. There is no need to specify values for <code>x</code>:</p><pre><code class="language-julia-repl">julia&gt; f(x) = exp(-x) * sinpi(x)
+f (generic function with 1 method)
+
+julia&gt; p = fit(Val(:lsq), Chebyshev{Float64}, f, 50);
+
+julia&gt; maximum(norm(p(x)-f(x) for x in range(-1,1,length=500))) &lt;= sqrt(eps())
+true</code></pre><p>This wavy example is from Trefethen:</p><pre><code class="language-julia-repl">julia&gt; f(x) = sin(6x) + sin(60*exp(x))
+f (generic function with 1 method)
+
+julia&gt; p50 = fit(Val(:lsq), Chebyshev{Float64}, f, 50);
+
+julia&gt; maximum(norm(p50(x)-f(x) for x in range(-1,1,length=500))) &lt;= sqrt(eps()) # cf. graph below
+false</code></pre><p>(With 50 points, the approximation misses badly over <code>[-1,1]</code>. There are 45 local extrema on  this interval.)</p><p>However, with more points we have a good fit:</p><pre><code class="language-julia-repl">julia&gt; p196 = fit(Chebyshev{Float64}, f, 196);
+
+julia&gt; maximum(norm(p196(x)-f(x) for x in range(-1,1,length=500))) &lt;= sqrt(eps())  # ≈ 1e-13
+true</code></pre><pre><code class="language-">using Plots, Polynomials, SpecialPolynomials
+f(x) = sin(6x) + sin(60*exp(x))
+p50 = fit(Chebyshev{Float64}, f, 50);
+p196 = fit(Chebyshev{Float64}, f, 196);
+plot(f, -1, 1, legend=false, color=:black)
+xs = range(-1, stop=1, length=500) # more points than recipe
+plot!(xs, p50.(xs), color=:blue)
+plot!(xs, p196.(xs), color=:red)
+savefig(&quot;wavy.svg&quot;); nothing # hide</code></pre><p><img src="wavy.svg" alt/></p><p>For the  <code>Chebyshev</code> type, the  <code>Val(:series)</code> argument will fit a heuristically identify truncated series  to the function.</p><pre><code class="language-none">using Polynomials, SpecialPolynomials
+f(x) = sin(6x) + sin(60*exp(x))
+p  = fit(Val(:series), Chebyshev, f);
+degree(p)</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The <a href="https://github.com/JuliaApproximation/ApproxFun.jl">ApproxFun</a> package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia&#39;s built-in functions are conveniently provided.</p></div></div><h2 id="Plotting-1"><a class="docs-heading-anchor" href="#Plotting-1">Plotting</a><a class="docs-heading-anchor-permalink" href="#Plotting-1" title="Permalink"></a></h2><p>The <code>plot</code> recipe from the <code>Polynomials</code> package works as expected for the polynomial types in this package. The domain to be plotted over matches that given by <code>domain</code>, unless this is infinite. A plot of the first few Chebyshev Polynomials of the second kind can be produced as follows:</p><pre><code class="language-">using Plots, Polynomials, SpecialPolynomials
+# U1, U2, U3, and U4:
+chebs = basis.(ChebyshevU, 1:4)
+colors = [&quot;#4063D8&quot;, &quot;#389826&quot;, &quot;#CB3C33&quot;, &quot;#9558B2&quot;]
+itr = zip(chebs, colors)
+(cheb,col), state = iterate(itr)
+p = plot(cheb, c=col,  lw=5, legend=false, label=&quot;&quot;)
+for (cheb, col) in Base.Iterators.rest(itr, state)
+  plot!(cheb, c=col, lw=5)
+end
+savefig(&quot;chebs.svg&quot;); nothing # hide</code></pre><p><img src="chebs.svg" alt/></p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="../">SpecialPolynomials.jl »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 18 June 2020 00:43">Thursday 18 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
