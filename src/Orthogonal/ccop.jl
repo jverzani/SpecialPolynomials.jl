@@ -414,13 +414,12 @@ end
 
 #  avoid dispatch when N is known
 function Base.:+(p::P, c::S) where {T, N, P<:AbstractCOP{T,N}, S<:Number}
-    c′ = one(T) * c / k0(P)
+    c′ = one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
     R = typeof(c′)
     #R = promote_type(promote_type(T,S), typeof(inv(k0(P))))
-    iszero(c) && return (N == 0 ? zero(⟒(P){R},p.var) :  ⟒(P){R,N}(R.(p.coeffs), p.var))
-    #c′ = c / k0(P)
-    N == 0 && return ⟒(P)(R[c], p.var)
-    N == 1 && return ⟒(P)(R[p[0]+ c′], p.var)
+    iszero(c) && return (N == 0 ? zero(⟒(P){R}, p.var) :  ⟒(P){R,N}(R.(p.coeffs), p.var))
+    N == 0 && return ⟒(P)(c, p.var)
+    N == 1 && return ⟒(P)
     cs = R[iszero(i) ? p[i]+c′ : p[i] for i in 0:N-1]
     return ⟒(P){R,N}(cs, p.var)
 end
@@ -447,8 +446,8 @@ function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
 
-    Polynomials.isconstant(p)  && return q + p[0]*k0(P)
-    Polynomials.isconstant(q)  && return p + q[0]*k0(Q)    
+    Polynomials.isconstant(p)  && return q + p(0) #p[0]*k0(P)
+    Polynomials.isconstant(q)  && return p + q(0) #q[0]*k0(Q)    
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
     if N==M
@@ -489,7 +488,9 @@ function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
-    convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
+    p′,q′ = _convert_cop.(Polynomial, (p,q))
+    _convert_cop(⟒(P), p′ * q′)
+#    convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
 
 end
 

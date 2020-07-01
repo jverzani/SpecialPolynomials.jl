@@ -77,8 +77,6 @@ function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
 end
 
-eval_cop(P::Type{<:Laguerre}, cs, x::Number) = eval_hyper(P,cs,x)
-
 gauss_nodes_weights(p::Type{P}, n) where {α, P <: Laguerre{α}} =
     FastGaussQuadrature.gausslaguerre(n,α)
 

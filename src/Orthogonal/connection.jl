@@ -48,7 +48,7 @@ function _convert_cop(::Type{Q}, p::P) where {P <: ConvertibleTypes,
                                                Q <: ConvertibleTypes}
 
     d = degree(p)
-    T,S = eltype(one(Q)), eltype(p)  #
+    T,S = eltype(Q), eltype(p)  #
     R = typeof(one(promote_type(T,S))/1)
 
     as = zeros(R, 1+d)
