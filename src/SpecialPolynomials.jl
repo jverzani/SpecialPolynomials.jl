@@ -11,6 +11,9 @@ export basis
 using QuadGK
 using Memoize
 
+using HypergeometricFunctions
+using FastTransforms
+using FastGaussQuadrature
 
 
 include("utils.jl")

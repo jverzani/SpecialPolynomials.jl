@@ -161,13 +161,13 @@ end
 
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
-An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n)
+An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n) 
 function  Ãn(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     Ãn(P, a,b,c,d,e ,n) 
 end
 
-Bn(P::Type{<:AbstractCOP}, n::Int) = B̃n(P,n) * k1k0(P,n)
+Bn(P::Type{<:AbstractCOP}, n::Int) = B̃n(P,n) * k1k0(P,n) 
 function B̃n(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     B̃n(P, a,b,c,d,e ,n) 
@@ -366,13 +366,26 @@ end
 ##
 ## Conversion
 
+
 function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP} 
     p(variable(Q, p.var))
 end
 function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynomials.StandardBasisPolynomial}
     _convert_cop(Q, p)
 end
+
+## Conversion
+## * use FastTransforms, when available for T <: AbstractFloat
+## * use  _convert_cop when possible
+## * use  convesion  through Polynomial type
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
+    _convert(Q, p)
+end
+
+# work around method ambiguity introducted in abstract
+# dispatch  to  specific FastTransform  method  (defined in `connection.jl`) or
+# use this default
+function  _convert(::Type{Q}, p::P) where {Q <: AbstractCCOP,  P <: AbstractCCOP}
 
     a,b,c,d,e = abcde(P)
     ā,b̄,c̄,d̄,ē = abcde(Q)
@@ -383,7 +396,7 @@ function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: Abstrac
         T = eltype(Q)
         convert(Q, convert(Polynomial{T}, p))
     end
-end
+end    
 
 ##
 ## --------------------------------------------------
@@ -401,11 +414,14 @@ end
 
 #  avoid dispatch when N is known
 function Base.:+(p::P, c::S) where {T, N, P<:AbstractCOP{T,N}, S<:Number}
-    R = promote_type(T,S)
+    c′ = one(T) * c / k0(P)
+    R = typeof(c′)
+    #R = promote_type(promote_type(T,S), typeof(inv(k0(P))))
     iszero(c) && return (N == 0 ? zero(⟒(P){R},p.var) :  ⟒(P){R,N}(R.(p.coeffs), p.var))
+    #c′ = c / k0(P)
     N == 0 && return ⟒(P)(R[c], p.var)
-    N == 1 && return ⟒(P)(R[p[0]+c], p.var)
-    cs = R[iszero(i) ? p[i]+c : p[i] for i in 0:N-1]
+    N == 1 && return ⟒(P)(R[p[0]+ c′], p.var)
+    cs = R[iszero(i) ? p[i]+c′ : p[i] for i in 0:N-1]
     return ⟒(P){R,N}(cs, p.var)
 end
 
@@ -431,8 +447,8 @@ function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
 
-    Polynomials.isconstant(p)  && return q + p[0]
-    Polynomials.isconstant(q)  && return p + q[0]    
+    Polynomials.isconstant(p)  && return q + p[0]*k0(P)
+    Polynomials.isconstant(q)  && return p + q[0]*k0(Q)    
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
     if N==M
@@ -468,8 +484,8 @@ end
 
 function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
-    Polynomials.isconstant(p)  && return q * p[0]
-    Polynomials.isconstant(q)  && return p * q[0]    
+    Polynomials.isconstant(p)  && return q * p(0)
+    Polynomials.isconstant(q)  && return p * q(0)
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
@@ -536,7 +552,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
             ps[1+n-1] -= pn*c/a
         end
     end
-    a,b,c = ân(P,0),b̂n(P,0),ĉn(P,0)
+    a,b = ân(P,0),b̂n(P,0)
     p1 = ps[1+1]
     as[1+0] = p1/a
 
@@ -550,34 +566,37 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
     T,S = eltype(p), typeof(C)
     R = promote_type(typeof(one(T) / 1), S)
     Q = ⟒(P){R}
-    #if hasnan(p) || hasnan(C)
-    #    error("XXX nan")
-    #end
+    if hasnan(p) || isnan(C)
+        return   Q(NaN)
+    end
+
     n = degree(p)
-    if n == 0
-        return Q([C, p[0]], p.var)
+    if n == -1
+        return zero(Q, p.var)
+    elseif n == 0
+        return C*one(Q, p.var)  + p(0)*variable(Q, p.var)
     end
     
     as = zeros(R, n + 2)
 
     # case d=0 we do by hand,  as
-    # P_0(x) = 1, so ∫P_o = x = variable(P)
+    # P_0(x) = c, so ∫P_o = x = c*variable(P)
     c₀,c₁ = coeffs(variable(p))
     pd = first(p.coeffs)
     as[1] = pd*c₀
-    as[2] = pd*c₁
+    as[2] = pd* (c₁ * k0(Q))
     @inbounds for d in 1:n
         pd = p.coeffs[d+1]
         as[1 + d + 1] += pd * ân(Q, d)
         as[1 + d]     += pd * b̂n(Q, d)
-        if  d > 0
+        if  d > 1
             as[1 + d - 1] += pd * ĉn(Q, d)
         end
     end
 
     # adjust constant
     ∫p = Q(as,  p.var)
-    return ∫p + (R(C) - ∫p(0))
+    return ∫p - ∫p(0) + Q(C) 
 
 end
 

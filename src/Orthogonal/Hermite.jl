@@ -62,10 +62,8 @@ function classical_hypergeometric(::Type{<:Hermite}, n, x)
     (2x)^n * pFq(as, bs, -inv(x)^2)
 end
 
-function  gauss_nodes_weights(P::Type{<:Hermite}, n)
-    xs,  ws  =  gauss_nodes_weights(ChebyshevHermite, n)
-    xs/sqrt(2), ws/sqrt(2)
-end
+gauss_nodes_weights(p::Type{P}, n) where {P <: Hermite} =
+    FastGaussQuadrature.gausshermite(n)
 
 
 ## Overrides

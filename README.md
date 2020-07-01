@@ -1,7 +1,7 @@
 # Special Polynomials
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jverzani.github.io/SpecialPolynomials.jl/stable)
-![Docs from  JuliaHub](https://juliahub.com/docs/SpecialPolynomials/)
+[![](https://img.shields.io/badge/docs-juliahub-blue.svg)](https://juliahub.com/docs/SpecialPolynomials/)
 [![Build Status](https://travis-ci.org/jverzani/SpecialPolynomials.jl.svg?branch=master)](https://travis-ci.org/jverzani/SpecialPolynomials.jl)
 
 A package providing various polynomial types (assuming different

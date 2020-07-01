@@ -55,16 +55,17 @@ k1k0(P::Type{<:Legendre}, n::Int) = (one(eltype(P))*(2n+1))/(n+1) #k1k0(Gegenbau
 #k1k_1(P::Type{<:Legendre}, n::Int) = k1k_1(Gegenbauer{1/2, eltype(P)}, n)
 
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
+ω₁₀(P::Type{<:Legendre}, n) = sqrt((one(eltype(P))*(2n+1))/(2n+3))
 weight_function(::Type{<:Legendre})  = x -> one(x)
 generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
-
-# gauss nodes
-function gauss_nodes_weights(P::Type{<:Legendre}, n)
-    xs,  ws =  glaser_liu_rokhlin_gauss_nodes(basis(MonicLegendre,n))
-    λ = kn(P,n)^2
-    xs, ws/λ
+function classical_hypergeometric(::Type{<:Legendre}, n, x)
+    as = (-n, n+1)
+    bs = (1, )
+    pFq(as, bs, (1-x)/2)
 end
 
+gauss_nodes_weights(p::Type{P}, n) where {P <: Legendre} =
+    FastGaussQuadrature.gausslegendre(n)
 
 # overrides
 
@@ -144,4 +145,10 @@ export MonicShiftedLegendre
 ϟ(::Type{<:MonicShiftedLegendre{T}}) where {T} = ShiftedLegendre{T}
 @register_monic(MonicShiftedLegendre)
 
+
+@register0 OrthonormalLegendre AbstractCCOP0
+export OrthonormalLegendre
+ϟ(::Type{<:OrthonormalLegendre}) = Legendre
+ϟ(::Type{<:OrthonormalLegendre{T}}) where {T} = Legendre{T}
+@register_orthonormal(OrthonormalLegendre)
 

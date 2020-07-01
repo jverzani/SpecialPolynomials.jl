@@ -50,19 +50,21 @@ Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
 abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
 
-k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = k <= 0  ? -one(eltype(P)) : -one(eltype(P))/(k+1)
+k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = -one(eltype(P))/(k+1) # k >=0
 
-
-# function kn(P::Type{<:Laguerre{α}}, n::Int)  where {α}
-#     (-one(eltype(P)))^n/factorial(n) #Γ(1+n)
-# end
-
-#k1k_1(P::Type{<:Laguerre{α}}, k::Int) where {α} =  k <= 0  ? zero(eltype(P)) : one(eltype(P))/(k+1)/k
 
 function norm2(::Type{<:Laguerre{α}}, n) where{α}
     iszero(α) && return one(α)
-    gamma(n + α + 1) / gamma(n+1)
+    Γ(n + α + 1) / Γ(n+1)
 end
+
+function ω₁₀(::Type{<:Laguerre{α}}, n) where{α}
+    iszero(α) && return 1.0
+    val = Γ(n + 1 + α + 1) / Γ(n + α + 1)
+    val /= n + 1 # Γ(n+1)/Γ(n+2)
+    sqrt(val)
+end
+
 
 weight_function(::Type{<:Laguerre{α}}) where {α} = x  -> x^α * exp(-x)
 generating_function(::Type{<:Laguerre{α}}) where {α} = (t,x) -> begin
@@ -75,12 +77,10 @@ function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
 end
 
-function gauss_nodes_weights(P::Type{<:Laguerre{α}}, n) where {α}
-    α <= -1 && throw(ArgumentError("α  too small"))
-    xs,  ws  =  glaser_liu_rokhlin_gauss_nodes(basis(MonicLaguerre{α},n))
-    λ = kn(P,n)^2
-    xs, ws/λ
-end
+eval_cop(P::Type{<:Laguerre}, cs, x::Number) = eval_hyper(P,cs,x)
+
+gauss_nodes_weights(p::Type{P}, n) where {α, P <: Laguerre{α}} =
+    FastGaussQuadrature.gausslaguerre(n,α)
 
         
 ## Overrides
@@ -119,12 +119,9 @@ export MonicLaguerre
 ϟ(::Type{<:MonicLaguerre{α,T}}) where {α,T} = Laguerre{α,T}
 @register_monic(MonicLaguerre)
 
-#
-pqr_start(P::Type{MonicLaguerre{α}}, n) where {α} = 2/(4n+2α+2)
-pqr_symmetry(P::Type{<:MonicLaguerre{α}})  where {α} = false
-function pqr_weight(P::Type{<:MonicLaguerre{α}}, n, x, dπx) where {α}
-    val =  one(eltype(P)) 
-    val /= (x*dπx^2)
-    val = 1/(x*dπx^2)    
-    val
-end
+
+@registerN OrthonormalLaguerre AbstractCCOP1 α
+export OrthonormalLaguerre
+ϟ(::Type{<:OrthonormalLaguerre{α}}) where {α} = Laguerre{α}
+ϟ(::Type{<:OrthonormalLaguerre{α,T}}) where {α,T} = Laguerre{α,T}
+@register_orthonormal(OrthonormalLaguerre)

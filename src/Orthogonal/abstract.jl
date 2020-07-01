@@ -101,7 +101,7 @@ macro registerN(name,  parent, params...)
             $poly{$(αs...),promote_type(T,S)}
 
         $poly{$(αs...),T}(n::Number, var::Polynomials.SymbolLike = :x) where {$(αs...),T} =
-            $poly{$(αs...)}(T[n], var)
+            n * one($poly{$(αs...),T}, var)
         $poly{$(αs...)}(n::S, var::Polynomials.SymbolLike = :x)        where {$(αs...), S<:Number} =
             $poly{$(αs...),S}(n,var)
         $poly{$(αs...),T}(var::Polynomials.SymbolLike=:x)              where {$(αs...), T} =
@@ -144,6 +144,31 @@ macro register_monic(name)
         SpecialPolynomials.ẫn(P::Type{<:$monic}, v::Val{N}) where {N} =  ẫn(ϟ(P),v)
         SpecialPolynomials.b̂̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  b̂̃n(ϟ(P),v)
         SpecialPolynomials.ĉ̃n(P::Type{<:$monic}, v::Val{N}) where {N} =  ĉ̃n(ϟ(P),v)
+    end
+end
+
+## Make ortho
+macro register_orthonormal(name)
+
+    orthonormal=esc(name)
+    
+    quote
+        SpecialPolynomials.isorthonormal(::Type{<:$orthonormal}) = true
+        SpecialPolynomials.abcde(P::Type{<:$orthonormal})  = abcde(ϟ(P))
+        SpecialPolynomials.basis_symbol(P::Type{<:$orthonormal})  = basis_symbol(ϟ(P)) * "̃"
+        SpecialPolynomials.weight_function(P::Type{<:$orthonormal}) = weight_function(ϟ(P))
+        Polynomials.domain(P::Type{<:$orthonormal}) = domain(ϟ(P))
+        SpecialPolynomials.k0(::Type{P}) where{P <: $orthonormal} = k0(ϟ(P)) / sqrt(norm2(ϟ(P),0)) 
+        SpecialPolynomials.k1k0(::Type{P},  n::Int) where{P <: $orthonormal} = k1k0(ϟ(P),n) /  ω₁₀(ϟ(P), n)
+        SpecialPolynomials.ω₁₀(P::Type{<:$orthonormal}, n::Int) = one(eltype(P))
+        
+        SpecialPolynomials.B̃n(P::Type{<:$orthonormal}, n::Int) =  B̃n(ϟ(P),n)
+        SpecialPolynomials.B̃n(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  B̃n(ϟ(P),v)
+        SpecialPolynomials.C̃n(P::Type{<:$orthonormal}, n::Int) =  C̃n(ϟ(P),n)
+        SpecialPolynomials.C̃n(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  C̃n(ϟ(P),v)
+        SpecialPolynomials.ẫn(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  ẫn(ϟ(P),v)
+        SpecialPolynomials.b̂̃n(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  b̂̃n(ϟ(P),v)
+        SpecialPolynomials.ĉ̃n(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  ĉ̃n(ϟ(P),v)
     end
 end
 

@@ -78,6 +78,8 @@ function  (p::FallingFactorial)(x)
     tot
 end
 
+k0(P::Type{<:FallingFactorial}) = one(eltype(P))
+
 Base.:*(p::FallingFactorial, q::FallingFactorial) = convert(FallingFactorial,  convert(Polynomial,p)*convert(Polynomial,q))
 
 
