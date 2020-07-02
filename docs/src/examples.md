@@ -309,7 +309,7 @@ Here we see `fromroots` and `roots` are related, provided a monic polynomial is 
 julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
 SpecialPolynomials
 
-julia> P = MonicJacobi{1/2,-1/2}
+julia> P = Jacobi{1/2,-1/2}
 Jacobi{0.5,-0.5,T,N} where N where T
 
 
