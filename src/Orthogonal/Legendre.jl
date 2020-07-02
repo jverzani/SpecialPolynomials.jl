@@ -50,9 +50,8 @@ basis_symbol(::Type{<:Legendre})  = "P"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 
 
-#kn(P::Type{<:Legendre}, n::Int)  = kn(Gegenbauer{1/2, eltype(P)}, n)
+k0(P::Type{<:Legendre}) = one(eltype(P))
 k1k0(P::Type{<:Legendre}, n::Int) = (one(eltype(P))*(2n+1))/(n+1) #k1k0(Gegenbauer{1/2, eltype(P)}, n)
-#k1k_1(P::Type{<:Legendre}, n::Int) = k1k_1(Gegenbauer{1/2, eltype(P)}, n)
 
 norm2(::Type{<:Legendre}, n) = 2/(2n+1)
 ω₁₀(P::Type{<:Legendre}, n) = sqrt((one(eltype(P))*(2n+1))/(2n+3))

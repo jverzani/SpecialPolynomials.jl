@@ -48,6 +48,7 @@ Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
 
 abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
 
+k0(P::Type{<:Hermite}) = one(eltype(P))
 function k1k0(P::Type{<:Hermite}, k::Int)
     val = 2*one(eltype(P))
     val

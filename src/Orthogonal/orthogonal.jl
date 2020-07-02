@@ -60,24 +60,6 @@ function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) whe
     return Δ0 * p₀  + Δ1 * p₁
 end
 
-# # from instance, x
-# function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
-
-#     T, cs = eltype(p), coeffs(p)
-#     N = length(cs)
-#     N == 0 && return zero(T)*zero(S)
-#     N == 1 && return cs[1] * one(S)
-
-#     Δ0 = cs[end - 1]
-#     Δ1 = cs[end]
-#     @inbounds for i in N-1:-1:2
-#         Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
-#     end
-
-#     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
-# end
-
-
 
 ## Connection/Linearization
 

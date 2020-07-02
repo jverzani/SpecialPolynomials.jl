@@ -67,8 +67,7 @@ k0(::Type{P}) where {P <: Polynomials.StandardBasisPolynomial} = one(eltype(P))
 # For non-monic subtypes of `AbstractCOP` only need k1k0  to be defined, as `kn` and `k1k_1` come for free
 
 # kn = prod(k1k0(i) for i in 0:n-1)  *  k0(P)
-# This  **assumes** basis(P,0) = 1, so kn(P,0)  = 1
-kn(::Type{P},  n::Int) where{P <: AbstractCOP} = foldr(*, (k1k0(P,i) for i in 0:n-1), init=k0(P)) #iszero(n) ?  k0(P) : prod(k1k0(P,i) for i in  0:n-1) * k0(P)
+kn(::Type{P},  n::Int) where{P <: AbstractCOP} = foldr(*, (k1k0(P,i) for i in 0:n-1), init=k0(P)) 
 
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP}
@@ -115,8 +114,8 @@ end
 function _eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
     if @generated
         quote
-            Δ0 = cs[end - 1]*one(T)*one(S)
-            Δ1 = cs[end]*one(T)*one(S)
+            Δ0 = cs[end - 1]
+            Δ1 = cs[end]
             @inbounds for i in N-1:-1:2
                 Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1), Bn(P,i-1))
             end
@@ -132,7 +131,7 @@ end
 #  evaluate  basis vector through hypergeometric formulation
 (B::Basis{P})(x) where  {P <: AbstractCOP} = eval_basis(P, B.n, x)
 
-# Evaluate a basis vector without realizing it and using Clenshaw
+# Evaluate a basis vector without realizing it and without using Clenshaw
 eval_basis(::Type{P}, n, x) where {P <: AbstractCOP} = classical_hypergeometric(P, n, x)
 
 """
@@ -141,6 +140,7 @@ eval_basis(::Type{P}, n, x) where {P <: AbstractCOP} = classical_hypergeometric(
 Evaluate polynomial `P(cs)` by  computing value for each basis vector from its hypergeometric representation
 """
 function eval_hyper(P::Type{<:AbstractCOP}, cs, x::S) where {S}
+    isempty(cs) &&  return zero(S)
     tot = cs[1] * one(S)
     for i in 2:length(cs)
         tot += cs[i] * Basis(P, i-1)(x)

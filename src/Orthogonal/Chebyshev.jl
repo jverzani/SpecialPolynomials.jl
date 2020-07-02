@@ -58,13 +58,12 @@ end
 
 abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
 
+k0(P::Type{<:Chebyshev}) = one(eltype(P))
 k1k0(P::Type{<:Chebyshev}, n::Int)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
 
 norm2(P::Type{<:Chebyshev}, n::Int) = (iszero(n) ? 1 : 1/2) * pi
 ω₁₀(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P))/sqrt(2) : one(eltype(P)) # √(norm2(n+1)/norm2(n)
 
-#kn(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
-#k1k_1(P::Type{<:Chebyshev}, n::Int) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
 
 leading_term(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
 

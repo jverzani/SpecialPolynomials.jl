@@ -81,7 +81,7 @@ julia> p3(u)
 ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
-For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, conversion utilizes `FastTransforms`, which can handle conversion between polynomials with very high degree.
+For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
 
 
 For the basis functions, the `basis` function can be used:
@@ -103,14 +103,14 @@ Basis(Hermite, 3)(0.5)
 
 
 
-If the coefficients are known, they can be directly passed to the constructor:
+If the coefficients of a polynomial relative to the polynomial type are known, they can be directly passed to the constructor:
 
 ```jldoctest example
 julia> Laguerre{0}([1,2,3])
 Laguerre{0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 ```
 
-Some polynomial types are parameterized. The parameters are passed as in this example or the previous one:
+Some polynomial types are parameterized, as above. The parameters are passed to the type, as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
@@ -260,23 +260,23 @@ julia> integrate(p, 0, 1)
 
 ### Conversion
 
-Expression a polynomial in type `P` in type `Q` is done through several possible means:
+Expressing a polynomial in type `P` in type `Q` is done through several possible means:
 
 ```jldoctest example
-julia> P,Q = Gegenbauer{1/3}, Gegenbauer{2/3}
-(Gegenbauer{0.3333333333333333,T,N} where N where T, Gegenbauer{0.6666666666666666,T,N} where N where T)
+julia> P,Q = Gegenbauer{1//3}, Gegenbauer{2//3}
+(Gegenbauer{1//3,T,N} where N where T, Gegenbauer{2//3,T,N} where N where T)
 
 julia> p = P([1,2,3.0])
-Gegenbauer{0.3333333333333333}(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
+Gegenbauer{1//3}(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
 
 julia> convert(Q, p)
-Gegenbauer{0.6666666666666666}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
 
 julia> p(variable(Q))
-Gegenbauer{0.6666666666666666}(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
 
 julia> SpecialPolynomials._convert_cop(Q,p)
-Gegenbauer{0.6666666666666666}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2⋅Cᵅ₂(x))
 ```
 
 The first uses a method from the `FastTransforms` package. This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
@@ -309,7 +309,7 @@ Here we see `fromroots` and `roots` are related, provided a monic polynomial is 
 julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
 SpecialPolynomials
 
-julia> P = Jacobi{1/2,-1/2}
+julia> P = MonicJacobi{1/2,-1/2}
 Jacobi{0.5,-0.5,T,N} where N where T
 
 
@@ -365,15 +365,27 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> s
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
 
 
-The unexported `gauss_nodes_weights` function returns the nodes and weights. For many types (e.g., `Jacobie`, `Legendre`, `Hermite`, `Laguerre`) it uses an `O(n)` algorithm of Glaser, Liu, and Rokhlin, for others the `O(n²)` algorithm through the Jacobi matrix.
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For many types (e.g., `Jacobie`, `Legendre`, `Hermite`, `Laguerre`). As possible, it uses the methods from the `FastGaussQuadratures` package, which provides `O(n)` algorithms, where the Jacobi matrix is `O(n²)`.
+
+
 
 ```jldoctest example
-julia> xs, ys = SpecialPolynomials.gauss_nodes_weights(Legendre{Float64}, 10)
-([-0.9739065285171717, -0.8650633666889845, -0.6794095682990244, -0.4333953941292472, -0.1488743389816312, 0.1488743389816312, 0.4333953941292472, 0.6794095682990244, 0.8650633666889845, 0.9739065285171717], [0.06667134430868804, 0.1494513491505808, 0.21908636251598188, 0.26926671930999635, 0.295524224714753, 0.295524224714753, 0.26926671930999635, 0.21908636251598188, 0.1494513491505808, 0.06667134430868804])
+julia> xs, ws = SpecialPolynomials.gauss_nodes_weights(Legendre, 4)
+([-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526], [0.34785484513745385, 0.6521451548625462, 0.6521451548625462, 0.34785484513745385])
+
+julia> basis(Legendre, 4).(xs)
+4-element Array{Float64,1}:
+  1.1102230246251565e-16
+ -8.326672684688674e-17
+ -8.326672684688674e-17
+  1.1102230246251565e-16
+
+julia> f(x) = x^7 - x^6; F(x) = x^8/8 - x^7/7;
+
+julia> sum(f(x)*w for (x,w) in zip(xs, ws)) - (F(1) - F(-1))
+5.551115123125783e-17
 ```
 
-!!! note
-    For a broader and more robust implementation, the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides `O(n)` algorithms for many classic orthogonal polynomial types.
 
 ## Fitting
 
@@ -545,26 +557,6 @@ degree(p)
 !!! note
     The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
 
-### Gauss nodes and weights
-
-Classic orthogonal polynomials systems are used for quadrature problems. For that a computation of the nodes and weights is needed. The unexported `gauss_nodes_weights` function computes these. As possible, the routines in the `FastGaussQuadrature` package are used.
-
-```jldoctest example
-julia> xs, ws = SpecialPolynomials.gauss_nodes_weights(Legendre, 4)
-([-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526], [0.34785484513745385, 0.6521451548625462, 0.6521451548625462, 0.34785484513745385])
-
-julia> basis(Legendre, 4).(xs)
-4-element Array{Float64,1}:
-  1.1102230246251565e-16
- -8.326672684688674e-17
- -8.326672684688674e-17
-  1.1102230246251565e-16
-
-julia> f(x) = x^7 - x^6; F(x) = x^8/8 - x^7/7;
-
-julia> sum(f(x)*w for (x,w) in zip(xs, ws)) - (F(1) - F(-1))
-5.551115123125783e-17
-```
 
 ## Plotting
 

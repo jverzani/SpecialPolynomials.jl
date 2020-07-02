@@ -29,7 +29,7 @@ Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-
 
 abcde(::Type{<:Gegenbauer{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(2α+1),0))
 
-
+k0(P::Type{<:Gegenbauer}) = one(eltype(P))
 k1k0(P::Type{<:Gegenbauer{α}}, k::Int) where {α} =(one(eltype(P))*2*(α+k))/(k+1)
 
 function norm2(::Type{<:Gegenbauer{α}}, n) where{α}

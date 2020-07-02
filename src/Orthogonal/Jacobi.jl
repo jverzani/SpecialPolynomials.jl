@@ -31,7 +31,7 @@ basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
 Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} = Polynomials.Interval(-1, 1, β >= 0, α >= 0)
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
-
+k0(P::Type{<:Jacobi}) = one(eltype(P))
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     n == -1  &&  return one(eltype(P))/1 
     γ = 2n + α + β

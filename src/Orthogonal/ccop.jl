@@ -375,8 +375,8 @@ function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynom
 end
 
 ## Conversion
-## * use FastTransforms, when available for T <: AbstractFloat
-## * use  _convert_cop when possible
+## * use FastTransforms, when available for T <: AbstractFloat; see connection.jl
+## * use  _convert_cop when possible (needs to match σ)
 ## * use  convesion  through Polynomial type
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
     _convert(Q, p)
@@ -401,41 +401,17 @@ end
 ##
 ## --------------------------------------------------
 # # scalar ops
-# function Base.:+(p::P, c::S) where {P <: AbstractCOP, S<:Number}
-#     R = promote_type(eltype(p), S)
-#     as = R[a for a in coeffs(p)]
-#     if length(as) >= 1
-#         as[1] += c  # *assume* basis(P,0) = 1
-#     else
-#         push!(as, c)
-#     end
-#     ⟒(P)(as, p.var)
-# end
 
 #  avoid dispatch when N is known
 function Base.:+(p::P, c::S) where {T, N, P<:AbstractCOP{T,N}, S<:Number}
-    c′ = one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
-    R = typeof(c′)
-    #R = promote_type(promote_type(T,S), typeof(inv(k0(P))))
+    c′ =  c / k0(P) #one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
+    R = promote_type(promote_type(T,S), typeof(inv(k0(P))))
     iszero(c) && return (N == 0 ? zero(⟒(P){R}, p.var) :  ⟒(P){R,N}(R.(p.coeffs), p.var))
-    N == 0 && return ⟒(P)(c, p.var)
-    N == 1 && return ⟒(P)
-    cs = R[iszero(i) ? p[i]+c′ : p[i] for i in 0:N-1]
+    N == 0 && return ⟒(P)(R(c), p.var)
+    N == 1 && return ⟒(P)(R[p[0] + c′], p.var)
+    cs = R[iszero(i) ? p[0]+c′ : p[i] for i in 0:N-1]
     return ⟒(P){R,N}(cs, p.var)
 end
-
-# function Base.:*(p::P, c::S) where {T, N, P<:AbstractCOP{T,N}, S <: Number}
-#     R = promote_type(T,S)
-#     iszero(c)  && return zero(⟒(P){R})
-#     ⟒(P){R,N}(p.coeffs .* c, p.var)
-# end
-
-# function Base.:/(p::P, c::S) where {T,N,P<:AbstractCOP{T,N},S <: Number}
-#     R = eltype(one(T)/one(S))
-#     isinf(c)  && return zero(⟒(P){R})
-#     ⟒(P){R,N}(p.coeffs ./ c, p.var)
-# end
-
 
 ##
 ## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
@@ -445,9 +421,10 @@ function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
+    R = promote_type(T,S)
+    Polynomials.isconstant(p)  && return q + p(0) 
+    Polynomials.isconstant(q)  && return p + q(0) 
 
-    Polynomials.isconstant(p)  && return q + p(0) #p[0]*k0(P)
-    Polynomials.isconstant(q)  && return p + q(0) #q[0]*k0(Q)    
     p.var != q.var && throw(ArgumentError("Variables don't  match"))    
 
     if N==M
@@ -584,8 +561,8 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
     # P_0(x) = c, so ∫P_o = x = c*variable(P)
     c₀,c₁ = coeffs(variable(p))
     pd = first(p.coeffs)
-    as[1] = pd*c₀
-    as[2] = pd* (c₁ * k0(Q))
+    as[1] = pd * c₀
+    as[2] = pd * (c₁ * k0(Q))
     @inbounds for d in 1:n
         pd = p.coeffs[d+1]
         as[1 + d + 1] += pd * ân(Q, d)

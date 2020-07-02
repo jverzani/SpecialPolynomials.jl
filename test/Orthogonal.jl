@@ -226,6 +226,7 @@ end
 
 @testset  "Evaluation" begin
     for  P in  Ps
+        (SP.ismonic(P) || SP.isorthonormal(P)) && continue
         n,x = 4, 1.23
         p = basis(P, n)
         # compares  clenshaw  to  hypergeometric
@@ -271,7 +272,7 @@ end
         @test -p == P(-xs)
         ys = copy(xs ./ 1) # might need float
         ys[1] += one(P)[0]
-        @test p + 1 == P(ys)
+        @test p + 1 ≈ p + P(1)
         @test 2p == P(2xs)
     end
 

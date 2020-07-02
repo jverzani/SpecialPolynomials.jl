@@ -47,7 +47,6 @@ include("Orthogonal/connection.jl")
 include("Orthogonal/glaser-liu-rokhlin.jl")
 
 
-
 include("Interpolating/interpolating.jl")
 include("Interpolating/Lagrange.jl")
 include("Interpolating/Newton.jl")
