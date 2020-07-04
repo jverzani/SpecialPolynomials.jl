@@ -45,29 +45,42 @@ abcde(::Type{<:AbstractCOP}) = throw(ArgumentError("No default method"))
 """
     k1k0
 
-Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis. This  function implement  `k₍ᵢ₊₁₎/kᵢ` for `i ≥  0`.
+Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis. 
+This  function implements  `k₍ᵢ₊₁₎/kᵢ` for `i ≥ 0`.
 
-With  the assumption that  `k₀ = 1`, the values `kᵢ` and `k₍ᵢ₊₁₎/k₍ᵢ₋₁₎` can  be generated.
+The values `kᵢ` and `k₍ᵢ₊₁₎/k₍ᵢ₋₁₎` can  be generated.
 
 The default value  leads to monic polynomials.
 """
 k1k0(::Type{P},  i::Int) where {P<:AbstractCOP} =  one(eltype(P))
+k1k0(::Type{P},  i::Int) where {P<:Polynomials.StandardBasisPolynomial} =  one(eltype(P))
+
+"""
+      k0(::Type{P})
+
+This is  `basis(P,0)`,  most  often  just `1`, but may be different with some normalizations, such as `Orthonormal`.
+"""
+k0(::Type{P})  where{P <: AbstractCOP}  =  one(eltype(P))
+k0(::Type{P}) where {P <: Polynomials.StandardBasisPolynomial} = one(eltype(P))
 
 # Set defaults to be monic
 # For non-monic subtypes of `AbstractCOP` only need k1k0  to be defined, as `kn` and `k1k_1` come for free
 
-# leading term (Section 3 table)  is kn
-leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
-
-# kn = prod(k1k0(i) for i in 0:n-1)  *  kn(P,0)
-# **Assume** basis(P,0) = 1, so kn(P,0)  = 1
-kn(::Type{P},  n::Int) where{P <: AbstractCOP} = iszero(n) ?  one(eltype(P)) : prod(k1k0(P,i) for i in  0:n-1)
+# kn = prod(k1k0(i) for i in 0:n-1)  *  k0(P)
+kn(::Type{P},  n::Int) where{P <: AbstractCOP} = foldr(*, (k1k0(P,i) for i in 0:n-1), init=k0(P)) 
 
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP}
     @assert i > 0
     k1k0(P,i)*k1k0(P,i-1)
 end
+
+# leading term (Section 3 table)  is kn
+leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
+
+# square root of ratio of norm2(P,n+1)/norm2(P,n)
+# Let ωᵢ = √{∫ πᵢ² dw}, this is ωᵢ₊₁ ÷ ωᵢ
+ω₁₀(::Type{P},n)  where {P <:  AbstractCOP} = sqrt(norm2(P,n+1)/norm2(P,n))
 
 
 # Can't  change  N  here
@@ -87,26 +100,50 @@ end
 Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
 Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 
+##  Evaluation
 
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
 function eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
+    N == 0 && return zero(T) * zero(S)
+    N == 1 && return (cs[1] * k0(P)) *  one(S)
+    _eval_cop(P,cs, x)
+end
+
+function _eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
     if @generated
-        N == 0 && return zero(T) * zero(S)
-        N == 1 && return cs[1] * one(S)
-        #SS = eltype(one(S))
-        Δ0 = :(cs[N-1])
-        Δ1 = :(cs[N])
-        for i in N-1:-1:2
-            a = :(cs[i - 1] - Δ1 * Cn(P, i-1))
-            b = :(Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1)))
-            Δ0 = :(a)
-            Δ1 = :(b)
+        quote
+            Δ0 = cs[end - 1]
+            Δ1 = cs[end]
+            @inbounds for i in N-1:-1:2
+                Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1), Bn(P,i-1))
+            end
+            p₀ = k0(P)
+            p₁ =  muladd(x, An(P,0),  Bn(P,0)) * p₀
+            Δ0 * p₀  + Δ1 * p₁
         end
-        Δ0 + Δ1* muladd(x, An(P,0), Bn(P,0))
     else
         clenshaw_eval(P, cs, x)
     end
 end
 
+#  evaluate  basis vector through hypergeometric formulation
+(B::Basis{P})(x) where  {P <: AbstractCOP} = eval_basis(P, B.n, x)
+
+# Evaluate a basis vector without realizing it and without using Clenshaw
+eval_basis(::Type{P}, n, x) where {P <: AbstractCOP} = classical_hypergeometric(P, n, x)
+
+"""
+    eval_hyper(::P, cs,  x::S)
+
+Evaluate polynomial `P(cs)` by  computing value for each basis vector from its hypergeometric representation
+"""
+function eval_hyper(P::Type{<:AbstractCOP}, cs, x::S) where {S}
+    isempty(cs) &&  return zero(S)
+    tot = cs[1] * one(S)
+    for i in 2:length(cs)
+        tot += cs[i] * Basis(P, i-1)(x)
+    end
+    tot
+end

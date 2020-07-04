@@ -1,5 +1,7 @@
 ## Abstract  types for  orthogonal  polynomials
 
+export Basis
+
 ## Has An(P), Bn(P), Cn(P)
 abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} end
 abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
@@ -33,44 +35,30 @@ function Polynomials.fromroots(P::Type{<:AbstractOrthogonalPolynomial}, roots::A
 end
 
 
+Base.convert(P::Type{<:AbstractOrthogonalPolynomial}, c::Number) = c * one(P)
+Base.one(P::Type{<:AbstractOrthogonalPolynomial}, var::Polynomials.SymbolLike=:x) =   basis(P,0, var) / k0(P)
+
 Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.SymbolLike=:x) =
-    (basis(P,1,var) - Bn(P,0)) / An(P,0)
+    (basis(P,1,var) / k0(P) - Bn(P,0)) / An(P,0) 
 
 ## Evaluation
 
 # from type, cs, x
 function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) where {T,S}
-
     N = length(cs)
-    N == 0 && return zero(T)*zero(S)
-    N == 1 && return cs[1] * one(S)
+    p₀ = k0(P)
+    R = promote_type(promote_type(T,S), typeof(An(P,0)))
+    N == 0 && return zero(R)
+    N == 1 && return (cs[1] * p₀) * one(R) 
 
-    Δ0 = cs[end - 1]
-    Δ1 = cs[end]
+    Δ0::R = cs[end - 1]
+    Δ1::R = cs[end]
     @inbounds for i in N-1:-1:2
         Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
     end
-
-    return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
+    p₁ =  muladd(x, An(P,0),  Bn(P,0)) * p₀
+    return Δ0 * p₀  + Δ1 * p₁
 end
-
-# # from instance, x
-# function clenshaw_eval(p::P, x::S) where {P <: AbstractOrthogonalPolynomial, S}
-
-#     T, cs = eltype(p), coeffs(p)
-#     N = length(cs)
-#     N == 0 && return zero(T)*zero(S)
-#     N == 1 && return cs[1] * one(S)
-
-#     Δ0 = cs[end - 1]
-#     Δ1 = cs[end]
-#     @inbounds for i in N-1:-1:2
-#         Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
-#     end
-
-#     return Δ0 + Δ1 * muladd(x, An(P,0),  Bn(P,0))
-# end
-
 
 
 ## Connection/Linearization
@@ -123,6 +111,7 @@ end
 
 # is P a monic polynomial system?
 ismonic(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
+isorthonormal(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
 
 # cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
 # Orthogonal polynomials have a three-point recursion formula
@@ -195,7 +184,29 @@ function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     p / (p[end]*leading_term(P, n))
 end
 
+##
+## Work with compact  basis
+##
+"""
+     Basis(P,n)
+     Basis{P}(n)
 
+The  command `basis(P,n, [var])` realizes the polynomial. `Basis(P,n)` does  not.  This  can  be  useful for  evaluation.
+"""
+struct Basis{Π}
+    n::Int
+end
+Basis(P,n) =  Basis{P}(n)
+Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P.name)($(b.n))") 
+
+function  innerproduct(::P,  f::Basis{P}, g::Basis{P}) where {P}
+    n,m  = f.n, g.n
+    if n == m
+        return norm2(P, n)
+    else
+        return zero(P)
+    end
+end
 
 
 
@@ -244,12 +255,11 @@ jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix
 
 Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal type.
 
+When available, the values are computed through  the `FastGaussQuadratures` package.
+
 For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
 
 For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
-
-!!! note
-    See the [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package for faster, vastly more engineered implementations.
 
 """
 function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
@@ -261,6 +271,9 @@ function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolyno
     eig.values,  wts
 end
 
+gauss_nodes_weights(B::Basis{P})  where  {P} = gauss_nodes_weights(B.P, B.n)
+
+    
 
 ##
 ## --------------------------------------------------

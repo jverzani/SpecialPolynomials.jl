@@ -31,7 +31,7 @@ basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
 Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} = Polynomials.Interval(-1, 1, β >= 0, α >= 0)
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
-
+k0(P::Type{<:Jacobi}) = one(eltype(P))
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
     n == -1  &&  return one(eltype(P))/1 
     γ = 2n + α + β
@@ -68,20 +68,8 @@ generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
     2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
 end
 
-function  gauss_nodes_weights(P::Type{<:Jacobi{α,β}}, n)  where {α,β}
-    # we don't  have a  good starting point  unless α=β
-    if α == β
-        xs, ws = glaser_liu_rokhlin_gauss_nodes(basis(MonicJacobi{α,β},n))
-        λ = kn(P,n)^2
-        xs, ws/λ
-    else
-        J = jacobi_matrix(P, n)
-        eig = eigen(J, extrema(P)...)
-        wts =  π̃βn(P,0) * (eig.vectors[1,:]).^2
-        eig.values,  wts
-    end
-
-end
+gauss_nodes_weights(p::Type{P}, n) where {α, β, P <: Jacobi{α, β}} =
+    FastGaussQuadrature.gaussjacobi(n, α, β)
 
 function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
 
@@ -98,6 +86,14 @@ end
 function norm2(::Type{<:Jacobi{α, β}}, n) where{α, β}
     α > -1 && β > -1 || throw(ArgumentError("α, β > -1 is necessary"))
     2^(α+β+1)/(2n+α+β+1) * (Γ(n+α+1) *  Γ(n + β +1))/(Γ(n+α+β+1)*Γ(n+1))
+end
+function ω₁₀(::Type{<:Jacobi{α, β}}, n) where{α, β}
+    val = Γ(n+1+α+1)/Γ(n+α+1)
+    val *= Γ(n + 1+ β +1) / Γ(n + β +1)
+    val *= Γ(n+α+β+1) / Γ(n+1+α+β+1)
+    val *= Γ(n+1) / Γ(n+1+1)
+    val *= (2n+α+β+1) / (2(n+1)+α+β+1)
+    sqrt(val)
 end
 
 # overrides
@@ -122,18 +118,12 @@ export MonicJacobi
 
 @register_monic(MonicJacobi)
 
-pqr_start(P::Type{MonicJacobi{α,α}}, n) where {α} =  0.0 # zero(eltype(P))
-pqr_symmetry(P::Type{<:MonicJacobi{α,α}}) where {α} = true
-function pqr_weight(P::Type{<:MonicJacobi{α,α}}, n, x, dπx) where {α}
-    # https://www.chebfun.org/publications/HaleTownsend2013a.pdf
-    # Eqn  (1.4)
-    # Cnαβ should be  computed  using asymptotic formula  for larger n (§3.2.3)
-    # XXX TThere i ss ome constant  that  makes this not work....
-    β = α
-    Cnαβ = 2^(α+β+1)  
-    Cnαβ *= gamma(n + α +  1) * gamma(n + β + 1) / gamma(n + α + β + 1)
-    Cnαβ /= gamma(1 + n)
-    val = Cnαβ / (1-x^2) / dπx^2
-    val
-end
-                      
+
+@registerN OrthonormalJacobi AbstractCCOP2 α β
+export OrthonormalJacobi
+ϟ(::Type{<:OrthonormalJacobi{α,β}}) where {α,β} = Jacobi{α,β}
+ϟ(::Type{<:OrthonormalJacobi{α,β,T}}) where {α,β,T} = Jacobi{α,β,T}
+
+@register_orthonormal(OrthonormalJacobi)
+
+

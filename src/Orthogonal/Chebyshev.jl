@@ -40,14 +40,30 @@ basis_symbol(::Type{<:Chebyshev})  = "T"
 Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval(-1, 1, false, false)
 weight_function(::Type{<: Chebyshev}) = x -> one(x)/sqrt(one(x) - x^2)
 generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
+function classical_hypergeometric(P::Type{<:Chebyshev}, n, x) where {α}
+    as = (-n,n)
+    bs = (one(eltype(P))/2, )
+    pFq(as, bs, (1-x)/2)
+end
 
+function eval_basis(::Type{Chebyshev}, n, x)
+    if abs(x) <= 1
+        cos(n * acos(x))
+    elseif x > 1
+        cosh(n*acosh(x))
+    else
+        (-1)^n * cosh(n*acosh(-x))
+    end
+end
 
 abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
 
+k0(P::Type{<:Chebyshev}) = one(eltype(P))
 k1k0(P::Type{<:Chebyshev}, n::Int)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
 
-#kn(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
-#k1k_1(P::Type{<:Chebyshev}, n::Int) = n==1 ? 2*one(eltype(P)) : 4*one(eltype(P))
+norm2(P::Type{<:Chebyshev}, n::Int) = (iszero(n) ? 1 : 1/2) * pi
+ω₁₀(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P))/sqrt(2) : one(eltype(P)) # √(norm2(n+1)/norm2(n)
+
 
 leading_term(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
 
@@ -57,7 +73,7 @@ Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
 
 # 
-C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))
+C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))/2
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P))/4
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
 γ̃n(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4
@@ -182,12 +198,15 @@ function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
     xs, ws
 end
 
-# noded for integrating against the weight function
-function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
-    xs = cos.(pi/2n * (2*(n:-1:1).-1))
-    ws = pi/n * ones(n)
-    xs, ws
-end
+# # noded for integrating against the weight function
+# function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
+#     xs = cos.(pi/2n * (2*(n:-1:1).-1))
+#     ws = pi/n * ones(n)
+#     xs, ws
+# end
+
+gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
+    FastGaussQuadrature.gausschebyshev(n)
 
 ##
 ## fitting coefficients
@@ -329,6 +348,15 @@ export MonicChebyshev
 @register_monic(MonicChebyshev)
 C̃n(P::Type{<:MonicChebyshev}, ::Val{1}) = one(eltype(P))
 
+
+##
+
+@register0 OrthonormalChebyshev AbstractCCOP0
+export OrthonormalChebyshev
+ϟ(::Type{<:OrthonormalChebyshev}) = Chebyshev
+ϟ(::Type{<:OrthonormalChebyshev{T}}) where {T} = Chebyshev{T}
+@register_orthonormal(OrthonormalChebyshev)
+
 ##
 ##  --------------------------------------------------
 ##
@@ -424,6 +452,12 @@ ChebyshevU
 basis_symbol(::Type{<:ChebyshevU})  = "U"
 weight_function(::Type{<:ChebyshevU})  = x -> sqrt(one(x) - x^2)
 generating_function(::Type{<: ChebyshevU}) = (t, x) -> 1 /  (1 - 2t*x + t^2)
+function classical_hypergeometric(P::Type{<:ChebyshevU}, n, x) where {α}
+    as = (-n,n+2)
+    bs = ((3one(eltype(P)))/2, )
+    (n+1)*pFq(as, bs, (1-x)/2)
+end
+
 Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
 
 abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -3, 0))
@@ -431,6 +465,9 @@ abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -3, 0))
 kn(P::Type{<:ChebyshevU}, n::Int) = (2 * one(eltype(P)))^n
 k1k0(P::Type{<:ChebyshevU}, n::Int)  = 2 * one(eltype(P))
 k1k_1(P::Type{<:ChebyshevU}, n::Int)  = 4 * one(eltype(P))
+
+norm2(P::Type{<:ChebyshevU}, n::Int) = pi/2
+ω₁₀(P::Type{<:ChebyshevU}, n::Int) = one(eltype(P))
 
 
 # directly adding these gives a 5x speed up in polynomial evaluation
@@ -510,5 +547,13 @@ export MonicChebyshevU
 ϟ(::Type{<:MonicChebyshevU}) = ChebyshevU
 ϟ(::Type{<:MonicChebyshevU{T}}) where {T} = ChebyshevU{T}
 @register_monic(MonicChebyshevU)
+
+
+@register0 OrthonormalChebyshevU AbstractCCOP0
+export OrthonormalChebyshevU
+ϟ(::Type{<:OrthonormalChebyshevU}) = ChebyshevU
+ϟ(::Type{<:OrthonormalChebyshevU{T}}) where {T} = ChebyshevU{T}
+@register_orthonormal(OrthonormalChebyshevU)
+
 
 

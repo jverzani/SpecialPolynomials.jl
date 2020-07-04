@@ -11,6 +11,9 @@ export basis
 using QuadGK
 using Memoize
 
+using HypergeometricFunctions
+using FastTransforms
+using FastGaussQuadrature
 
 
 include("utils.jl")
@@ -42,7 +45,6 @@ include("Orthogonal/Discrete/DiscreteChebyshev.jl")
 
 include("Orthogonal/connection.jl")
 include("Orthogonal/glaser-liu-rokhlin.jl")
-
 
 
 include("Interpolating/interpolating.jl")

@@ -5,8 +5,43 @@
 
 Find Gauss nodes and weights of the  basis  polynomial  `π = basis(P,n)`. The nodes  are the  roots of the  polynomial and the weights are computed  from known formulas.
 
-The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. This is  an  O(n)  method (whereas the method  basedon the Jacobi  matrix is O(n^2)). This method fits easily  into the framework  provided  through  the `AbstractCCOP` types.  The [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides even more efficient  algorithms and  pays attention to numerical  issues, examples of  which  can  be found in  [Hale and Townsend](https://core.ac.uk/download/pdf/9403469.pdf). The `FastGuassQuadrature` package is recommended for actual  use  of these values. 
+The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. This is  an  O(n)  method (whereas the method  basedon the Jacobi  matrix is O(n^2)). This method fits easily  into the framework  provided  through  the `AbstractCCOP` types.  The [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides even more efficient  algorithms and  pays attention to numerical  issues, examples of  which  can  be found in  [Hale and Townsend](https://core.ac.uk/download/pdf/9403469.pdf). The `FastGuassQuadrature` package is used when  available.
 
+
+An example:
+
+```
+function  gauss_nodes_weights(P::Type{<:Jacobi{α,β}}, n)  where {α,β}
+    # we don't  have a  good starting point  unless α=β
+    if α == β
+        xs, ws = glaser_liu_rokhlin_gauss_nodes(basis(MonicJacobi{α,β},n))
+        λ = kn(P,n)^2
+        xs, ws/λ
+    else
+        J = jacobi_matrix(P, n)
+        eig = eigen(J, extrema(P)...)
+        wts =  π̃βn(P,0) * (eig.vectors[1,:]).^2
+        eig.values,  wts
+    end
+
+end
+    
+
+pqr_start(P::Type{MonicJacobi{α,α}}, n) where {α} =  0.0 # zero(eltype(P))
+pqr_symmetry(P::Type{<:MonicJacobi{α,α}}) where {α} = true
+function pqr_weight(P::Type{<:MonicJacobi{α,α}}, n, x, dπx) where {α}
+    # https://www.chebfun.org/publications/HaleTownsend2013a.pdf
+    # Eqn  (1.4)
+    # Cnαβ should be  computed  using asymptotic formula  for larger n (§3.2.3)
+    # XXX TThere i ss ome constant  that  makes this not work....
+    β = α
+    Cnαβ = 2^(α+β+1)  
+    Cnαβ *= gamma(n + α +  1) * gamma(n + β + 1) / gamma(n + α + β + 1)
+    Cnαβ /= gamma(1 + n)
+    val = Cnαβ / (1-x^2) / dπx^2
+    val
+end
+```
 
 """
 glaser_liu_rokhlin_gauss_nodes()
@@ -122,6 +157,7 @@ function prufer(Π::Type{P},n) where {P <: AbstractCCOP}
         a, b = first(dom)+eps(), last(dom)-eps()
         x = clamp(x, a, b)
         p,q,r,dp,dq,dr = pqr(Π, n, x)
+        @show p,q,r,dp, dq, dr
         -inv(sqrt(r/p) + (dr*p - dp*r + 2r*q)/(2r*p) * sin(2θ)/2)
     end
 end

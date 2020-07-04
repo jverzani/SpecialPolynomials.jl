@@ -37,6 +37,7 @@ end
 # default is (x)ᵢ
 Pochhammer(z,n::Int) = Pochhammer(Val(:rising),  z, n)
 
+
 # (x)_n/n!
 Pochhammer_factorial(z, n) = Pochhammer_factorial(Val(:rising), z, n)
 
@@ -117,7 +118,17 @@ end
 ## tuples
 @inline plus_1(as) = map(x->x+1, as)
         
+
+# use HypergeometricFunction.mFn if possible
+function pFq(as::Tuple{A,B}, bs::Tuple{C}, z::AbstractFloat) where {A,B,C}
+    HypergeometricFunctions._₂F₁(as[1],as[2],bs[1],z)
+end
+function pFq(as::Tuple{A,B,C}, bs::Tuple{D,E}, z::AbstractFloat) where {A,B,C,D,E}
+    HypergeometricFunctions._₃F₂(as[1],as[2],as[3],bs[1],bs[2],z)
+end
     
+
+
 ## Try to speed up  quadgk by not specializing on F
 mutable struct Wrapper
     F

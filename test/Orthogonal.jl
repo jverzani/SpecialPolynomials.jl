@@ -3,17 +3,22 @@
 T = Float64
 Ps = (
     Chebyshev,
+    OrthonormalChebyshev,
     ChebyshevU,
     Laguerre{0},
     Laguerre{1/2},
+    OrthonormalLaguerre{1/2},
     Hermite,
     ChebyshevHermite,
     Jacobi{1/2, 1/2},
     Jacobi{1/4, 3/4},
     Jacobi{-1/2, 1/2},
-    Jacobi{1/2, -1/2},      
+    Jacobi{1/2, -1/2},
+    OrthonormalJacobi{1/2,1/2},
     Legendre,
+    OrthonormalLegendre,
     Gegenbauer{1/2},
+    OrthonormalGegenbauer{1/2},
     Bessel{3/2}, # Bessel{1} is an issue
     Bessel{1/2}
 )
@@ -205,9 +210,29 @@ end
             end
         end
     end
+
+    # Connections via FastTransforms
+    x = variable()
+    for P in Ps
+        for Q in Ps
+            p = P([1.0, 2.0, 3.0])
+            @test convert(Q, p)(x) ≈ p(x)
+        end
+    end
+            
     
 end
 
+
+@testset  "Evaluation" begin
+    for  P in  Ps
+        (SP.ismonic(P) || SP.isorthonormal(P)) && continue
+        n,x = 4, 1.23
+        p = basis(P, n)
+        # compares  clenshaw  to  hypergeometric
+        @test p(x) ≈ Basis(P,n)(x)
+    end
+end
 
 @testset "Arithmetic" begin
 
@@ -245,9 +270,9 @@ end
         xs = [1,2,3,4]
         p = P(xs)
         @test -p == P(-xs)
-        ys = copy(xs)
-        ys[1] += 1
-        @test p + 1 == P(ys)
+        ys = copy(xs ./ 1) # might need float
+        ys[1] += one(P)[0]
+        @test p + 1 ≈ p + P(1)
         @test 2p == P(2xs)
     end
 
@@ -318,8 +343,10 @@ end
             ps = rand(1:10, 5)
             p = P(ps)
             @test  (derivative ∘ derivative)(p) ≈ derivative(p, 2)
-            
-            @test (derivative ∘ integrate)(p) ≈ p
+
+            q = (derivative ∘ integrate)(p) - p
+            q = chop(q, atol=1e-8)
+            @test degree(q) <= 0
 
             q = (integrate ∘ derivative)(p) - p
             q = chop(q, atol=1e-8)
