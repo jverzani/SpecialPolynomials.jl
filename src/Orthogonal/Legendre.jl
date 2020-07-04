@@ -1,4 +1,8 @@
 ## Legendre Polynomials = Gegenbauer{1/2}
+
+include("FastLegendre.jl")
+
+
 @register0 Legendre AbstractCCOP0
 export Legendre
 
@@ -62,6 +66,8 @@ function classical_hypergeometric(::Type{<:Legendre}, n, x)
     bs = (1, )
     pFq(as, bs, (1-x)/2)
 end
+eval_basis(::Type{P}, n, x::Float64) where {P <: Legendre} = FastLegendre.fastlegendre(n,x)
+eval_basis(::Type{P}, n, x::Union{Int, Int32, Float16, Float32}) where {P <: Legendre} = FastLegendre.fastlegendre(n,float(x))
 
 gauss_nodes_weights(p::Type{P}, n) where {P <: Legendre} =
     FastGaussQuadrature.gausslegendre(n)
