@@ -39,12 +39,12 @@ end
 ## ---- n < 100 case
 
 # precompute first 99
-xᵢs = [FastGaussQuadrature.gausslegendre(n)[1][1:(n÷2)] for n in 1:99]
-xᵢs⁻¹ = [inv.(xᵢ) for xᵢ in xᵢs]
-xᵢs2⁻¹ = [inv.(1 .- xᵢ.^2) for xᵢ in xᵢs]
+const xᵢs = [FastGaussQuadrature.gausslegendre(n)[1][1:(n÷2)] for n in 1:99]
+const xᵢs⁻¹ = [inv.(xᵢ) for xᵢ in xᵢs]
+const xᵢs2⁻¹ = [inv.(1 .- xᵢ.^2) for xᵢ in xᵢs]
 
 # precompute
-Cn = zeros(Float64, 99)
+const Cn = zeros(Float64, 99)
 Cn[1] = 1.0
 for i in 1:49
     n = 2i
@@ -84,7 +84,7 @@ direct_sine(::Val{false}, n,x) =  x * direct_sine(Val(true),n,x)
 
 
 function direct_cosine(p::Val{true}, n,x)
-    tot::Float64 =  Cn[n]
+    tot =  Cn[n]
     xs::Vector{Float64} = xᵢs⁻¹[n]
     for aᵢ in  xs
         tot *= (1 - (x*aᵢ)^2)
@@ -95,7 +95,7 @@ direct_cosine(p::Val{false}, n,x) = x * direct_cosine(Val(true), n, x)
 
 
 ## ----
-Cl0s = [gamma(n+1)/gamma(n + 3/2) for n in 1:9]
+const Cl0s = [gamma(n+1)/gamma(n + 3/2) for n in 1:9]
 τ(x) = evalpoly(1/x, (1/1, 0, -1/64, 0, 21/8192, 0, -671/524288, 0, 180323/80323134, 0,
                     -20898423/8589934592, - 7426362705/1099511627776))
 
@@ -110,7 +110,7 @@ function asy_32(n,x)
     val = sqrt((2/pi)*(1/sin(θ))) 
     tot = 0.0
     sθ = sin(θ)
-    λ::Float64 = Cl0(n)
+    λ = Cl0(n)
     for m in 0:M-1
         α = (n+m+1/2)*θ - (m+1/2)*pi/2
         tot += λ * cos(α)
@@ -122,7 +122,7 @@ end
 ## ---
 h(n,y) = y^n * besselj(n,y)
 
-cns = [[1/8, -1/12],
+const cns = [[1/8, -1/12],
       [11/384, -7/160, 1/160],
       [173/15360, -101/3584, 671/80640, -61/120960],
       [22931/3440640,  -90497/3870720, 217/20480, -1261/967680, 1261/29030400],
@@ -132,7 +132,7 @@ cns = [[1/8, -1/12],
        -72836747/12651724800, +3135577/5367398400, -1532789/61993451520, +66643/185980354560]
       ]
 
-function fn(i,y)::Float64 # i in 1:6
+function fn(i,y)# i in 1:6
     n = 2i
     cs::Vector{Float64} = cns[i]
     tot = 0.0

@@ -227,10 +227,12 @@ end
 @testset  "Evaluation" begin
     for  P in  Ps
         (SP.ismonic(P) || SP.isorthonormal(P)) && continue
-        n,x = 4, 1.23
-        p = basis(P, n)
-        # compares  clenshaw  to  hypergeometric
-        @test p(x) ≈ Basis(P,n)(x)
+        for n in 4:2:20
+            p = basis(P, n)
+            x = 0.123
+            # compares  clenshaw  to  hypergeometric or  a  different direct  evaluation
+            @test isapprox(p(x), Basis(P,n)(x), atol=1e-6, rtol=1e-8)
+        end
     end
 end
 
