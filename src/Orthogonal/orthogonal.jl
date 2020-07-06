@@ -197,7 +197,7 @@ struct Basis{Π}
     n::Int
 end
 Basis(P,n) =  Basis{P}(n)
-Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P.name)($(b.n))") 
+Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P)($(b.n))") 
 
 function  innerproduct(::P,  f::Basis{P}, g::Basis{P}) where {P}
     n,m  = f.n, g.n
