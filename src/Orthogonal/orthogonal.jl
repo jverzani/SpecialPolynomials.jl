@@ -287,10 +287,10 @@ Compute  `<f,g> = ∫ f⋅g⋅w dx` where  `w` is the weight function of the  ty
 function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol=sqrt(eps(float(eltype(P)))))
     dom = domain(P)
     a, b = first(dom), last(dom)
-    if !first(Polynomials.inclusivity(dom))
+    if first(bounds_types(dom)) == Open    
         a += eps(float(one(a)))
     end
-    if !last(Polynomials.inclusivity(dom))
+    if last(bounds_types(dom)) == Open        
         b -= eps(float(one(b)))
     end
     fn = x -> f(x) * g(x) * weight_function(P)(x)

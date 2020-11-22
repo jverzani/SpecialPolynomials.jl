@@ -191,10 +191,10 @@ end
 function ∫(fdw, P; kwargs...)
     dom = domain(P)
     a, b = first(dom), last(dom)
-    if !first(Polynomials.inclusivity(dom))
+    if first(bounds_types(dom)) == Open
         a += eps(float(one(a)))
     end
-    if !last(Polynomials.inclusivity(dom))
+    if last(bounds_types(dom)) == Open    
         b -= eps(float(one(b)))
     end
 
