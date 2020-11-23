@@ -28,7 +28,8 @@ true
 Jacobi
 
 basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
-Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} = Polynomials.Interval(-1, 1, β >= 0, α >= 0)
+Polynomials.domain(::Type{<:Jacobi{α, β}}) where {α, β} =
+    Polynomials.Interval{β >= 0 ? Open : Closed, α >= 0 ? Open : Closed}(-1, 1)
 abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-(α+β+2),β-α))
 
 k0(P::Type{<:Jacobi}) = one(eltype(P))
@@ -67,6 +68,25 @@ generating_function(::Type{<:Jacobi{α, β}}) where {α, β} = (t,x) -> begin
     R = sqrt(1 - 2x*t+t^2)
     2^(α + β) * 1/R  * (1 - t + R)^(-α) * (1 + t + R)^(-β)
 end
+
+"""
+    jacobi_eval(α, β, n, z)
+
+Evaluate the nth basis element of Pᵅᵝ at z using
+
+`Pₙᵅᵝ(z) = 2⁻ⁿ∑ (α+n, k) × (β+n, n-k) ⋅ (z+1)ᵏ ⋅ (z-1)ⁿ⁻ᵏ`
+
+This alternate evaluation is  useful when α or β ≤ -1 (and consequently the polynomials are not orthogonal)
+"""
+function jacobi_eval(α, β, n, z)
+    T = eltype(z/2)
+    tot = zero(T)
+    for k in 0:n
+        tot += generalized_binomial′(α+n,k) * generalized_binomial′(β+n, n-k) * ((z+1)/2)^k * ((z-1)/2)^(n-k)
+    end
+    tot
+end
+
 
 gauss_nodes_weights(p::Type{P}, n) where {α, β, P <: Jacobi{α, β}} =
     FastGaussQuadrature.gaussjacobi(n, α, β)

@@ -253,7 +253,13 @@ end
             @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
         end
     end
-            
+
+    ## We have `jacobi_eval` for α and β outside [-1, ∞)
+    α,β = 1/2, -1/2
+    for n in 2:5
+        x0 = 1/2
+        @test SP.jacobi_eval(α, β, n, x0) ≈ basis(Jacobi{α, β},n)(x0)
+    end
 
 end
 

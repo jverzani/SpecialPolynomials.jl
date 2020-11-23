@@ -1,6 +1,7 @@
 # some utility functions
 const Γ = gamma
 
+
 function generalized_binomial(α::T, n::S) where {T,S <: Integer}
     R = Base.promote_op(/,T,S)
     out = one(R)
@@ -9,6 +10,13 @@ function generalized_binomial(α::T, n::S) where {T,S <: Integer}
         α -= 1
     end
     out
+end
+
+## memoized version of the above
+@memoize function generalized_binomial′(a, k::Int)
+    k < 0 && return NaN * one(a)
+    k == 0 && return one(a)/1
+    generalized_binomial′(a,k-1) * (a-k+1)/k
 end
 
 

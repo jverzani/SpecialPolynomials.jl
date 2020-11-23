@@ -8,6 +8,8 @@ using Polynomials
 import Polynomials: basis, isconstant, StandardBasisPolynomial, ⟒
 export basis
 
+import Intervals
+import Intervals: Open, Closed, Unbounded, bounds_types
 using QuadGK
 using Memoize
 

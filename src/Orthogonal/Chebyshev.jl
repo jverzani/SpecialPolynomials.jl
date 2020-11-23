@@ -37,7 +37,7 @@ Chebyshev
 
 
 basis_symbol(::Type{<:Chebyshev})  = "T"
-Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval(-1, 1, false, false)
+Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval{Open, Open}(-1, 1)
 weight_function(::Type{<: Chebyshev}) = x -> one(x)/sqrt(one(x) - x^2)
 generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
 function classical_hypergeometric(P::Type{<:Chebyshev}, n, x) where {α}

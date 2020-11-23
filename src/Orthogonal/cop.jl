@@ -30,7 +30,7 @@ end
 ## interface for a  given type
 
 basis_symbol(::Type{<:AbstractCOP}) = "P"
-Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf,  Inf)
+Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf, Inf)
 classical_hypergeometric(P::Type{<:AbstractCOP}, n, x) = throw(ArgumentError("No default method"))
 
 """
