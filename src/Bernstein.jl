@@ -1,8 +1,8 @@
-abstract type AbstractBernstein{T} <: AbstractSpecialPolynomial{T} end
+abstract type AbstractBernstein{T,X} <: AbstractSpecialPolynomial{T,X} end
 
 """
 
-    Bernstein{N, T}
+    Bernstein{N, T, X}
 
 A [Bernstein  polynomial](https://en.wikipedia.org/wiki/Bernstein_polynomial) is a polynomial expressed in terms of
 Bernstein basic polynomials. For each degree, `𝐍`, this is a set of `𝐍+1` degree `𝐍` polynomials of the form:
@@ -26,14 +26,13 @@ Polynomial(3.0*x^2 - 3.0*x^3)
     [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) Offers a  more  performant version.
 
 """
-struct Bernstein{𝐍, T} <: AbstractBernstein{T}
+struct Bernstein{𝐍, T, X} <: AbstractBernstein{T, X}
     coeffs::Vector{T}
-    var::Symbol
-    function Bernstein{𝐍, T}(coeffs::AbstractVector{T}, var::Polynomials.SymbolLike=:x)  where {𝐍, T}
+    function Bernstein{𝐍, T, X}(coeffs::AbstractVector{T})  where {𝐍, T, X}
         N = findlast(!iszero, coeffs)
-        N == nothing && return new{𝐍,T}(zeros(T,0), Symbol(var))
+        N == nothing && return new{𝐍,T,X}(zeros(T,0))
         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficents"))
-        return new{𝐍, T}(coeffs[1:N], Symbol(var))
+        return new{𝐍, T, X}(coeffs[1:N])
     end
 end
 
@@ -41,7 +40,7 @@ export Bernstein
 Polynomials.@registerN Bernstein 𝐍
 Polynomials.:⟒(::Type{<:Bernstein{𝐍}}) where  {𝐍} = Bernstein{𝐍}
 
-function Polynomials.showterm(io::IO, ::Type{Bernstein{N, T}}, pj::T, var, j, first::Bool, mimetype) where {N, T}
+function Polynomials.showterm(io::IO, ::Type{Bernstein{N,T,X}}, pj::T, var, j, first::Bool, mimetype) where {N, T, X}
     iszero(pj) && return false
     !first &&  print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " :  (!first ? "+ " : ""))
@@ -57,11 +56,12 @@ end
 function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x)  where {T}
     l = findlast(!iszero,  coeffs)
     𝐍 = l == nothing ?  -1 :  l - 1
-    Bernstein{𝐍, T}(coeffs[1:𝐍+1], var)
+    Bernstein{𝐍, T, Symbol(var)}(coeffs[1:𝐍+1])
 end
 
 # promotion between family
-function Base.promote(p::P, q::Q) where {𝐍,T,P<:Bernstein{𝐍,T}, 𝐌,S,Q<:Bernstein{𝐌,S}}
+function Base.promote(p::P, q::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}, 𝐌,S,Y,Q<:Bernstein{𝐌,S,Y}}
+    X == Y || throw(ArgumentError("different indeterminates"))
     MN = max(𝐌,𝐍)
     R = promote_type(T,S)
     PQ = Bernstein{MN,R}
@@ -81,7 +81,8 @@ function Base.convert(P::Type{<:Bernstein{𝐍}}, p::Bernstein{𝐌, S}) where {
             cs[1+i] +=  pⱼ * binomial(𝐌,j) * binomial(𝐑, i-j) /  binomial(𝐍, i)
         end
     end
-    Bernstein{𝐍, R}(cs, p.var)
+    X = Polynomials.indeterminate(P, p)
+    Bernstein{𝐍, R, X}(cs)
     
 end
 
@@ -105,23 +106,26 @@ function Base.convert(C::Type{<:Bernstein{𝐍, T}}, p::Polynomial) where {𝐍,
             cs[j+1] += a_nu/nk*binomial(j,k)
         end
     end
-    
-    Bernstein{𝐍, R}(cs, p.var)
+
+    X = Polynomials.indeterminate(C,p)
+    Bernstein{𝐍, R, X}(cs)
 end
 
-function Base.convert(::Type{<:AbstractBernstein}, p::Polynomial{T}) where {T}
+function Base.convert(P::Type{<:AbstractBernstein}, p::Polynomial{T}) where {T}
     𝐍 = degree(p)
-    convert(Bernstein{𝐍, T}, p)
+    X = Polynomials.indeterminate(P,p)
+    convert(Bernstein{𝐍, T, X}, p)
 end
 
 
 
 Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
-Polynomials.degree(p::Bernstein{N,T}) where {N, T} = degree(convert(Polynomial{T}, p))
+Polynomials.degree(p::Bernstein{N,T, X}) where {N, T, X} = degree(convert(Polynomial{T, X}, p))
 
 ## need to do one  and variable differently,as coefficients have length N+1
-Base.one(P::Type{Bernstein{N,T}}, var::Polynomials.SymbolLike=:x) where {N,T} = Bernstein{N,T}(ones(T, N+1), var)
-Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N} = one(Bernstein{N,eltype(P)}, var)
+Base.one(P::Type{Bernstein{N,T,X}}) where {N,T,X} = Bernstein{N,T,X}(ones(T, N+1))
+Base.one(P::Type{Bernstein{N,T}}, var::Polynomials.SymbolLike) where {N,T} = Bernstein{N,T, Symbol(var)}(ones(T, N+1))
+Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N} = one(Bernstein{N,eltype(P),Symbol(var)})
 
 function Polynomials.variable(P::Type{<:Bernstein{𝐍}}, var::Polynomials.SymbolLike=:x) where {𝐍}
     S = eltype(P)
@@ -130,11 +134,13 @@ function Polynomials.variable(P::Type{<:Bernstein{𝐍}}, var::Polynomials.Symbo
 end
 Polynomials.variable(P::Type{Bernstein},  var::Polynomials.SymbolLike=:x) = variable(Bernstein{1, eltype(P)}, var)
 
-function basis(::Type{Bernstein}, k::Int, _var::Polynomials.SymbolLike=:x; var=_var) 
+function basis(P::Type{<:Bernstein}, k::Int, _var::Polynomials.SymbolLike=:x; var=_var)
     zs = zeros(Int, k+1)
     zs[end] = 1
     Bernstein(zs, var)
 end
+
+
 
 # poly evaluation
 (p::Bernstein{T})(x::S) where {T,S} = simple_deCasteljau_polyval(p, x)
@@ -145,7 +151,7 @@ end
 # Hao Jiang, Shengguo Li, Lizhi Cheng, and Fang Su
 #
 # for increased accuracy, but is it really necessary here?
-function simple_deCasteljau_polyval(p::Bernstein{𝐍,T}, t::S) where {𝐍,T, S}
+function simple_deCasteljau_polyval(p::Bernstein{𝐍,T,X}, t::S) where {𝐍,T, X, S}
 
     R = promote_type(T, S)
     𝐍 == -1 && return zero(R)
@@ -238,19 +244,17 @@ function Base.:+(p::Bernstein{𝐍,T}, c::Number) where {𝐍, T}
 end
 
 # default `+` calls promote(p1,p2) then dispatches to this.
-function Base.:+(p1::Bernstein{𝐍,T}, p2::Bernstein{𝐍,T}) where {𝐍, T}
-
-    Polynomials.check_same_variable(p1, p2) || throw(ArgumentError("p1 and p2 must have the same symbol"))
-    return Bernstein{𝐍, T}([p1[i] + p2[i] for i in 0:𝐍], p1.var)
+function Base.:+(p1::Bernstein{𝐍,T,X}, p2::Bernstein{𝐍,T,X}) where {𝐍,T,X}
+    return Bernstein{𝐍, T, X}([p1[i] + p2[i] for i in 0:𝐍])
 end
 
 # no promote(p1,p2)  called here
-function Base.:*(p::Bernstein{N,T}, q::Bernstein{M,S}) where {N,T, M,S}
+function Base.:*(p::Bernstein{N,T,X}, q::Bernstein{M,S,Y}) where {N,T, M,S, X, Y}
     ## use b(n,k) * b(m,j) = choose(n,k)choose(m,j)/choose(n+m,k+j) b(n+m, k+j)
 
     isconstant(p) && return q * p[0]
-    isconstant(q) && return p * q[0]    
-    p.var == q.var || throw(ArgumentError("p and q must have the same symbol"))
+    isconstant(q) && return p * q[0]
+    Polynomials.assert_same_variable(p, q) || throw(ArgumentError("p1 and p2 must have the same symbol"))
 
     
     R = typeof(one(promote_type(T,S))/1)
@@ -274,14 +278,14 @@ function Base.:*(p::Bernstein{N,T}, q::Bernstein{M,S}) where {N,T, M,S}
 end
 
 #  use p'(t) = n ∑ (b_{i+1} - b_i) B_i,n-1
-function Polynomials.derivative(p::Bernstein{𝐍, T}, order::Integer = 1) where {𝐍, T}
+function Polynomials.derivative(p::Bernstein{𝐍, T, X}, order::Integer = 1) where {𝐍, T, X}
     cs = coeffs(p)
     𝐍 < -1 &&  return p
     iszero(𝐍) && return zero(p)
     order ==  0 && return p
 
     cs = zeros(T, 𝐍)
-    dp = Bernstein{𝐍-1, T}(𝐍 * diff(coeffs(p)), p.var)
+    dp = Bernstein{𝐍-1, T, X}(𝐍 * diff(coeffs(p)))
     
     order > 1 ? derivative(dp, order-1) : dp
 end
@@ -289,7 +293,7 @@ end
 
 
 # use ∫b_n,nu  = 1/(n+1)  * ∑_{nu+1}^{n+1} b_n+1, j
-function Polynomials.integrate(p::Bernstein{𝐍, T}, C::S) where {𝐍, T,S <: Number}
+function Polynomials.integrate(p::Bernstein{𝐍, T, X}, C::S) where {𝐍, T,X,S <: Number}
     R = promote_type(eltype(one(T) / 1), S)
     𝐍𝐍 = 𝐍 + 1
     
@@ -301,7 +305,7 @@ function Polynomials.integrate(p::Bernstein{𝐍, T}, C::S) where {𝐍, T,S <: 
         end
     end
     
-    ∫p = Bernstein{𝐍𝐍, R}(cs, p.var)
+    ∫p = Bernstein{𝐍𝐍, R,X}(cs)
     return ∫p - (∫p(0) - C)
 
 end

@@ -81,8 +81,8 @@ function _convert_cop(::Type{Q}, p::P) where {P <: ConvertibleTypes,
             C̃ⁱ⁺²ⱼ, C̃ⁱ⁺¹ⱼ = C̃ⁱ⁺¹ⱼ, C̃ⁱⱼ
         end
     end
-
-    ⟒(Q){R}(as, p.var)
+    X = Polynomials.indeterminate(Q,p)
+    ⟒(Q){R,X}(as)
 end
 
 ## Use FastTransform for conversion, as  possible
@@ -300,8 +300,8 @@ function connection(::Type{P}, q::Q) where
             cs[1+k] = muladd(q[i], val, cs[1+k])
         end
     end
-
-    ⟒(P)(cs, q.var)
+    X = Polynomials.indeterminate(P,q)
+    ⟒(P){T,X}(cs)
     
 end
 

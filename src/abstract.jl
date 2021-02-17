@@ -1,5 +1,5 @@
 """
-    AbstractSpecialPolynomial{T}
+    AbstractSpecialPolynomial{T,X}
 
 An abstract type to distinguish the different polynomial types in this package.
 
@@ -15,7 +15,7 @@ As many of the methods for the base `Polynomials` class are directly coded if po
 depend on conversion to the base `Polynomial` type (which uses the standard polynomial basis).
 
 """
-abstract type AbstractSpecialPolynomial{T} <: Polynomials.AbstractPolynomial{T} end
+abstract type AbstractSpecialPolynomial{T,X} <: Polynomials.AbstractPolynomial{T,X} end
 
 # polynomial like Vector{T} with variable
 Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T

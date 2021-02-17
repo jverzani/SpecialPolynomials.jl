@@ -2,9 +2,9 @@
 ## --------------------------------------------------
 ##
 ## Classic Continuos Orthogonal Polynomials
-abstract type AbstractCCOP{T,N} <: AbstractCOP{T,N} end
+abstract type AbstractCCOP{T,X,N} <: AbstractCOP{T,X,N} end
 """
-    AbstractCCOP{T,N} <:  AbstractCOP{T,N}
+    AbstractCCOP{T,X,N} <:  AbstractCOP{T,X,N}
 
 Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
@@ -102,10 +102,10 @@ AbstractCCOP
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
-abstract type AbstractCCOP0{T,N} <: AbstractCCOP{T,N} end
-abstract type AbstractCCOP1{α,T,N} <: AbstractCCOP{T,N} end
-abstract type AbstractCCOP2{α,β,T,N} <: AbstractCCOP{T,N}  end
-abstract type AbstractCCOP3{α,β,γ,T,N} <: AbstractCCOP{T,N}  end
+abstract type AbstractCCOP0{T,X,N} <: AbstractCCOP{T,X,N} end
+abstract type AbstractCCOP1{α,T,X,N} <: AbstractCCOP{T,X,N} end
+abstract type AbstractCCOP2{α,β,T,X,N} <: AbstractCCOP{T,X,N}  end
+abstract type AbstractCCOP3{α,β,γ,T,X,N} <: AbstractCCOP{T,X,N}  end
 
 # We want to  be able to strip  off T,N  or α,...,T,N
 # * constructorof(P{α,..,T,N}) =  P
@@ -367,8 +367,11 @@ end
 ## Conversion
 
 
-function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP} 
-    p(variable(Q, p.var))
+function Base.convert(::Type{Q},  p::P)  where {Q <: Polynomials.StandardBasisPolynomial, P <: AbstractCOP}
+    X = Polynomials.indeterminate(Q,p)
+    T = eltype(Q)
+    x = variable(⟒(Q){T,X})
+    p(x)
 end
 function Base.convert(::Type{Q},  p::P)  where {Q <: AbstractCCOP,  P <: Polynomials.StandardBasisPolynomial}
     _convert_cop(Q, p)
@@ -403,21 +406,21 @@ end
 # # scalar ops
 
 #  avoid dispatch when N is known
-function Base.:+(p::P, c::S) where {T, N, P<:AbstractCOP{T,N}, S<:Number}
+function Base.:+(p::P, c::S) where {T, X, N, P<:AbstractCOP{T,X,N}, S<:Number}
     c′ =  c / k0(P) #one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
     R = promote_type(promote_type(T,S), typeof(inv(k0(P))))
-    iszero(c) && return (N == 0 ? zero(⟒(P){R}, p.var) :  ⟒(P){R,N}(R.(p.coeffs), p.var))
-    N == 0 && return ⟒(P)(R(c), p.var)
-    N == 1 && return ⟒(P)(R[p[0] + c′], p.var)
+    iszero(c) && return (N == 0 ? zero(⟒(P){R,X}) :  ⟒(P){R,X,N}(R.(p.coeffs)))
+    N == 0 && return ⟒(P){R,X}(R(c))
+    N == 1 && return ⟒(P)(R[p[0] + c′], X)
     cs = R[iszero(i) ? p[0]+c′ : p[i] for i in 0:N-1]
-    return ⟒(P){R,N}(cs, p.var)
+    return ⟒(P){R,X,N}(cs)
 end
 
 ##
 ## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
 ## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
 ## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
-function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP{S,M}}
+function ⊕(p::P, q::Q) where {T,X,N,S,Y,M, P <: AbstractCOP{T,X,N}, Q <: AbstractCOP{S,Y,M}}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
@@ -425,11 +428,11 @@ function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP
     Polynomials.isconstant(p)  && return q + p(0) 
     Polynomials.isconstant(q)  && return p + q(0) 
 
-    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
+    X != Y && throw(ArgumentError("Variables don't  match"))    
 
     if N==M
         as = [p[i]+q[i] for i in 0:N-1]
-        return ⟒(P)(as, p.var) # might have trailing zeros here
+        return ⟒(P){R,X}(as) # might have trailing zeros here
     end
 
     N > M ? ⊕′(p,q) : ⊕′(q,p)
@@ -437,7 +440,7 @@ function ⊕(p::P, q::Q) where {T,N,S,M, P <: AbstractCOP{T,N}, Q <: AbstractCOP
 end
 
 # assumes N >  M
-@generated  function ⊕′(p1::P, p2::Q) where {T,N,S,M, P<:AbstractCOP{T,N}, Q<:AbstractCOP{S,M}}
+@generated  function ⊕′(p1::P, p2::Q) where {T,X,N,S,Y,M, P<:AbstractCOP{T,X,N}, Q<:AbstractCOP{S,Y,M}}
 
     #@assert  ⟒(P) == ⟒(Q)
     R = promote_type(T,S)
@@ -452,7 +455,7 @@ end
 
     return quote
         Base.@_inline_meta
-        ⟒(P){$(R),$(N)}(tuple($(exprs...)), p1.var)
+        ⟒(P){$(R),X,$(N)}(tuple($(exprs...)))
     end
 
 end
@@ -462,7 +465,7 @@ function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
     Polynomials.isconstant(p)  && return q * p(0)
     Polynomials.isconstant(q)  && return p * q(0)
-    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
+    Polynomials.indeterminate(p) != Polynomials.indeterminate(q) && throw(ArgumentError("Variables don't  match"))    
 
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
     p′,q′ = _convert_cop.(Polynomial, (p,q))
@@ -476,21 +479,21 @@ end
 
 function Polynomials.truncate(p::P;
                                rtol::Real = Base.rtoldefault(real(T)),
-                               atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
+                               atol::Real = 0,) where {T,X,N,P<:AbstractCOP{T,X,N}}
     ps = coeffs(p)
     max_coeff = maximum(abs, ps)
     thresh = max_coeff * rtol + atol
     map!(c->abs(c) <= thresh ? zero(T) : c, ps,ps)
-    ⟒(P){T}(ps, p.var)
+    ⟒(P){T,X}(ps)
 end
 
 Polynomials.truncate!(p::P;
                       rtol::Real = Base.rtoldefault(real(T)),
-                      atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`truncate!` not defined")
+                      atol::Real = 0,) where {T,P<:AbstractCOP{T}} = error("`truncate!` not defined")
 
 function Base.chop(p::P;
                    rtol::Real = Base.rtoldefault(real(T)),
-                   atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}}
+                   atol::Real = 0,) where {T,X,N,P<:AbstractCOP{T,X,N}}
     
     N == 0 && return p
     i = N-1
@@ -501,12 +504,12 @@ function Base.chop(p::P;
         end
         i -= 1
     end
-    ⟒(P)(coeffs(p)[1:i+1], p.var)
+    ⟒(P)(coeffs(p)[1:i+1], X)
 end
 
 Polynomials.chop!(p::P;
                   rtol::Real = Base.rtoldefault(real(T)),
-                  atol::Real = 0,) where {T,N,P<:AbstractCOP{T,N}} = error("`chop!` not defined")
+                  atol::Real = 0,) where {T,P<:AbstractCOP{T}} = error("`chop!` not defined")
 
 
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
@@ -514,9 +517,10 @@ Polynomials.chop!(p::P;
 function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
 
     R = eltype(one(eltype(p))/1)
+    X = Polynomials.indeterminate(p)
     d = degree(p)
     order < 0 && throw(ArgumentError("order must  be non-negative"))
-    order == 0 && return ⟒(P){R}(coeffs(p), p.var)
+    order == 0 && return ⟒(P){R,X}(coeffs(p))
     d < order && return zero(⟒(P){R})
     
     as = zeros(R, d)
@@ -534,7 +538,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
     p1 = ps[1+1]
     as[1+0] = p1/a
 
-    dp = ⟒(P)(as, p.var)
+    dp = ⟒(P)(as, Polynomials.indeterminate(p))
     order == 1 ? dp : derivative(dp, order - 1)
     
 end
@@ -543,16 +547,17 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
     
     T,S = eltype(p), typeof(C)
     R = promote_type(typeof(one(T) / 1), S)
-    Q = ⟒(P){R}
+    X = Polynomials.indeterminate(p)
+    Q = ⟒(P){R,X}
     if hasnan(p) || isnan(C)
         return   Q(NaN)
     end
 
     n = degree(p)
     if n == -1
-        return zero(Q, p.var)
+        return zero(Q)
     elseif n == 0
-        return C*one(Q, p.var)  + p(0)*variable(Q, p.var)
+        return C*one(Q)  + p(0)*variable(Q)
     end
     
     as = zeros(R, n + 2)
@@ -573,7 +578,7 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
     end
 
     # adjust constant
-    ∫p = Q(as,  p.var)
+    ∫p = Q(as)
     return ∫p - ∫p(0) + Q(C) 
 
 end

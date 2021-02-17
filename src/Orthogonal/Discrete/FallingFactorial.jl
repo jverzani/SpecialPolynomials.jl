@@ -27,15 +27,18 @@ true
 ```
 
 """
-struct FallingFactorial{T <: Number} <: AbstractSpecialPolynomial{T}
+struct FallingFactorial{T <: Number,X} <: AbstractSpecialPolynomial{T,X}
     coeffs::Vector{T}
-    var::Symbol
-    function FallingFactorial{T}(coeffs::Vector{T}, var::Symbol) where {T <: Number}
-        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
+    function FallingFactorial{T,X}(coeffs::Vector{T}) where {T <: Number,X}
+        length(coeffs) == 0 && return new{T,X}(zeros(T, 1))
         last_nz = findlast(!iszero, coeffs)
         last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{T}(coeffs[1:last], var)
+        return new{T,X}(coeffs[1:last])
     end
+    function FallingFactorial{T}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {T <: Number}
+        FallingFactorial{T,Symbol(var)}(coeffs)
+    end
+
 end
 
 Polynomials.@register FallingFactorial

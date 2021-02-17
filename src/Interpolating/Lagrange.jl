@@ -1,5 +1,5 @@
 """
-    Lagrange{N, S, R, T}
+    Lagrange{N, S, R, T, X}
 
 Represent a polynomial in Lagrange form using nodes `xs`, weights `ws`, and coefficients `coeffs`.
 The Lagrange form does polynomial interpolation between `xs` and `ys` through `p(x) = Σ_{0..n} ℓ_i(x) y_i`,
@@ -71,7 +71,7 @@ true
     polynomial will reference a different  basis.
 
 """
-struct Lagrange{N, S<:Number, R <: Number, T <: Number} <: AbstractInterpolatingPolynomial{T}
+struct Lagrange{N, S<:Number, R <: Number, T <: Number, X} <: AbstractInterpolatingPolynomial{T,X}
     xs::Vector{S}
     ws::Vector{R}
     coeffs::Vector{T}
@@ -80,7 +80,7 @@ struct Lagrange{N, S<:Number, R <: Number, T <: Number} <: AbstractInterpolating
         xs = unique(xs)
         N = length(xs)
         N == length(coeffs) || throw(ArgumentError("the unique xs and the coeffs must have the same length"))
-        new{N, S,R,T}(xs, ws, coeffs, var)
+        new{N, S,R,T,Symbol(var)}(xs, ws, coeffs)
     end
     function  Lagrange(xs::Vector{S}, coeffs::Vector{T}, var::Symbol=:x) where {S,T}
         xs = unique(xs)
@@ -88,12 +88,13 @@ struct Lagrange{N, S<:Number, R <: Number, T <: Number} <: AbstractInterpolating
         ws = lagrange_barycentric_weights(xs)
         R = eltype(ws)
         length(coeffs) == length(xs) || throw(ArgumentError("the unique xs and the coeffs must have the same length"))
-        new{N, S, R, T}(xs, ws, coeffs, :x)
+        new{N, S, R, T,Symbol(var)}(xs, ws, coeffs)
     end
 end
 
 export Lagrange
 
+Polynomials.indeterminate(::Type{Lagrange{N,S,R,T,X}}) where {N,S,R,T,X} = X
 basis_symbol(::Type{Lagrange{N,S,R,T}}) where {N,S,R,T} = "ℓ^$(N-1)"
 
 ## Boilerplate code reproduced here, as there are three type parameters
@@ -112,7 +113,7 @@ function Polynomials.variable(p::Lagrange{S, R, T}, var::Polynomials.SymbolLike=
     _fit(Lagrange, p.xs, p.ws, p.xs, var)
 end
 function Polynomials.one(p::Lagrange)
-    _fit(Lagrange, p.xs, p.ws, ones(eltype(p.xs),length(p.xs)), p.var)
+    _fit(Lagrange, p.xs, p.ws, ones(eltype(p.xs),length(p.xs)), Polynomials.indeterminate(p))
 end
 Polynomials.zero(p::Lagrange{N, S, R, T}) where {N,S,R,T} = 0*p
 
@@ -214,29 +215,29 @@ lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) 
 
 ## can add easily if the nodes are shared
 ## otherwise, this needs to interpolate
-function Base.:+(p1::Lagrange{N,S,R,T}, p2::Lagrange{M,S1,R1,T1}) where {N,S,R,T,M,S1,R1,T1}
-    p1.var == p2.var || throw(ArgumentError("p1 and p2 must share the same variable"))
+function Base.:+(p1::Lagrange{N,S,R,T,X}, p2::Lagrange{M,S1,R1,T1,Y}) where {N,S,R,T,X,M,S1,R1,T1,Y}
+    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
 
     # can just add if using the same set of nodes
     if N == M && p1.xs == p2.xs
         cs =  coeffs(p1) +  coeffs(p2)
-        return Lagrange(p1.xs, p1.ws, cs, p1.var)
+        return Lagrange(p1.xs, p1.ws, cs, X)
     else
         p,q = N >= M ? (p1, p2) : (p2, p1)
         xs, ws, cs = p.xs, p.ws, copy(coeffs(p))
         for i in eachindex(xs)
             cs[i] += q(xs[i])
         end
-        return _fit(Lagrange, xs,  ws, cs, p1.var)
+        return _fit(Lagrange, xs,  ws, cs, X)
     end
 end
 
 ## XXX is there a better way?
 ## This refits using  updated weights,
 ## but this can be wildly inaccurate
-function Base.:*(p1::Lagrange{N,S,R,T}, p2::Lagrange{M,S1,R1,T1}) where {N,S,R,T,M,S1,R1,T1}
+function Base.:*(p1::Lagrange{N,S,R,T,X}, p2::Lagrange{M,S1,R1,T1,Y}) where {N,S,R,T,X,M,S1,R1,T1,Y}
 
-    p1.var == p2.var || throw(ArgumentError("p1 and p2 must share the same variable"))
+    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
 
     p, q =  N >= M ? (p1, p2)  : (p2, p1)
     S2 = typeof(one(S) * one(S1)/1)
@@ -250,20 +251,20 @@ function Base.:*(p1::Lagrange{N,S,R,T}, p2::Lagrange{M,S1,R1,T1}) where {N,S,R,T
         push!(xs, y)
     end
     ys = p.(xs) .* q.(xs)
-    _fit(Lagrange, xs,  ws, ys, p1.var)
+    _fit(Lagrange, xs,  ws, ys, X)
 
 end
 
 
 # handle scalar case
 function Base.:+(p::Lagrange, c::Number)
-    q = Lagrange(p.xs[1:1], [c], p.var)
+    q = Lagrange(p.xs[1:1], [c], Polynomials.indeterminate(p))
     p + q
 end
 
 Base.:*(c::Number, p::Lagrange) = p*c
 function Base.:*(p::P, c::Number) where {P <: Lagrange}
-    Lagrange(p.xs, c*coeffs(p), p.var)
+    Lagrange(p.xs, c*coeffs(p),  Polynomials.indeterminate(p))
 end
 
 Base.:-(p::P) where {P<:Lagrange} = (-1)*p

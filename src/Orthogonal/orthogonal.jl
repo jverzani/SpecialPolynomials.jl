@@ -3,12 +3,12 @@
 export Basis
 
 ## Has An(P), Bn(P), Cn(P)
-abstract type AbstractOrthogonalPolynomial{T} <: AbstractSpecialPolynomial{T} end
-abstract type AbstractContinuousOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
-abstract type AbstractDiscreteOrthogonalPolynomial{T} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractOrthogonalPolynomial{T,X} <: AbstractSpecialPolynomial{T,X} end
+abstract type AbstractContinuousOrthogonalPolynomial{T,X} <: AbstractOrthogonalPolynomial{T,X} end
+abstract type AbstractDiscreteOrthogonalPolynomial{T,X} <: AbstractOrthogonalPolynomial{T,X} end
 
 """
-    AbstractOrthogonalPolynomial{T}
+    AbstractOrthogonalPolynomial{T,X}
 
 Type to represent systems of orthogonal polynomials. These polynomials have  several properties, including an accompanying inner product satsifying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
 

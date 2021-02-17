@@ -8,11 +8,11 @@
     @test p.coeffs == coeff
     @test coeffs(p) == coeff
     @test degree(p) <= length(coeff) - 1
-    @test p.var == :x
+    @test Polynomials.indeterminate(p) == :x
     @test length(p) == length(coeff)
     @test size(p) == size(coeff)
     @test size(p, 1) == size(coeff, 1)
-    @test typeof(p).parameters[end] == eltype(coeff)
+    @test typeof(p).parameters[end-1] == eltype(coeff)
     @test eltype(p) == eltype(coeff)
 end
 

@@ -115,7 +115,7 @@ end
 
 
 # 2x more performant
-function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
+function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
     # int H_n = 1/(n+1) H_{n+1}
     R = eltype(one(T)/1)
     d = degree(p)
@@ -125,7 +125,7 @@ function Polynomials.integrate(p::P, C::Number=0) where {T,P<:Hermite{T}}
         qs[i+2] = p[i]/(2(i+1))
     end
 
-    q = ⟒(P)(qs, p.var)
+    q = ⟒(P){R,X}(qs)
     q = q - q(0) + R(C)
 
     return q
@@ -201,21 +201,21 @@ pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =  sqrt(2)*gamma(1+n)*sqrt(p
 
 ##  Multiplication
 ## TODO: work  on  types
-AbstractHermite{T} = Union{Hermite{T}, ChebyshevHermite{T}}
+AbstractHermite{T,X} = Union{Hermite{T,X}, ChebyshevHermite{T,X}}
 
 # Default is slow. Instead
 # directly use a linearization formula from
 # https://arxiv.org/pdf/1901.01648.pdf
 # and  for Hermite, Hn(x) =2^(n/2)Hₑ_n(sqrt(2) x)
 # so Hm⋅Hn = ∑ C_{m,n,j} 2^j H_{m+n-2j}
-function ⊗(p::P, q::Q) where {T,S, P<:AbstractHermite{T}, Q<:AbstractHermite{S}}
+function ⊗(p::P, q::Q) where {T,X,S,Y, P<:AbstractHermite{T,X}, Q<:AbstractHermite{S,Y}}
     R = eltype(one(promote_type(T,S))/1)
     N,M = degree(p), degree(q)
-    N == -1 && return zero(⟒(P){R}, q.var)
-    M == -1 && return zero(⟒(P){R}, p.var)
+    N == -1 && return zero(⟒(P){R,Y})
+    M == -1 && return zero(⟒(P){R,X})
     N == 0  && return q * p[0]
     M == 0  && return p * q[0]
-    q.var != p.var && throw(ArgumentError("Variable names must   match"))
+    X != Y && throw(ArgumentError("Variable names must match"))
 
     as =  zeros(R, 1+N+M)
     for i  in eachindex(p)
@@ -232,7 +232,7 @@ function ⊗(p::P, q::Q) where {T,S, P<:AbstractHermite{T}, Q<:AbstractHermite{S
             end
         end
     end
-    ⟒(P){R}(as, p.var)
+    ⟒(P){R,X}(as)
 end
                     
 hermite_α(P::Type{<:ChebyshevHermite}) = 1

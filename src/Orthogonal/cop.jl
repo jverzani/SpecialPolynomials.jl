@@ -1,7 +1,7 @@
 ## common functionality for  COP classical orthogonal polynomials
 ## These are described by 5  values: a,.b.c.d.e
 
-abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractCOP{T,X,N} <: AbstractOrthogonalPolynomial{T,X} end
 
 function Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
                            Q::Type{<:AbstractCOP{S}}) where {T,S}
@@ -84,7 +84,7 @@ leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
 
 
 # Can't  change  N  here
-function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}
+function Base.setindex!(p::AbstractCOP{T,X,N}, value::Number, idx::Int) where {T, X,N}
 
     ## widen size...
     idx < 0 &&  throw(ArgumentError("Negative index"))
@@ -97,7 +97,7 @@ function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, 
 end
 
 
-Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
+Polynomials.degree(p::AbstractCOP{T,X,N})  where {T,X,N} = N-1
 Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 
 ##  Evaluation
@@ -105,13 +105,13 @@ Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
-function eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
+function eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
     N == 0 && return zero(T) * zero(S)
     N == 1 && return (cs[1] * k0(P)) *  one(S)
     _eval_cop(P,cs, x)
 end
 
-function _eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
+function _eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
     if @generated
         quote
             Δ0 = cs[end - 1]
