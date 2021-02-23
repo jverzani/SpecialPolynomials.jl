@@ -416,56 +416,56 @@ function Base.:+(p::P, c::S) where {T, X, N, P<:AbstractCOP{T,X,N}, S<:Number}
     return ⟒(P){R,X,N}(cs)
 end
 
-##
-## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
-## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
-## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
-function ⊕(p::P, q::Q) where {T,X,N,S,Y,M, P <: AbstractCOP{T,X,N}, Q <: AbstractCOP{S,Y,M}}
+# ##
+# ## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
+# ## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
+# ## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
+# function ⊕(p::P, q::Q) where {T,X,N,S,Y,M, P <: AbstractCOP{T,X,N}, Q <: AbstractCOP{S,Y,M}}
 
-    #@assert  ⟒(P) == ⟒(Q)
-    #@assert eltype(p) == eltype(q)
-    R = promote_type(T,S)
-    Polynomials.isconstant(p)  && return q + p(0) 
-    Polynomials.isconstant(q)  && return p + q(0) 
+#     #@assert  ⟒(P) == ⟒(Q)
+#     #@assert eltype(p) == eltype(q)
+#     R = promote_type(T,S)
+#     Polynomials.isconstant(p)  && return q + p(0) 
+#     Polynomials.isconstant(q)  && return p + q(0) 
 
-    X != Y && throw(ArgumentError("Variables don't  match"))    
+#     X != Y && throw(ArgumentError("Variables don't  match"))    
 
-    if N==M
-        as = [p[i]+q[i] for i in 0:N-1]
-        return ⟒(P){R,X}(as) # might have trailing zeros here
-    end
+#     if N==M
+#         as = [p[i]+q[i] for i in 0:N-1]
+#         return ⟒(P){R,X}(as) # might have trailing zeros here
+#     end
 
-    N > M ? ⊕′(p,q) : ⊕′(q,p)
+#     N > M ? ⊕′(p,q) : ⊕′(q,p)
 
-end
+# end
 
-# assumes N >  M
-@generated  function ⊕′(p1::P, p2::Q) where {T,X,N,S,Y,M, P<:AbstractCOP{T,X,N}, Q<:AbstractCOP{S,Y,M}}
+# # assumes N >  M
+# @generated  function ⊕′(p1::P, p2::Q) where {T,X,N,S,Y,M, P<:AbstractCOP{T,X,N}, Q<:AbstractCOP{S,Y,M}}
 
-    #@assert  ⟒(P) == ⟒(Q)
-    R = promote_type(T,S)
+#     #@assert  ⟒(P) == ⟒(Q)
+#     R = promote_type(T,S)
 
-    exprs = Any[nothing for i = 1:N]
-    for i in  1:M
-        exprs[i] = :(p1.coeffs[$i] + p2.coeffs[$i])
-    end
-    for i in M+1:N
-        exprs[i] =:(p1.coeffs[$i])
-    end
+#     exprs = Any[nothing for i = 1:N]
+#     for i in  1:M
+#         exprs[i] = :(p1.coeffs[$i] + p2.coeffs[$i])
+#     end
+#     for i in M+1:N
+#         exprs[i] =:(p1.coeffs[$i])
+#     end
 
-    return quote
-        Base.@_inline_meta
-        ⟒(P){$(R),X,$(N)}(tuple($(exprs...)))
-    end
+#     return quote
+#         Base.@_inline_meta
+#         ⟒(P){$(R),X,$(N)}(tuple($(exprs...)))
+#     end
 
-end
+# end
 
 
 function ⊗(p::P, q::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
-    Polynomials.isconstant(p)  && return q * p(0)
-    Polynomials.isconstant(q)  && return p * q(0)
-    Polynomials.indeterminate(p) != Polynomials.indeterminate(q) && throw(ArgumentError("Variables don't  match"))    
+    isconstant(p)  && return q * constantterm(p)
+    isconstant(q)  && return p * constantterm(q)
+    assert_same_variable(p,q)
 
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
     p′,q′ = _convert_cop.(Polynomial, (p,q))
@@ -543,14 +543,14 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
     
 end
 
-function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
+function Polynomials.integrate(p::P) where {P <: AbstractCOP}
     
-    T,S = eltype(p), typeof(C)
-    R = promote_type(typeof(one(T) / 1), S)
+    T = eltype(p)
+    R = typeof(one(T) / 1)
     X = Polynomials.indeterminate(p)
     Q = ⟒(P){R,X}
-    if hasnan(p) || isnan(C)
-        return   Q(NaN)
+    if hasnan(p)
+        return Q(NaN)
     end
 
     n = degree(p)
@@ -577,9 +577,8 @@ function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractCOP}
         end
     end
 
-    # adjust constant
     ∫p = Q(as)
-    return ∫p - ∫p(0) + Q(C) 
+    return ∫p
 
 end
 

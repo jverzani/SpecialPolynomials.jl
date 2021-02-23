@@ -144,11 +144,11 @@ function Polynomials.derivative(p::P, order::Integer = 1) where {P <: AbstractSp
 end
 
 
-function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractSpecialPolynomial}
-    T = eltype(one(p))
-    q = convert(Polynomial{T}, p)
-    convert(⟒(P), integrate(q, C))
-end
+# function Polynomials.integrate(p::P, C::Number=0) where {P <: AbstractSpecialPolynomial}
+#     T = eltype(one(p))
+#     q = convert(Polynomial{T}, p)
+#     convert(⟒(P), integrate(q, C))
+# end
 
 function Polynomials.integrate(p::P, a::Number, b::Number) where {P <: AbstractSpecialPolynomial}
     q = convert(Polynomial, p)

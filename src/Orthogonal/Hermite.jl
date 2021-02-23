@@ -208,7 +208,7 @@ AbstractHermite{T,X} = Union{Hermite{T,X}, ChebyshevHermite{T,X}}
 # https://arxiv.org/pdf/1901.01648.pdf
 # and  for Hermite, Hn(x) =2^(n/2)Hₑ_n(sqrt(2) x)
 # so Hm⋅Hn = ∑ C_{m,n,j} 2^j H_{m+n-2j}
-function ⊗(p::P, q::Q) where {T,X,S,Y, P<:AbstractHermite{T,X}, Q<:AbstractHermite{S,Y}}
+function ⊗(::Type{<:AbstractHermite}, p::P, q::Q) where {T,X,S,Y, P<:AbstractHermite{T,X}, Q<:AbstractHermite{S,Y}}
     R = eltype(one(promote_type(T,S))/1)
     N,M = degree(p), degree(q)
     N == -1 && return zero(⟒(P){R,Y})

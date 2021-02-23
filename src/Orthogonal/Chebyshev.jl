@@ -78,12 +78,12 @@ C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))/2
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
 γ̃n(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4
 
-function ⊗(p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
+function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
 
     isconstant(p1) &&  return p2 * p1[0]
     isconstant(p2) &&  return p1 * p2[0]
+    assert_same_variable(X,Y)
 
-    X != Y && throw(ArgumentError("Polynomials must have same variable"))
     R = promote_type(T,S)
     z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
     z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
@@ -476,11 +476,10 @@ Cn(::Type{<:ChebyshevU}, n::Int) = 1
 # work around cancellation
 ĉ̃n(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4)
 
-function ⊗(p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
-
+function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
     isconstant(p) &&  return q * p[0]
     isconstant(q) &&  return p * q[0]
-    X != Y && throw(ArgumentError("Polynomials must have same variable"))
+    assert_same_variable(X,Y)
 
     M, N = degree(p), degree(q)
     R = promote_type(T, S)

@@ -57,11 +57,15 @@ macro register0(name, parent)
         Polynomials.@register $poly
 
         # work around N parameter in promote(p,q) usage in defaults
-        Base.:*(p::$poly{T}, q::$poly{T}) where {T}  = ⊗(p,q)
-        Base.:+(p::$poly{T}, q::$poly{T}) where {T}  = ⊕(p,q)
+        Base.:+(p::P,q::Q) where {T,X,N,P<:$poly{T,X,N},
+                                  S,  M,Q<:$poly{S,X,M}} = ⊕(P, p, q)
+        Base.:*(p::P,q::Q) where {T,X,N,P<:$poly{T,X,N},
+                                  S,  M,Q<:$poly{S,X,M}} = ⊗(P, p, q)
         Base.divrem(p::$poly{T}, q::$poly{T}) where {T}  = _divrem(p,q)
     end
 end
+
+    
 
 # register macro for polynomial families with parameters
 # would be nice to consolidate, but ...
@@ -94,7 +98,7 @@ macro registerN(name,  parent, params...)
             function $poly{$(αs...),T}(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {$(αs...),T,S}
                 N = findlast(!iszero, coeffs)
                 if N ==  nothing
-                    new{$(αs...),T,Symbol(var),0}(T[])
+                    new{$(αs...),T,Symbol(var),0}(zeros(T,0))
                 else
                     new{$(αs...),T,Symbol(var),N}(T.(coeffs[1:N]))
                 end
@@ -132,8 +136,14 @@ macro registerN(name,  parent, params...)
             variable($poly{$(αs...)}, var)
 
         # work around N parameter in promote
-        Base.:*(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p1,p2)
-        Base.:+(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p1,p2)
+        #Base.:+(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p1,p2)
+        #Base.:*(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p1,p2)
+        Base.:+(p::P,q::Q) where {$(αs...),
+                                  T,X,N,P<:$poly{$(αs...),T,X,N},
+                                  S,  M,Q<:$poly{$(αs...),S,X,M}} = ⊕(P, p, q)
+        Base.:*(p::P,q::Q) where {$(αs...),
+                                  T,X,N,P<:$poly{$(αs...),T,X,N},
+                                  S,  M,Q<:$poly{$(αs...),S,X,M}} = ⊗(P, p, q)
         Base.divrem(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = _divrem(p1,p2)
 
         Polynomials._indeterminate(::Type{P}) where {$(αs...),T,X,P <: $poly{$(αs...),T,X}} = X

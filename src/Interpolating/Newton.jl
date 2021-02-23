@@ -26,14 +26,16 @@ Polynomial(1.0 - 2.0*x + 1.0*x^3)
 ```
 
 """
-struct Newton{N, S<:Number, T <: Number, X} <: AbstractInterpolatingPolynomial{T, X}
+struct Newton{N, S<:Number, T <: Number, X, V} <: AbstractInterpolatingPolynomial{T, X}
     xs::Vector{S}
     tableau::Matrix{T}
+    coeffs::V
     function Newton(xs::Vector{S}, nt::AbstractMatrix{T}, var::Symbol=:x) where {S,T}
         N = length(xs)
         xs = sort(unique(xs))
         N != length(xs) && throw(ArgumentError("xs must be unique"))
-        new{N,S,T, Symbol(var)}(xs, nt)
+        v = view(nt, 1, :)
+        new{N,S,T, Symbol(var), typeof(v)}(xs, nt, v)
     end
 end
 
@@ -107,6 +109,8 @@ end
 ## the coefficients are the top row of the upper
 ## triangular tableau
 Polynomials.coeffs(p::Newton) = p.tableau[1,:]
+
+
 
 ## Evaluation
 ## p(x) = f[x0] + f[x0,x1](x-x0) + ... + f[x0,x1,...,x_n](x-x0)(x-x1)...(x-x_{n-1})

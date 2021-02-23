@@ -122,10 +122,15 @@ end
 Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
 Polynomials.degree(p::Bernstein{N,T, X}) where {N, T, X} = degree(convert(Polynomial{T, X}, p))
 
+Polynomials.constantterm(p::Bernstein) = p[0] # β.,ᵢ = 0 + ... when i > 0
+
 ## need to do one  and variable differently,as coefficients have length N+1
 Base.one(P::Type{Bernstein{N,T,X}}) where {N,T,X} = Bernstein{N,T,X}(ones(T, N+1))
 Base.one(P::Type{Bernstein{N,T}}, var::Polynomials.SymbolLike) where {N,T} = Bernstein{N,T, Symbol(var)}(ones(T, N+1))
-Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N} = one(Bernstein{N,eltype(P),Symbol(var)})
+function Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N}
+    N′ = max(N,0)
+    one(Bernstein{N′,eltype(P),Symbol(var)})
+end
 
 function Polynomials.variable(P::Type{<:Bernstein{𝐍}}, var::Polynomials.SymbolLike=:x) where {𝐍}
     S = eltype(P)
@@ -237,23 +242,24 @@ end
 # twoProd(x, y)  = x*y, 0
 
 
-# default in abstract.jl  assumes basis(P,0)=1
-function Base.:+(p::Bernstein{𝐍,T}, c::Number) where {𝐍, T}
-    u, v =  promote(p, c)
-    u+v
+# avoid call to p + constanterm in default `+` of Polynomials/common.jl, 
+function Base.:+(p::P, q::Q) where {𝐍,T,X, P<:Bernstein{𝐍,T,X},
+                                    𝐌,S,   Q<:Bernstein{𝐌,S,X}}
+    sum(promote(p,q))
 end
 
-# default `+` calls promote(p1,p2) then dispatches to this.
-function Base.:+(p1::Bernstein{𝐍,T,X}, p2::Bernstein{𝐍,T,X}) where {𝐍,T,X}
-    return Bernstein{𝐍, T, X}([p1[i] + p2[i] for i in 0:𝐍])
+
+function Base.:+(p1::P, p2::P) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}}
+    return P([p1[i] + p2[i] for i in 0:𝐍])
 end
 
 # no promote(p1,p2)  called here
-function Base.:*(p::Bernstein{N,T,X}, q::Bernstein{M,S,Y}) where {N,T, M,S, X, Y}
+function Base.:*(p::P, q::Q) where {𝐍,T,X, P<:Bernstein{𝐍,T,X},
+                                    𝐌,S,Y, Q<:Bernstein{𝐌,S,Y}}
     ## use b(n,k) * b(m,j) = choose(n,k)choose(m,j)/choose(n+m,k+j) b(n+m, k+j)
 
-    isconstant(p) && return q * p[0]
-    isconstant(q) && return p * q[0]
+    isconstant(p) && return q * constantterm(p)
+    isconstant(q) && return p * constantterm(q)
     Polynomials.assert_same_variable(p, q) || throw(ArgumentError("p1 and p2 must have the same symbol"))
 
     
@@ -293,8 +299,8 @@ end
 
 
 # use ∫b_n,nu  = 1/(n+1)  * ∑_{nu+1}^{n+1} b_n+1, j
-function Polynomials.integrate(p::Bernstein{𝐍, T, X}, C::S) where {𝐍, T,X,S <: Number}
-    R = promote_type(eltype(one(T) / 1), S)
+function Polynomials.integrate(p::Bernstein{𝐍, T, X}) where {𝐍, T,X}
+    R = eltype(one(T) / 1)
     𝐍𝐍 = 𝐍 + 1
     
     cs = zeros(R, 𝐍𝐍+1)
@@ -306,7 +312,7 @@ function Polynomials.integrate(p::Bernstein{𝐍, T, X}, C::S) where {𝐍, T,X,
     end
     
     ∫p = Bernstein{𝐍𝐍, R,X}(cs)
-    return ∫p - (∫p(0) - C)
+    return ∫p
 
 end
 

@@ -218,12 +218,20 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
      T <: Number}
     
     A = Matrix{T}(undef, length(x), n + 1)
-    A[:, 1] .= P0(P, one(T))
+
+    # for i in 0:n
+    #     A[:, i+1] = basis(P, i).(x)
+    # end
+    # return A
+    
+    A[:, 1] .= basis(P,0)(one(T)) #P0(P, one(T))
 
     if n > 0
-        A[:, 2] .= P1(P, x)
+        A[:, 2] .= basis(P,1).(x) #P1(P, x)
         @inbounds for i in 1:n-1
-            A[:, i+2] .= A[:, i+1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i])
+            # `P_{n+1} = (A_n x + B_n) P_{n} - C_n P_{n-1}`
+            n′ = i+1
+            A[:, n′+1] = (An(p,n′) * x .+ Bn(p,n′)) .* A[:, n′] .- (Cn(p,n′) * A[:, n′ - 1])
         end
     end
     
@@ -350,7 +358,7 @@ Polynomials.fit(val::Val{:lsq},
 """
     fit(Val(:series), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
 
-If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncated sum `∑_0^n c̃_k P_k(x)` where `n` ischosen algorithmically and `c̃_k`is chosen using an efficient manner, not necessarily through the orthogonality condition, `<f,p_k>/<p_k,p_k>`.
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncated sum `∑_0^n c̃_k P_k(x)` where `n` is chosen algorithmically and `c̃_k` is chosen using an efficient manner, not necessarily through the orthogonality condition, `<f,p_k>/<p_k,p_k>`.
 
 """
 Polynomials.fit(val::Val{:series},

@@ -216,15 +216,13 @@ function ĉ̃n(P::Type{<:AbstractCDOP}, n::Int)
 end
 
 
-function ⊗(p::P, q::Q) where {P <: AbstractCDOP, Q <: AbstractCDOP}
+function ⊗(::Type{<:AbstractCDOP}, p::P, q::Q) where {P <: AbstractCDOP, Q <: AbstractCDOP}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
-    Polynomials.isconstant(p)  && return q * p[0]
-    Polynomials.isconstant(q)  && return p * q[0]    
-
-    X, Y = Polynomials.indeterminate(p), Polynomials.indeterminate(q) 
-    X != Y && throw(ArgumentError("Variables don't  match"))    
+    isconstant(p)  && return q * constantterm(p)
+    isconstant(q)  && return p * constantterm(q)    
+    assert_same_variable(p,q)
         
     convert(⟒(P), convert(FallingFactorial, p) * convert(FallingFactorial, q))
 

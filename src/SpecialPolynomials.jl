@@ -5,7 +5,7 @@ using LinearAlgebra
 import SpecialFunctions: gamma
 
 using Polynomials
-import Polynomials: basis, isconstant, StandardBasisPolynomial, ⟒
+import Polynomials: basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒
 export basis
 
 import Intervals

@@ -12,6 +12,34 @@ Base.promote_rule(P::Type{<:AbstractCOP{S}},
                   Q::Type{<:Polynomials.AbstractPolynomial{T}}) where {T,S} =
                       ϛ(P){promote_type(T, S)}
 
+# generic addition for polynomials
+function ⊕(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}
+    R = promote_type(T,S)
+    P′ = ⟒(P){R,X}
+    if N > M
+        cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
+        return P′{N}(cs)
+    elseif N < M
+        cs = Polynomials.:⊕(P, q.coeffs, p.coeffs)
+        return P′{M}(cs)
+    else
+        cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
+        return P′(cs)
+    end
+end    
+
+# multiplication of polynomials of type P
+function ⊗(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}
+    isconstant(p)  && return q * constantterm(p) # scalar mult is faster, well defined
+    isconstant(q)  && return p * constantterm(q)
+    # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
+    p′,q′ = _convert_cop.(Polynomial, (p,q))
+    _convert_cop(⟒(P), p′ * q′)
+#    convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
+
+end
+
+
 function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
     #@assert  ⟒(P) == ⟒(Q)
