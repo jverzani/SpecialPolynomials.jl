@@ -148,7 +148,7 @@ end
 
 
 # poly evaluation
-(p::Bernstein{T})(x::S) where {T,S} = simple_deCasteljau_polyval(p, x)
+Polynomials.evalpoly(x, p::Bernstein) = simple_deCasteljau_polyval(p, x)
 
 # we could  use the compensated one
 # from https://doi.org/10.1016/j.camwa.2010.05.021

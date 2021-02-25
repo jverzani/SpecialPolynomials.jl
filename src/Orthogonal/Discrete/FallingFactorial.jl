@@ -67,7 +67,7 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
 end
 
 
-function  (p::FallingFactorial)(x)
+function  Polynomials.evalpoly(x, p::FallingFactorial)
     d = degree(p)
     d <= 0 &&  return  p[0]*one(x)
 
