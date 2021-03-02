@@ -119,7 +119,7 @@ Polynomials.zero(p::Lagrange{N, S, R, T}) where {N,S,R,T} = 0*p
 
 ##  Evaluation
 ##  From https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
-function (p::Lagrange)(x::Number)
+function Polynomials.evalpoly(x, p::Lagrange)
     ws, xs, cs = p.ws, p.xs, coeffs(p)
     a = b = zero(x/1)
     for j in eachindex(xs)
@@ -131,6 +131,7 @@ function (p::Lagrange)(x::Number)
    end
    a/b
 end
+(p::Lagrange)(x::Number) = evalpoly(x,p)
 
 ## convert to poly
 ## avoids division in barycentric form, which isn't available for Polynomial  arguments, such as `x-xs[j]`

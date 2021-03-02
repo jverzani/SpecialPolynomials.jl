@@ -132,12 +132,23 @@ function Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where
     one(Bernstein{N′,eltype(P),Symbol(var)})
 end
 
+function Polynomials.variable(P::Type{Bernstein{𝐍,T,X}}) where {𝐍,T,X}
+    𝐍 <= 0 && throw(ArgumentError("Need  𝐍 ≥ 1"))
+    R = typeof(one(T)/1)
+    Bernstein{𝐍,R,X}([1 - (i*one(T))/𝐍 for i in 𝐍:-1:0])
+end
+
 function Polynomials.variable(P::Type{<:Bernstein{𝐍}}, var::Polynomials.SymbolLike=:x) where {𝐍}
     S = eltype(P)
-    𝐍 <= 0 && throw(ArgumentError("Need  𝐍 ≥ 1"))
-    Bernstein{𝐍}([1 - (i*one(S))/𝐍 for i in 𝐍:-1:0], var)
+    variable(Bernstein{𝐍,S,Symbol(var)})
 end
-Polynomials.variable(P::Type{Bernstein},  var::Polynomials.SymbolLike=:x) = variable(Bernstein{1, eltype(P)}, var)
+Polynomials.variable(P::Type{Bernstein},  var::Polynomials.SymbolLike=:x) = variable(Bernstein{1, eltype(P),Symbol(var)})
+
+function basis(::Type{P}, k::Int) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}}
+    zs = zeros(Int, k+1)
+    zs[end] = 1
+    P(zs)
+end
 
 function basis(P::Type{<:Bernstein}, k::Int, _var::Polynomials.SymbolLike=:x; var=_var)
     zs = zeros(Int, k+1)
@@ -242,15 +253,13 @@ end
 # twoProd(x, y)  = x*y, 0
 
 
-# avoid call to p + constanterm in default `+` of Polynomials/common.jl, 
-function Base.:+(p::P, q::Q) where {𝐍,T,X, P<:Bernstein{𝐍,T,X},
-                                    𝐌,S,   Q<:Bernstein{𝐌,S,X}}
-    sum(promote(p,q))
-end
-
-
-function Base.:+(p1::P, p2::P) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}}
-    return P([p1[i] + p2[i] for i in 0:𝐍])
+# not needed, but speeds things along
+function Base.:+(p1::P, p2::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},
+                                      𝐌,S,  Q<:Bernstein{𝐌,S,X}}
+    p,q = promote(p1, p2)
+    𝐎,R = length(p.coeffs), eltype(p)
+    P′ = Bernstein{𝐎,R,X}
+    return Bernstein([p[i] + q[i] for i in 0:𝐎], X)
 end
 
 # no promote(p1,p2)  called here
@@ -318,11 +327,22 @@ end
 
 #  could do p 33 of http://mae.engr.ucdavis.edu/~farouki/bernstein.pdf
 function Base.divrem(num::Bernstein{𝐍,T}, den::Bernstein{𝐌,S}) where {𝐍, T, 𝐌, S}
-    p1 = convert(Polynomial{T}, num)
-    p2 = convert(Polynomial{S}, den)
+    R = eltype((one(T)+one(S))/1)
+    p1 = convert(Polynomial{R}, num)
+    p2 = convert(Polynomial{R}, den)
     q,r = divrem(p1, p2)
     convert.(Bernstein, (q,r))
 end
+
+# Replace me. Doesn't seem necessary and poor stability of conversion.
+# cf https://arxiv.org/pdf/1910.01998.pdf for one possible way, though for approximate GCD
+function Base.gcd(num::Bernstein{𝐍,T}, den::Bernstein{𝐌,S}) where {𝐍, T, 𝐌, S}
+    ps = convert.(Polynomial, (num,den))
+    qs = gcd(ps...)
+    convert.(Bernstein, qs)
+end
+
+
 
 function Polynomials.vander(P::Type{<:AbstractBernstein}, xs::AbstractVector{T}, n::Integer) where {T <: Number}
     N = length(xs) - 1 # xs = [x0, x1, ...]
@@ -337,3 +357,35 @@ function Polynomials.vander(P::Type{<:AbstractBernstein}, xs::AbstractVector{T},
     end
     V
 end
+
+# direct compuation of roots using numerical stable method of y Guðbjörn and Jónsson as
+# noted by Corless, Sevyeri  in §2.1 of
+# https://arxiv.org/pdf/1910.01998.pdf
+function Polynomials.roots(p::Bernstein{𝐍,T}) where {𝐍,T}
+
+    R = eltype(one(T)/1)
+
+    as = zeros(R, 𝐍 + 1)
+    for (i,pᵢ) ∈ pairs(coeffs(p))
+        as[i] = pᵢ
+    end
+
+    Ap = diagm(-1 => ones(R, 𝐍-1))
+    for j in 1:𝐍
+        Ap[1,j] = -as[end-j]
+    end
+
+    Bp = diagm(-1 => ones(R, 𝐍-1))
+    for j in 1:𝐍
+        Bp[1,j] = -as[end-j]
+    end
+
+    for j in 2:𝐍
+        Bp[j,j] = j/(𝐍-j+1)
+    end
+    Bp[1,1] += as[end]/𝐍
+
+    eigvals(Ap,Bp)
+end
+
+    

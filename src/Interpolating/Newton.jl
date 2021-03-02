@@ -115,7 +115,8 @@ Polynomials.coeffs(p::Newton) = p.tableau[1,:]
 ## Evaluation
 ## p(x) = f[x0] + f[x0,x1](x-x0) + ... + f[x0,x1,...,x_n](x-x0)(x-x1)...(x-x_{n-1})
 ## use nested evaluation (http://pages.cs.wisc.edu/~amos/412/lecture-notes/lecture08.pdf)
-function (p::Newton{N,S,T})(x) where {N,S,T}
+(p::Newton)(x)  = evalpoly(x,p)
+function Polynomials.evalpoly(x, p::Newton{N}) where {N}
     xs, cs = p.xs, coeffs(p)
     tot = cs[end]
     for j in N-1:-1:1

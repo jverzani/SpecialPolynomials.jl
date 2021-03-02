@@ -1,7 +1,7 @@
 ##
 ## --------------------------------------------------
 ##
-# Macros to register POLY{T},  POLY{αs..., T}
+# Macros to register POLY{T,X},  POLY{αs..., T,X}
 #
 # We use `Vector{T}` with N =  d+1 to store  a degree d  polynomial - no trailing zeros permitted.
 ##
@@ -137,8 +137,6 @@ macro registerN(name,  parent, params...)
             variable($poly{$(αs...)}, var)
 
         # work around N parameter in promote
-        #Base.:+(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊕(p1,p2)
-        #Base.:*(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T}  = ⊗(p1,p2)
         Base.:+(p::P,q::Q) where {$(αs...),
                                   T,X,N,P<:$poly{$(αs...),T,X,N},
                                   S,  M,Q<:$poly{$(αs...),S,X,M}} = ⊕(P, p, q)

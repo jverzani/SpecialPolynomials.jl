@@ -380,7 +380,7 @@ end
 ## Conversion
 ## * use FastTransforms, when available for T <: AbstractFloat; see connection.jl
 ## * use  _convert_cop when possible (needs to match σ)
-## * use  convesion  through Polynomial type
+## * use  conversion  through Polynomial type
 function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCCOP,  P <: AbstractCCOP}
     _convert(Q, p)
 end

@@ -81,6 +81,18 @@ function  Polynomials.evalpoly(x, p::FallingFactorial)
     tot
 end
 
+function Base.one(::Type{P}) where {P<:FallingFactorial}
+    T,X = eltype(P), Polynomials.indeterminate(P)
+    ⟒(P){T,X}(ones(T,1))
+end
+
+function Polynomials.variable(::Type{P}) where {P<:FallingFactorial}
+    T,X = eltype(P), Polynomials.indeterminate(P)
+    ⟒(P){T,X}([zero(T),one(T)])
+end
+
+
+
 k0(P::Type{<:FallingFactorial}) = one(eltype(P))
 
 Base.:*(p::FallingFactorial, q::FallingFactorial) = convert(FallingFactorial,  convert(Polynomial,p)*convert(Polynomial,q))

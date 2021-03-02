@@ -73,7 +73,6 @@ function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCDOP,  P <: Abstrac
 end
     
 
-
 Δₓ(p::AbstractCDOP) = p(variable(p)+1)-p(variable(p))
 ∇ₓ(p::AbstractCDOP) = p(variable(p))-p(variable(p)-1)
 
