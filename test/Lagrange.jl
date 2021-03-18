@@ -90,3 +90,9 @@ end
     @test all(roots(q) .≈ [-1/2, 1/2, 1])
 
 end
+
+
+## issue_17 
+x = LinRange(0,7,30)
+y = @.sin(-x)
+f = fit(Legendre, Array(x), y) # test that it doesn't error
