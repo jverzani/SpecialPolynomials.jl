@@ -218,10 +218,10 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
      T <: Number}
     
     A = Matrix{T}(undef, length(x), n + 1)
-    A[:, 1] .= P0(P, one(T))
+    A[:, 1] .= basis(P,0)(one(T)) 
 
     if n > 0
-        A[:, 2] .= P1(P, x)
+        A[:, 2] .= basis(P,1)(one(T)) 
         @inbounds for i in 1:n-1
             A[:, i+2] .= A[:, i+1] .* (An(p, i)*x .+ Bn(p,i)) .+ (Cn(p,i) * A[:, i])
         end
