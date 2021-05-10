@@ -204,8 +204,9 @@ end
 #     xs, ws
 # end
 
-gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
-    FastGaussQuadrature.gausschebyshev(n)
+## cf. fastgaussquadrature
+#gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
+#    FastGaussQuadrature.gausschebyshev(n)
 
 ##
 ## fitting coefficients
