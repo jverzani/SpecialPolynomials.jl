@@ -253,6 +253,7 @@ macro register_discrete_weight_function(W, xs, ws)
     
     quote
         SpecialPolynomials.xs_ws(::Type{<:$W′}) = ($xs′, $ws′)
-        (p::$W′)(x)  = clenshaw_eval(p, x)
+        SpecialPolynomials.k0(::Type{<:$W′}) = 1
+        (p::$W′)(x)  = clenshaw_eval(typeof(p), coeffs(p), x)
     end
 end

@@ -43,7 +43,7 @@ julia> SP.@register0 Toy SP.WeightFunction   # register a  Toy  example
 julia> SP.@register_weight_function Toy MonicChebyshev SP.weight_function(ChebyshevU)
 
 julia> [SP.Cn.(Toy, 1:5) SP.Cn.(MonicChebyshevU, 1:5)]
-5×2 Array{Float64,2}:
+5×2 Matrix{Float64}:
  0.25  0.25
  0.25  0.25
  0.25  0.25
@@ -72,13 +72,13 @@ julia> SP.@register_weight_function WF MonicChebyshev w
 julia> αs, βs = -SP.Bn.(WF, 0:5), SP.Cn.(WF, 0:5);
 
 julia> [αs βs]
-6×2 Array{Float64,2}:
+6×2 Matrix{Float64}:
  -1.87309e-15  9.68226
-  2.35136e-15  0.793782
- -8.51176e-16  0.119868
- -3.06017e-15  0.22704
- -3.09826e-16  0.241061
-  2.37296e-15  0.245429
+ -7.11555e-18  0.793782
+ -1.76472e-15  0.119868
+ -2.89401e-15  0.22704
+ -4.11827e-15  0.241061
+ -5.47762e-15  0.245428
 ```
 
 
@@ -110,7 +110,7 @@ julia> SP.modified_moment(::Type{WF1},  j::Int) = ν(j)
 julia> αs, βs = -SP.Bn.(WF1, 0:5), SP.Cn.(WF1, 0:5);
 
 julia> [αs βs]
-6×2 Array{Float64,2}:
+6×2 Matrix{Float64}:
  -0.75      1.0
  -0.381148  0.423611
  -0.504058  0.172646
