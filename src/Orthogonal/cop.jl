@@ -1,7 +1,7 @@
 ## common functionality for  COP classical orthogonal polynomials
 ## These are described by 5  values: a,.b.c.d.e
 
-abstract type AbstractCOP{T,N} <: AbstractOrthogonalPolynomial{T} end
+abstract type AbstractCOP{T,X,N} <: AbstractOrthogonalPolynomial{T,X} end
 
 function Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
                            Q::Type{<:AbstractCOP{S}}) where {T,S}
@@ -11,6 +11,34 @@ end
 Base.promote_rule(P::Type{<:AbstractCOP{S}},
                   Q::Type{<:Polynomials.AbstractPolynomial{T}}) where {T,S} =
                       ϛ(P){promote_type(T, S)}
+
+# generic addition for polynomials
+function ⊕(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}
+    R = promote_type(T,S)
+    P′ = ⟒(P){R,X}
+    if N > M
+        cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
+        return P′{N}(cs)
+    elseif N < M
+        cs = Polynomials.:⊕(P, q.coeffs, p.coeffs)
+        return P′{M}(cs)
+    else
+        cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
+        return P′(cs)
+    end
+end    
+
+# multiplication of polynomials of type P
+function ⊗(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}
+    isconstant(p)  && return q * constantterm(p) # scalar mult is faster, well defined
+    isconstant(q)  && return p * constantterm(q)
+    # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
+    p′,q′ = _convert_cop.(Polynomial, (p,q))
+    _convert_cop(⟒(P), p′ * q′)
+#    convert(⟒(P), convert(Polynomial, p) * convert(Polynomial, q))
+
+end
+
 
 function _divrem(num::P, den::Q) where {P <: AbstractCOP, Q <: AbstractCOP}
 
@@ -84,7 +112,7 @@ leading_term(P::Type{<:AbstractCOP},  n::Int) =  kn(P, n)
 
 
 # Can't  change  N  here
-function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, N}
+function Base.setindex!(p::AbstractCOP{T,X,N}, value::Number, idx::Int) where {T, X,N}
 
     ## widen size...
     idx < 0 &&  throw(ArgumentError("Negative index"))
@@ -97,7 +125,7 @@ function Base.setindex!(p::AbstractCOP{T,N}, value::Number, idx::Int) where {T, 
 end
 
 
-Polynomials.degree(p::AbstractCOP{T,N})  where {T,N} = N-1
+Polynomials.degree(p::AbstractCOP{T,X,N})  where {T,X,N} = N-1
 Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 
 ##  Evaluation
@@ -105,13 +133,13 @@ Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 """
     Clenshaw evaluation of an orthogonal polynomial 
 """
-function eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
+function eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
     N == 0 && return zero(T) * zero(S)
     N == 1 && return (cs[1] * k0(P)) *  one(S)
     _eval_cop(P,cs, x)
 end
 
-function _eval_cop(P::Type{<:AbstractCOP{T,N}}, cs, x::S) where {T,N,S}
+function _eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
     if @generated
         quote
             Δ0 = cs[end - 1]

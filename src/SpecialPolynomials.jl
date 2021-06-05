@@ -5,8 +5,9 @@ using LinearAlgebra
 import SpecialFunctions: gamma
 
 using Polynomials
-import Polynomials: basis, isconstant, StandardBasisPolynomial, ⟒
+import Polynomials: basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒
 export basis
+
 
 import Intervals
 import Intervals: Open, Closed, Unbounded, bounds_types
@@ -14,8 +15,8 @@ using QuadGK
 using Memoize
 
 using HypergeometricFunctions
-using FastTransforms
-using FastGaussQuadrature
+
+
 
 
 include("utils.jl")
@@ -54,5 +55,12 @@ include("Interpolating/Lagrange.jl")
 include("Interpolating/Newton.jl")
 
 include("Bernstein.jl")
+
+
+using Requires
+function __init__()
+    @require FastTransforms="057dd010-8810-581a-b7be-e3fc3b93f78c" include("fasttransforms.jl")
+    @require FastGaussQuadrature="442a2c76-b920-505d-bb47-c5924d526838" include("fastgaussquadrature.jl")
+end
 
 end # module

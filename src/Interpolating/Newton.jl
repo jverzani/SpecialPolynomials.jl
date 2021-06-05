@@ -1,5 +1,5 @@
 """
-    Newton{S,T}
+    Newton{N,S,T,X}
 
 A [Newton](https://en.wikipedia.org/wiki/Newton_polynomial)
 interpolating polynomial uses a basis `1`, `(x-x_0)`,
@@ -26,15 +26,16 @@ Polynomial(1.0 - 2.0*x + 1.0*x^3)
 ```
 
 """
-struct Newton{N, S<:Number, T <: Number} <: AbstractInterpolatingPolynomial{T}
+struct Newton{N, S<:Number, T <: Number, X, V} <: AbstractInterpolatingPolynomial{T, X}
     xs::Vector{S}
     tableau::Matrix{T}
-    var::Symbol
+    coeffs::V
     function Newton(xs::Vector{S}, nt::AbstractMatrix{T}, var::Symbol=:x) where {S,T}
         N = length(xs)
         xs = sort(unique(xs))
         N != length(xs) && throw(ArgumentError("xs must be unique"))
-        new{N,S,T}(xs, nt,  var)
+        v = view(nt, 1, :)
+        new{N,S,T, Symbol(var), typeof(v)}(xs, nt, v)
     end
 end
 
@@ -44,7 +45,7 @@ basis_symbol(::Type{<:Newton}) = "p"
 
 ## Boilerplate code reproduced here, as there are two type parameters
 Base.convert(::Type{P}, p::P) where {P <: Newton} =  p
-Base.convert(::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} = Newton{N,S,T}(p.xs, p.tableau, p.var)
+Base.convert(P::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} = Newton{N,S,T,Polynomial.indeterminate(P,p)}(p.xs, p.tableau)
 Base.promote_rule(::Type{Newton{N, S, T}}, ::Type{U}) where {N, S, T, U <: Number} = Newton{N, S, promote_type(T,U)}
 
 Polynomials.domain(::Type{<:Newton}) = Polynomials.Interval(-Inf, Inf)
@@ -53,7 +54,7 @@ Polynomials.zero(p::Newton{N, S, T}) where {N,S,T} = 0*p
 function Polynomials.one(p::Newton)
     xs = sort(p.xs)
     nt = newton_tableau(one, xs)
-    Newton(xs, nt, p.var)
+    Newton(xs, nt, Polynomials.indeterminate(p))
 end
 
 """
@@ -109,10 +110,13 @@ end
 ## triangular tableau
 Polynomials.coeffs(p::Newton) = p.tableau[1,:]
 
+
+
 ## Evaluation
 ## p(x) = f[x0] + f[x0,x1](x-x0) + ... + f[x0,x1,...,x_n](x-x0)(x-x1)...(x-x_{n-1})
 ## use nested evaluation (http://pages.cs.wisc.edu/~amos/412/lecture-notes/lecture08.pdf)
-function (p::Newton{N,S,T})(x) where {N,S,T}
+(p::Newton)(x)  = evalpoly(x,p)
+function Polynomials.evalpoly(x, p::Newton{N}) where {N}
     xs, cs = p.xs, coeffs(p)
     tot = cs[end]
     for j in N-1:-1:1
@@ -136,11 +140,11 @@ end
 
     
 
-function Base.:+(p1::Newton{N,S,T}, p2::Newton{M,S1,T1}) where {N,S,T,M,S1,T1}
-    p1.var == p2.var || throw(ArgumentError("p1 and p2 must share the same variable"))
+function Base.:+(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1,T1,Y}
+    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
     if N == M && p1.xs == p2.xs
         tableau = p1.tableau + p2.tableau
-        return Newton(p1.xs, tableau, p1.var)
+        return Newton(p1.xs, tableau, X)
     else
         p,q = N >= M ? (p1, p2) : (p2, p1)
         qq = fit(Newton, p.xs, q) # stretch than add
@@ -151,11 +155,12 @@ function Base.:+(p1::Newton{N,S,T}, p2::Newton{M,S1,T1}) where {N,S,T,M,S1,T1}
 
 end
 
-function Base.:*(p1::Newton{N,S,T}, p2::Newton{M,S1,T1}) where {N,S,T,M,S1,T1}
+function Base.:*(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1,T1,Y}
     ## Basic idea
     ## find larger of xs, expand to xxs
     ## refit p1 and p2 on this
     ## use  product of tableaus
+    Polynomials.assert_same_variable(p1, p2)
     p,q = N >= M ? (p1, p2) : (p2, p1)
     xs = p.xs
     new_xs = _new_nodes(xs, q.xs)
@@ -167,22 +172,22 @@ function Base.:*(p1::Newton{N,S,T}, p2::Newton{M,S1,T1}) where {N,S,T,M,S1,T1}
     ## https://en.wikipedia.org/wiki/Divided_differences
     ## T_{f*g}(x) = T_f(x) * T_g(x)
 
-    Newton(pp.xs, pp.tableau * qq.tableau, p.var)
+    Newton(pp.xs, pp.tableau * qq.tableau, X)
     
 end
 
 ## Scalar
-function Base.:+(p::Newton{N,T,S}, c::Number) where {N,T,S}
+function Base.:+(p::Newton{N,T,S,X}, c::Number) where {N,T,S,X}
     tableau = copy(p.tableau)
     for i in 1:N
         tableau[i,i] += c
     end
-    Newton(p.xs, tableau, p.var)
+    Newton(p.xs, tableau, X)
 end
 
 Base.:*(c::Number, p::Newton) = p*c
 function Base.:*(p::P, c::Number) where {P <: Newton}
-    Newton(p.xs, c*p.tableau, p.var)
+    Newton(p.xs, c*p.tableau, Polynomials.indeterminate(p))
 end
 
 Base.:-(p::P) where {P<:Newton} = p*(-1)
@@ -221,7 +226,7 @@ function Polynomials.integrate(p::Newton{N,S,T}, C::Number=0) where {N,S,T}
     else
         xxs = vcat(p.xs, p.xs[1]+1)
     end
-    fit(Newton, xxs, Q, var=p.var)
+    fit(Newton, xxs, Q, var=Polynomial.indeterminate(p))
     
 end
 

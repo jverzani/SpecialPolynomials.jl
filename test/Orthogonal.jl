@@ -88,7 +88,7 @@ DPs =  (Charlier{1/2},
         @test zero(P, :x) ≈ zero(P, :y)
         @test one(P, :x) ≈ one(P, :y)
         @test (variable(P, :x) ≈ variable(P, :x))
-        @test_throws ErrorException variable(P, :x) ≈ variable(P, :y)
+        @test_throws ArgumentError variable(P, :x) ≈ variable(P, :y)
 
     end
 

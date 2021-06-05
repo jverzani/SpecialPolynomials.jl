@@ -157,7 +157,6 @@ function prufer(Π::Type{P},n) where {P <: AbstractCCOP}
         a, b = first(dom)+eps(), last(dom)-eps()
         x = clamp(x, a, b)
         p,q,r,dp,dq,dr = pqr(Π, n, x)
-        @show p,q,r,dp, dq, dr
         -inv(sqrt(r/p) + (dr*p - dp*r + 2r*q)/(2r*p) * sin(2θ)/2)
     end
 end

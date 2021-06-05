@@ -1,5 +1,5 @@
 """
-    AbstractInterpolatingPolynomial{T}
+    AbstractInterpolatingPolynomial{T,X}
 
 Abstract type for interpolating polynomials.
 
@@ -18,7 +18,7 @@ information needed to describe the family. So methods like
 appropriate, instead.
 
 """
-abstract type AbstractInterpolatingPolynomial{T} <: AbstractSpecialPolynomial{T} end
+abstract type AbstractInterpolatingPolynomial{T,X} <: AbstractSpecialPolynomial{T,X} end
 
 
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: AbstractInterpolatingPolynomial}

@@ -78,32 +78,31 @@ C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))/2
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
 γ̃n(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4
 
-function ⊗(p1::Chebyshev{T}, p2::Chebyshev{S}) where {T,S}
+function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
 
     isconstant(p1) &&  return p2 * p1[0]
     isconstant(p2) &&  return p1 * p2[0]
+    assert_same_variable(X,Y)
 
-    p1.var != p2.var && throw(ArgumentError("Polynomials must have same variable"))
     R = promote_type(T,S)
     z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
     z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
     prod = Polynomials.fastconv(z1, z2)
-    ret = Chebyshev(_z_to_c(prod), p1.var)
+    ret = Chebyshev(_z_to_c(prod), X)
     return truncate(ret)
     
 end
 
 ## Defining p' and ∫dp directly speeds things up, and works around an issue with ĉ
-function Polynomials.derivative(p::Chebyshev{T,N}, order::Int = 1) where {T, N}
+function Polynomials.derivative(p::Chebyshev{T,X,N}, order::Int = 1) where {T,X,N}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     R  = eltype(one(T)/1)
-    P = Chebyshev{R}
-    order == 0 && return convert(P, p)
-    hasnan(p) && return P([NaN], p.var)
+    P = Chebyshev{R,X}
+    order == 0 && return P(coeffs(p))
+    hasnan(p) && return P([NaN])
     order > length(p) && return zero(P)
 
-
-    q =  convert(P, copy(p))
+    q =  P(copy(coeffs(p)))
     n = length(p)
     der = Vector{R}(undef, n)
 
@@ -116,19 +115,19 @@ function Polynomials.derivative(p::Chebyshev{T,N}, order::Int = 1) where {T, N}
     end
     der[1] = q[1]
 
-    dp = P(der, p.var)
+    dp = P(der)
     return order > 1 ?  derivative(dp, order - 1) : dp
 
 end
 
-function Polynomials.integrate(p::P, C::S) where {T, P<:Chebyshev{T}, S <: Number}
+function Polynomials.integrate(p::P, C::S) where {T, X, P<:Chebyshev{T,X}, S <: Number}
     R = promote_type(eltype(one(T) / 1), S)
     if hasnan(p) || isnan(C)
-        return ⟒{P}([NaN])
+        return ⟒{P}{R,X}([NaN])
     end
     n = length(p)
     if n == 1
-        return ⟒{P}{R}([C, p[0]])
+        return ⟒{P}{R,X}([C, p[0]])
     end
     a2 = Vector{R}(undef, n + 1)
     a2[1] = zero(R)
@@ -140,7 +139,7 @@ function Polynomials.integrate(p::P, C::S) where {T, P<:Chebyshev{T}, S <: Numbe
     end
     a2[1] = C - sum(a2[1+i] for i in 2:2:n)
 
-    return ⟒(P)(a2, p.var)
+    return ⟒(P){R,X}(a2)
 end
 
 
@@ -160,13 +159,13 @@ function Polynomials.companion(p::Chebyshev{T}) where {T}
     return R.(comp)
 end
 
-function Base.divrem(num::Chebyshev{T}, den::Chebyshev{S}) where {T,S}
-    num.var != den.var && throw(ArgumentError("Polynomials must have same variable"))
+function Base.divrem(num::Chebyshev{T,X}, den::Chebyshev{S,Y}) where {T,X,S,Y}
+    X != Y && throw(ArgumentError("Polynomials must have same variable"))
     n = length(num) - 1
     m = length(den) - 1
 
     R = typeof(one(T) / one(S))
-    P = Chebyshev{R}
+    P = Chebyshev{R,X}
 
     if n < m
         return zero(P), convert(P, num)
@@ -180,7 +179,7 @@ function Base.divrem(num::Chebyshev{T}, den::Chebyshev{S}) where {T,S}
     quo, rem = _z_division(znum, zden)
     q_coeff = _z_to_c(quo)
     r_coeff = _z_to_c(rem)
-    return P(q_coeff, num.var), P(r_coeff, num.var)
+    return P(q_coeff), P(r_coeff)
 end
 
 ##
@@ -205,8 +204,9 @@ end
 #     xs, ws
 # end
 
-gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
-    FastGaussQuadrature.gausschebyshev(n)
+## cf. fastgaussquadrature
+#gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
+#    FastGaussQuadrature.gausschebyshev(n)
 
 ##
 ## fitting coefficients
@@ -477,11 +477,10 @@ Cn(::Type{<:ChebyshevU}, n::Int) = 1
 # work around cancellation
 ĉ̃n(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4)
 
-function ⊗(p::ChebyshevU{T}, q::ChebyshevU{S}) where {T,S}
-
+function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
     isconstant(p) &&  return q * p[0]
     isconstant(q) &&  return p * q[0]
-    p.var != q.var && throw(ArgumentError("Polynomials must have same variable"))
+    assert_same_variable(X,Y)
 
     M, N = degree(p), degree(q)
     R = promote_type(T, S)
@@ -499,7 +498,7 @@ function ⊗(p::ChebyshevU{T}, q::ChebyshevU{S}) where {T,S}
         end
     end
 
-    ChebyshevU(out, p.var)
+    ChebyshevU{R,X}(out)
 end
 
 

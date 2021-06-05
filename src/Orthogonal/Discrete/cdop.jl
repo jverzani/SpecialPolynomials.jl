@@ -1,8 +1,8 @@
 # generic classical discrete orthogonal polynomial, CDOP
 
-abstract type AbstractCDOP{T,N} <: AbstractCOP{T,N} end
+abstract type AbstractCDOP{T,X,N} <: AbstractCOP{T,X,N} end
 """
-     AbstractCDOP{T,N} <: AbstractCOP{T,N}
+     AbstractCDOP{T,X,N} <: AbstractCOP{T,X,N}
 
 Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
@@ -52,10 +52,10 @@ AbstractCDOP
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
-abstract type AbstractCDOP0{T,N} <: AbstractCDOP{T,N} end
-abstract type AbstractCDOP1{α,T,N} <: AbstractCDOP{T,N} end
-abstract type AbstractCDOP2{α, β,T,N} <: AbstractCDOP{T,N}  end
-abstract type AbstractCDOP3{α, β,γ,T,N} <: AbstractCDOP{T,N}  end
+abstract type AbstractCDOP0{T,X,N} <: AbstractCDOP{T,X,N} end
+abstract type AbstractCDOP1{α,T,X,N} <: AbstractCDOP{T,X,N} end
+abstract type AbstractCDOP2{α, β,T,X,N} <: AbstractCDOP{T,X,N}  end
+abstract type AbstractCDOP3{α, β,γ,T,X,N} <: AbstractCDOP{T,X,N}  end
 
 ⟒(P::Type{<:AbstractCDOP1{α}}) where {α} = constructorof(P){α}
 ⟒(P::Type{<:AbstractCDOP2{α,β}}) where {α, β} = constructorof(P){α, β}
@@ -72,7 +72,6 @@ function Base.convert(::Type{Q}, p::P)  where  {Q <: AbstractCDOP,  P <: Abstrac
     _convert_cop(Q, _convert_cop(FallingFactorial{T},  p))
 end
     
-
 
 Δₓ(p::AbstractCDOP) = p(variable(p)+1)-p(variable(p))
 ∇ₓ(p::AbstractCDOP) = p(variable(p))-p(variable(p)-1)
@@ -216,14 +215,13 @@ function ĉ̃n(P::Type{<:AbstractCDOP}, n::Int)
 end
 
 
-function ⊗(p::P, q::Q) where {P <: AbstractCDOP, Q <: AbstractCDOP}
+function ⊗(::Type{<:AbstractCDOP}, p::P, q::Q) where {P <: AbstractCDOP, Q <: AbstractCDOP}
 
     #@assert  ⟒(P) == ⟒(Q)
     #@assert eltype(p) == eltype(q)
-
-    Polynomials.isconstant(p)  && return q * p[0]
-    Polynomials.isconstant(q)  && return p * q[0]    
-    p.var != q.var && throw(ArgumentError("Variables don't  match"))    
+    isconstant(p)  && return q * constantterm(p)
+    isconstant(q)  && return p * constantterm(q)    
+    assert_same_variable(p,q)
         
     convert(⟒(P), convert(FallingFactorial, p) * convert(FallingFactorial, q))
 

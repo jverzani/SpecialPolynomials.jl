@@ -27,15 +27,18 @@ true
 ```
 
 """
-struct FallingFactorial{T <: Number} <: AbstractSpecialPolynomial{T}
+struct FallingFactorial{T <: Number,X} <: AbstractSpecialPolynomial{T,X}
     coeffs::Vector{T}
-    var::Symbol
-    function FallingFactorial{T}(coeffs::Vector{T}, var::Symbol) where {T <: Number}
-        length(coeffs) == 0 && return new{T}(zeros(T, 1), var)
+    function FallingFactorial{T,X}(coeffs::Vector{T}) where {T <: Number,X}
+        length(coeffs) == 0 && return new{T,X}(zeros(T, 1))
         last_nz = findlast(!iszero, coeffs)
         last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{T}(coeffs[1:last], var)
+        return new{T,X}(coeffs[1:last])
     end
+    function FallingFactorial{T}(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x) where {T <: Number}
+        FallingFactorial{T,Symbol(var)}(coeffs)
+    end
+
 end
 
 Polynomials.@register FallingFactorial
@@ -64,7 +67,7 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
 end
 
 
-function  (p::FallingFactorial)(x)
+function  Polynomials.evalpoly(x, p::FallingFactorial)
     d = degree(p)
     d <= 0 &&  return  p[0]*one(x)
 
@@ -77,6 +80,18 @@ function  (p::FallingFactorial)(x)
     
     tot
 end
+
+function Base.one(::Type{P}) where {P<:FallingFactorial}
+    T,X = eltype(P), Polynomials.indeterminate(P)
+    ⟒(P){T,X}(ones(T,1))
+end
+
+function Polynomials.variable(::Type{P}) where {P<:FallingFactorial}
+    T,X = eltype(P), Polynomials.indeterminate(P)
+    ⟒(P){T,X}([zero(T),one(T)])
+end
+
+
 
 k0(P::Type{<:FallingFactorial}) = one(eltype(P))
 

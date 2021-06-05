@@ -1,6 +1,7 @@
 ## Legendre Polynomials = Gegenbauer{1/2}
 
-include("FastLegendre.jl")
+# cf FastGaussquadrature.jl
+#include("FastLegendre.jl")
 
 
 @register0 Legendre AbstractCCOP0
@@ -66,12 +67,11 @@ function classical_hypergeometric(::Type{<:Legendre}, n, x)
     bs = (1, )
     pFq(as, bs, (1-x)/2)
 end
-eval_basis(::Type{P}, n, x::Float64) where {P <: Legendre} = FastLegendre.fastlegendre(n,x)
-eval_basis(::Type{P}, n, x::Union{Int, Int32, Float16, Float32}) where {P <: Legendre} = FastLegendre.fastlegendre(n,float(x))
-
-gauss_nodes_weights(p::Type{P}, n) where {P <: Legendre} =
-    FastGaussQuadrature.gausslegendre(n)
-
+#eval_basis(::Type{P}, n, x::Float64) where {P <: Legendre} = FastLegendre.fastlegendre(n,x)
+# cf. fastgauss.jl
+# eval_basis(::Type{P}, n, x::Union{Int, Int32, Float16, Float32}) where {P <: Legendre} = FastLegendre.fastlegendre(n,float(x))
+#gauss_nodes_weights(p::Type{P}, n) where {P <: Legendre} =
+#    FastGaussQuadrature.gausslegendre(n)
 # overrides
 
 
@@ -83,10 +83,10 @@ C̃n(P::Type{<:Legendre}, ::Val{0}) = zero(eltype(P))
 b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
 ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
 
-function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
+function Polynomials.derivative(p::Legendre{T,X}, order::Integer = 1) where {T,X}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     order == 0 && return convert(Legendre{T}, p)
-    hasnan(p) && return Legendre(T[NaN], p.var)
+    hasnan(p) && return Legendre{T,X}(T[NaN])
     order > length(p) && return zero(Legendre{T})
 
     d = degree(p)
@@ -96,7 +96,7 @@ function Polynomials.derivative(p::Legendre{T}, order::Integer = 1) where {T}
         qs[i+1] = gamma * sum(p[j] for j in (i+1):2:d)
     end
 
-    q = Legendre(qs, p.var)
+    q = Legendre{T,X}(qs)
 
     if order > 1
         derivative(q, order-1)
