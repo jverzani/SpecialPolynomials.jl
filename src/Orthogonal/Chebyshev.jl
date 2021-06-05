@@ -436,7 +436,7 @@ julia> p = ChebyshevU([1,2,3])
 ChebyshevU(1⋅U₀(x) + 2⋅U₁(x) + 3⋅U₂(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-2.0 + 4.0*x + 12.0*x^2)
+Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2)
 
 julia> derivative(p)
 ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))

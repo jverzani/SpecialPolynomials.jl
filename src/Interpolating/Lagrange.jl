@@ -19,7 +19,7 @@ julia> p.([1,2,3]) # the coefficients
  3
 
 julia> convert(Polynomial,  p)
-Polynomial(1.0*x)
+Polynomials.Polynomial(1.0*x)
 ```
 
 The instances hold the nodes and weights, which are necessary for
@@ -34,13 +34,13 @@ julia> variable(p)
 Lagrange(1⋅P_0(x) + 2⋅P_1(x) + 3⋅P_2(x))
 
 julia> q = Polynomial([0,0,1])
-Polynomial(x^2)
+Polynomials.Polynomial(x^2)
 
 julia> qq = fit(Lagrange, p.xs, q)
 Lagrange(1⋅P_0(x) + 4⋅P_1(x) + 9⋅P_2(x))
 
 julia> convert(Polynomial, qq)
-Polynomial(1.0*x^2)
+Polynomials.Polynomial(1.0*x^2)
 ```
 
 Interpolating polynomials suffer from the Runge phenomenon unless the

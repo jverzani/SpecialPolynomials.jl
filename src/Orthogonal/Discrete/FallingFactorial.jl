@@ -20,7 +20,7 @@ julia> p = basis(FallingFactorial, 3)
 FallingFactorial(1.0⋅x³̲)
 
 julia> x = variable(Polynomial)
-Polynomial(1.0*x)
+Polynomials.Polynomial(1.0*x)
 
 julia> p(x) ≈ x*(x-1)*(x-2)
 true

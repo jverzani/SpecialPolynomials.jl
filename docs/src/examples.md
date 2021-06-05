@@ -43,10 +43,10 @@ conversion to the standard basis. For example:
 ```jldoctest example
 julia> convert.(Polynomial, [p0,p1,p2,p3])
 4-element Vector{Polynomial{Float64, :x}}:
- Polynomial(1.0)
- Polynomial(1.0*x)
- Polynomial(-0.5 + 1.5*x^2)
- Polynomial(-1.5*x + 2.5*x^3)
+ Polynomials.Polynomial(1.0)
+ Polynomials.Polynomial(1.0*x)
+ Polynomials.Polynomial(-0.5 + 1.5*x^2)
+ Polynomials.Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Polynomial instances are callable. We have, for example, to evaluate a polynomial at a set of points:
@@ -65,10 +65,10 @@ Conversion can also be achieved through polynomial evaluation, using a variable 
 
 ```jldoctest example
 julia> x = variable(Polynomial)
-Polynomial(1.0*x)
+Polynomials.Polynomial(1.0*x)
 
 julia> p3(x)
-Polynomial(-1.5*x + 2.5*x^3)
+Polynomials.Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Representation in another basis can be achieved this way:
@@ -92,7 +92,7 @@ julia> h0,h1,h2,h3 = basis.(Hermite, 0:3);
 julia> x = variable();
 
 julia> h3(x)
-Polynomial(-12.0*x + 8.0*x^3)
+Polynomials.Polynomial(-12.0*x + 8.0*x^3)
 ```
 
 For numeric evaluation of just a basis polynomial of a classical orthogonal polynomial system, the `Basis` constructor provides a direct evaluation without the construction of an intermediate polynomial:
@@ -231,7 +231,7 @@ julia> dp = derivative(p)
 ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> convert.(Polynomial, (p, dp))
-(Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
+(Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomials.Polynomial(4.0 + 24.0*x))
 
 julia> P = Jacobi{1//2, -1//2}
 Jacobi{1//2, -1//2, T, X, N} where {T, X, N}
@@ -399,7 +399,7 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
 julia> p1 = fit(Polynomial,  xs, ys)
-Polynomial(1.0 + 8.666666666666666*x - 23.999999999999996*x^2 + 21.333333333333332*x^3)
+Polynomials.Polynomial(1.0 + 8.666666666666666*x - 23.999999999999996*x^2 + 21.333333333333332*x^3)
 ```
 
 The `Lagrange` and `Newton` types represent the polynomial in
@@ -432,7 +432,7 @@ julia> p = fit(Newton, [1,2,3], x->x^2)
 Newton(1.0⋅p_0(x) + 3.0⋅p_1(x) + 1.0⋅p_2(x))
 
 julia> convert(Polynomial, p)
-Polynomial(1.0*x^2)
+Polynomials.Polynomial(1.0*x^2)
 ```
 
 Polynomial interpolation can demonstrate the Runge phenomenon if the
@@ -480,13 +480,13 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomial(1.4999999999999978 + 0.4000000000000007*x)
+Polynomials.Polynomial(1.4999999999999978 + 0.4000000000000007*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomial(4.000000000000002 - 2.1000000000000023*x + 0.5000000000000006*x^2)
+Polynomials.Polynomial(4.000000000000002 - 2.1000000000000023*x + 0.5000000000000006*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
-Polynomial(-10.0 + 20.166666666666664*x - 9.5*x^2 + 1.3333333333333333*x^3)
+Polynomials.Polynomial(-10.0 + 20.166666666666664*x - 9.5*x^2 + 1.3333333333333333*x^3)
 ```
 
 For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial

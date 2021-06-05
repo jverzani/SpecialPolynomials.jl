@@ -17,7 +17,7 @@ julia> p =  Gegenbauer{1/2}([1,2,3])
 typename(Gegenbauer){0.5}(1⋅Cᵅ₀(x) + 2⋅Cᵅ₁(x) + 3⋅Cᵅ₂(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-0.5 + 2.0*x + 4.5*x^2)
+Polynomials.Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 ```
 
 """
