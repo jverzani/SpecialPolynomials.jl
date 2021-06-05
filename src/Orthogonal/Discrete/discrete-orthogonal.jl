@@ -51,7 +51,7 @@ julia> SP.@register0 DWF DiscreteWeightFunction
 julia> SP.@register_discrete_weight_function(DWF, xs, ws)
 
 julia> [SP.Bn.(DWF, 0:N-1) SP.Cn.(DWF, 0:N-1)]
-9×2 Array{Float64,2}:
+9×2 Matrix{Float64}:
  -4.0  9.0
  -4.0  6.66667
  -4.0  5.13333
@@ -75,6 +75,7 @@ julia> x = variable()
 Polynomial(x)
 
 julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
+
 
 
 

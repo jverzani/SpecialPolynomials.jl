@@ -436,13 +436,13 @@ julia> p = ChebyshevU([1,2,3])
 ChebyshevU(1⋅U₀(x) + 2⋅U₁(x) + 3⋅U₂(x))
 
 julia> convert(Polynomial, p)
-Polynomial(-2 + 4*x + 12*x^2)
+Polynomial(-2.0 + 4.0*x + 12.0*x^2)
 
 julia> derivative(p)
 ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> roots(p)
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  -0.6076252185107651
   0.27429188517743175
 ```

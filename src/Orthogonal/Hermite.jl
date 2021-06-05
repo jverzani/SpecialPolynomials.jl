@@ -19,7 +19,7 @@ julia> x = variable(Polynomial{Rational{Int}})
 Polynomial(x)
 
 julia> [basis(Hermite, i)(x) for i in 0:5]
-6-element Array{Polynomial{Float64},1}:
+6-element Vector{Polynomial{Float64, :x}}:
  Polynomial(1.0)
  Polynomial(2.0*x)
  Polynomial(-2.0 + 4.0*x^2)
@@ -28,7 +28,7 @@ julia> [basis(Hermite, i)(x) for i in 0:5]
  Polynomial(120.0*x - 160.0*x^3 + 32.0*x^5)
 
 julia> [basis(ChebyshevHermite, i)(x) for i in 0:5]
-6-element Array{Polynomial{Float64},1}:
+6-element Vector{Polynomial{Float64, :x}}:
  Polynomial(1.0)
  Polynomial(1.0*x)
  Polynomial(-1.0 + 1.0*x^2)

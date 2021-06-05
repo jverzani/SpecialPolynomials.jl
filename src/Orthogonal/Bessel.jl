@@ -18,7 +18,7 @@ julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
 julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
-6-element Array{Polynomial{Rational{Int64}},1}:
+6-element Vector{Polynomial{Rational{Int64}, :x}}:
  Polynomial(1//1)
  Polynomial(1//1 + 3//4*x)
  Polynomial(1//1 + 5//2*x + 35//16*x^2)

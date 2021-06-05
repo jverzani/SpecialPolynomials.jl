@@ -3,14 +3,14 @@
 
 abstract type AbstractCOP{T,X,N} <: AbstractOrthogonalPolynomial{T,X} end
 
-function Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T}},
-                           Q::Type{<:AbstractCOP{S}}) where {T,S}
-    ϛ(Q){promote_type(T, S)}
+function Base.promote_rule(P::Type{<:Polynomials.AbstractPolynomial{T,X}},
+                           Q::Type{<:AbstractCOP{S,X}}) where {T,S,X}
+    ϛ(Q){promote_type(T, S), X}
 end
 
-Base.promote_rule(P::Type{<:AbstractCOP{S}},
-                  Q::Type{<:Polynomials.AbstractPolynomial{T}}) where {T,S} =
-                      ϛ(P){promote_type(T, S)}
+Base.promote_rule(P::Type{<:AbstractCOP{S,X}},
+                  Q::Type{<:Polynomials.AbstractPolynomial{T,X}}) where {T,S,X} =
+                      ϛ(P){promote_type(T, S), X}
 
 # generic addition for polynomials
 function ⊕(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}

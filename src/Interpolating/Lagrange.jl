@@ -10,10 +10,10 @@ satisfy `ℓ_i(x_j) = δ_{ij}`, so the coefficients are just the `ys`.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p =  Lagrange([1,2,3], [1,2,3])
-Lagrange(1⋅ℓ^2_0(x) + 2⋅ℓ^2_1(x) + 3⋅ℓ^2_2(x))
+Lagrange(1⋅P_0(x) + 2⋅P_1(x) + 3⋅P_2(x))
 
 julia> p.([1,2,3]) # the coefficients
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  1
  2
  3
@@ -28,16 +28,16 @@ as `variable` or `convert(Lagrange, ...)`. For the former we can  use an instanc
 
 ```jldoctest Lagrange
 julia> p =  Lagrange([1,2,3], [1,2,3])
-Lagrange(1⋅ℓ^2_0(x) + 2⋅ℓ^2_1(x) + 3⋅ℓ^2_2(x))
+Lagrange(1⋅P_0(x) + 2⋅P_1(x) + 3⋅P_2(x))
 
 julia> variable(p)
-Lagrange(1⋅ℓ^2_0(x) + 2⋅ℓ^2_1(x) + 3⋅ℓ^2_2(x))
+Lagrange(1⋅P_0(x) + 2⋅P_1(x) + 3⋅P_2(x))
 
 julia> q = Polynomial([0,0,1])
 Polynomial(x^2)
 
 julia> qq = fit(Lagrange, p.xs, q)
-Lagrange(1⋅ℓ^2_0(x) + 4⋅ℓ^2_1(x) + 9⋅ℓ^2_2(x))
+Lagrange(1⋅P_0(x) + 4⋅P_1(x) + 9⋅P_2(x))
 
 julia> convert(Polynomial, qq)
 Polynomial(1.0*x^2)

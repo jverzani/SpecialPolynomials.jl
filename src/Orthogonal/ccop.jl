@@ -82,13 +82,13 @@ julia> x = variable(Polynomial{𝐐})
 Polynomial(x)
 
 julia> [basis(MonicLegendre′{𝐐}, i)(x) for i  in 0:5]
-6-element Array{Polynomial{Rational{Int64}},1}:
+6-element Vector{Polynomial{T, :x} where T<:Number}:
  Polynomial(1//1)
- Polynomial(x)
- Polynomial(-1//3 + x^2)
- Polynomial(-3//5*x + x^3)
- Polynomial(3//35 - 6//7*x^2 + x^4)
- Polynomial(5//21*x - 10//9*x^3 + x^5)
+ Polynomial(1.0*x)
+ Polynomial(-0.3333333333333333 + 1.0*x^2)
+ Polynomial(-0.6*x + 1.0*x^3)
+ Polynomial(0.0857142857142857 - 0.857142857142857*x^2 + 1.0*x^4)
+ Polynomial(0.23809523809523805*x - 1.111111111111111*x^3 + 1.0*x^5)
 ```
 
 [Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
