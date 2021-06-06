@@ -18,9 +18,11 @@ HypergeometricFunctions = "0.2, 0.3"
 Intervals = "0.5, 1"
 Memoize = "0.4"
 Polynomials = "2"
+Requires = "1"
 QuadGK = "1,2"
 SpecialFunctions = "0.09, 0.10, 1"
 julia = "1.4"
+
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
