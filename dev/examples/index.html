@@ -250,13 +250,7 @@ p196 = fit(Chebyshev{Float64}, f, 196);
 plot(f, -1, 1, legend=false, color=:black)
 xs = range(-1, stop=1, length=500) # more points than recipe
 plot!(xs, p50.(xs), color=:blue)
-plot!(xs, p196.(xs), color=:red)</code></pre><pre class="documenter-example-output">qt.qpa.xcb: could not connect to display
-qt.qpa.plugin: Could not load the Qt platform plugin &quot;xcb&quot; in &quot;&quot; even though it was found.
-This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
-
-Available platform plugins are: linuxfb, minimal, offscreen, vnc, xcb.
-
-Aborted (core dumped)
+plot!(xs, p196.(xs), color=:red)</code></pre><pre class="documenter-example-output">/home/travis/.julia/packages/GR/BwGt2/src/../deps/gr/bin/gksqt: error while loading shared libraries: libQt5Widgets.so.5: cannot open shared object file: No such file or directory
 connect: Connection refused
 GKS: can&#39;t connect to GKS socket application
 
@@ -273,15 +267,9 @@ itr = zip(chebs, colors)
 p = plot(cheb, c=col,  lw=5, legend=false, label=&quot;&quot;)
 for (cheb, col) in Base.Iterators.rest(itr, state)
   plot!(cheb, c=col, lw=5)
-end</code></pre><pre class="documenter-example-output">qt.qpa.xcb: could not connect to display
-qt.qpa.plugin: Could not load the Qt platform plugin &quot;xcb&quot; in &quot;&quot; even though it was found.
-This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
-
-Available platform plugins are: linuxfb, minimal, offscreen, vnc, xcb.
-
-Aborted (core dumped)
+end</code></pre><pre class="documenter-example-output">/home/travis/.julia/packages/GR/BwGt2/src/../deps/gr/bin/gksqt: error while loading shared libraries: libQt5Widgets.so.5: cannot open shared object file: No such file or directory
 connect: Connection refused
 GKS: can&#39;t connect to GKS socket application
 
 GKS: Open failed in routine OPEN_WS
-GKS: GKS not in proper state. GKS must be either in the state WSOP or WSAC in routine ACTIVATE_WS</pre><p><img src="../chebs.svg" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« SpecialPolynomials.jl</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 12 June 2021 13:38">Saturday 12 June 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+GKS: GKS not in proper state. GKS must be either in the state WSOP or WSAC in routine ACTIVATE_WS</pre><p><img src="../chebs.svg" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« SpecialPolynomials.jl</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 12 June 2021 14:14">Saturday 12 June 2021</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
