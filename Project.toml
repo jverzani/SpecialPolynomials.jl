@@ -19,6 +19,7 @@ Intervals = "0.5, 1"
 Memoize = "0.4"
 Polynomials = "2"
 QuadGK = "1,2"
+Requires = "1"
 SpecialFunctions = "0.09, 0.10, 1"
 julia = "1.4"
 
