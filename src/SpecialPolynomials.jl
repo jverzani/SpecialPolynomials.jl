@@ -48,6 +48,7 @@ include("Orthogonal/Discrete/DiscreteChebyshev.jl")
 
 include("Orthogonal/connection.jl")
 include("Orthogonal/glaser-liu-rokhlin.jl")
+include("Orthogonal/comrade.jl")
 
 
 include("Interpolating/interpolating.jl")
