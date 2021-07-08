@@ -81,7 +81,7 @@ end
 gauss_nodes_weights(p::Type{P}, n) where {α, P <: Laguerre{α}} =
     FastGaussQuadrature.gausslaguerre(n,α)
 
-        
+
 ## Overrides
 
 # default  connection between Laguerre is popping out  0s
@@ -91,7 +91,7 @@ function Base.iterate(o::Connection{P, Q}, state=nothing) where
 
     k, n = o.k, o.n
 
-    if state == nothing 
+    if state == nothing
         i = k
         i > n && return nothing
     elseif state + 1 > n
@@ -105,7 +105,7 @@ function Base.iterate(o::Connection{P, Q}, state=nothing) where
     N = α - β - 1 + K
 
     return (i, generalized_binomial(N,K)), i
-    
+
 end
 
 

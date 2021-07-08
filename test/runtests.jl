@@ -1,6 +1,6 @@
 using SpecialPolynomials; const SP=SpecialPolynomials
 using Polynomials
-import LinearAlgebra: eigvals, dot
+import LinearAlgebra: eigvals, dot, norm
 import SpecialFunctions: gamma
 using Test
 
@@ -15,4 +15,3 @@ using Test
 @testset "Newton" begin include("Newton.jl") end
 
 @testset "Bernstein" begin include("Bernstein.jl") end
-

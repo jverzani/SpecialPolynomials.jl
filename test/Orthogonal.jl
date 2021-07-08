@@ -376,7 +376,7 @@ end
         for n in 6:2:10
             rts = roots(basis(P, n))
             evals = eigvals(SP.jacobi_matrix(P, n))
-            @test maximum(abs, sort(rts) - sort(evals)) <= 1e-4
+            @test maximum(abs,  rts - evals) <= 1e-4
         end
     end
 

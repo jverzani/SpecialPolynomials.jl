@@ -3,9 +3,9 @@
 
 An abstract type to distinguish the different polynomial types in this package.
 
-The concrete types specify different bases for the space of polynomials of degree `n` or less. 
+The concrete types specify different bases for the space of polynomials of degree `n` or less.
 
-This package includes: 
+This package includes:
 
 * several classic orthogonal polynomials.
 * Newton and Lagrange interpolating polynomials
@@ -26,7 +26,7 @@ Base.eltype(::Type{<:AbstractSpecialPolynomial}) = Float64
 @generated function constructorof(::Type{T}) where T
       getfield(parentmodule(T), nameof(T))
  end
-⟒(P::Type{<:AbstractSpecialPolynomial}) = constructorof(P) 
+⟒(P::Type{<:AbstractSpecialPolynomial}) = constructorof(P)
 ⟒(::Type{<:Polynomial}) = Polynomial
 
 ## Display
@@ -41,8 +41,14 @@ end
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: AbstractSpecialPolynomial}
     iszero(pj) && return false
     !first &&  print(io, " ")
-    print(io, Polynomials.hasneg(T)  && Polynomials.isneg(pj) ? "- " :  (!first ? "+ " : ""))
-    print(io, "$(abs(pj))⋅$(basis_symbol(P))")
+    if Polynomials.hasneg(T)
+        print(io, Polynomials.isneg(pj) ? "-" :  (!first ? "+ " : ""))
+        print(io, "$(abs(pj))⋅$(basis_symbol(P))")
+    else
+        print(io, "$(pj)⋅$(basis_symbol(P))")
+    end
+
+
     unicode_subscript(io, j)
     print(io,"($(var))")
     return true

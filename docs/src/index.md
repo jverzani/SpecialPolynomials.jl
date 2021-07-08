@@ -115,15 +115,15 @@ Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve  (parameterized
 ```@example
 using Plots, Polynomials, SpecialPolynomials
 bs =[[220, 260], [220, 40], [35, 100],  [120, 140]]
-N = length(bs)-1
 
-ρ = sum(bᵢ.*basis(Bernstein{N},i-1) for (i,bᵢ)  ∈ enumerate(bs))
+p = Bernstein(bs)
 ts = range(0, stop=1, length=500)
-p =  plot(ρ[1].(ts), ρ[2].(ts), legend=false)
+ps = p.(ts)
+xs,ys=[[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
+p = plot(xs, ys, legend=false)
+
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 savefig("bezier.svg"); nothing # hide
 ```
 
 ![](bezier.svg)
-
-

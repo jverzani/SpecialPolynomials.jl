@@ -1,26 +1,108 @@
-##  Comrade Matrix
+## Comrade Matrix
+## The comrade matrix plays the role of the companion matrix for static basis polynomials
 
+#
 # generate the  matrix for monic polynomial family
 # should have eigvals(comrade_matrix(p)) ≈ roots(convert(Polynomial, p))
 # This isn't exported
-comrade_matrix(p::P) where {P <: AbstractCCOP} = comrade_matrix(P, coeffs(p))
-function comrade_matrix(P, p::Vector{T}) where {T}
+function comrade_matrix(p::P) where {P <: AbstractCCOP}
+    U,V = comrade_pencil(p)
+    U * inv(V)
+end
 
-    ismonic(P) || throw(ArgumentError("Polynomial type must be monic"))
+# Generate the [comrade pencil](http://www.cecm.sfu.ca/personal/pborwein/MITACS/papers/LinMatPol.pdf)
+# C₀, C₁ with λ C₁ - C₀ the linearization; and C₀ ⋅ C₁⁻¹ the companion matrix
+# can be used with square matrix coefficients
+function comrade_pencil(p::P, symmetrize=false) where {T, P <: AbstractCCOP{T}}
+    n = Polynomials.degree(p)
+    𝐏 = ⟒(P)
+    As = An.(𝐏{T}, 0:n-1)
+    Bs = Bn.(𝐏{T}, 0:n-1)
+    Cs = Cn.(𝐏{T}, 1:n-1)
+    kₙ, kₙ₋₁ = leading_term(𝐏{T}, n), leading_term(𝐏{T},n-1)
 
-    # p = [p0,p1, ...,pn]
-    n = length(p) - 1
-    p ./= p[end] # p is monic
-
-    As = An.(P, 0:n-1)
-    Bs = Bn.(P, 0:n-1)
-    Cs = Cn.(P, 1:n-1)
+    # α = 1/A
+    # β = -B/A
+    # γ = C/A
 
 
-    A = diagm(1 => T.(reverse(Cs ./ As[2:end])), 0 => -T.(reverse(Bs ./ As)), -1 => T.(reverse(1 ./ As[2:end])))
-    A[1,:] -= p[end-1:-1:1]/p[end] * 1/An(P,n)
+    α = inv.(As[1:end-1])
+    β = (-Bs ./ As)
+    γ = (Cs ./ As[2:end])
 
-    A
+    comrade_pencil(p, α, β, γ, kₙ₋₁, kₙ, symmetrize)
+end
+
+# α = [α₀, α₁, ⋯, αₙ₋₂]
+# β = [β₀, β₁, ⋯, βₙ₋₂, βₙ₋₁]
+# γ = [γ₁, γ₂ ⋯, αₙ₋₁]
+# kₙ₋₁/kₙ = aₙ₋₁
+function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) where {T, P <: Polynomials.AbstractPolynomial{T}}
+
+    n = degree(p)
+    C₀ = diagm(1 => γ,
+              0 => β,
+              -1 => α
+              )
+
+    C₀[end-1,end] *= kₙ * p[end]
+    C₀[end,end] *= kₙ * p[end]
+
+    for i ∈ 0:n-1
+        C₀[1+i, end] -= kₙ₋₁ * p[i]
+    end
+
+
+    C₁ = diagm(0 => ones(T, n))
+    C₁[end,end] = kₙ * p[end]
+
+    C₀, C₁
+end
+
+
+function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) where {T, M <: AbstractMatrix{T}, P <: Polynomials.AbstractPolynomial{M}}
+
+    n = Polynomials.degree(p)
+    m,m′ = size(p[0])
+    @assert m == m′ # square
+    𝐈 = I(m)
+
+
+    C₀ = zeros(T, n*m, n*m)
+    C₁ = diagm(0 => ones(T, n*m))
+    Δ = 1:m
+
+    C₀[0*m .+ Δ, 0*m .+ Δ] .= β[1]
+    C₀[1*m .+ Δ, 0*m .+ Δ] .= α[1]
+
+    for i ∈ 1:n-2
+        C₀[(i-1)*m .+ Δ, i*m .+ Δ] .= γ[i] * 𝐈
+        C₀[i*m .+ Δ, i*m .+ Δ] .= β[1+i] * 𝐈
+        C₀[(i+1)*m .+ Δ, i*m .+ Δ] .= α[1+i] * 𝐈
+    end
+
+    C₀[(n-2)*m .+ Δ, (n-1)*m .+ Δ] .= γ[end] * kₙ * p[end] * 𝐈
+    C₀[(n-1)*m .+ Δ, (n-1)*m .+ Δ] .= β[end] * kₙ * p[end] * 𝐈
+
+    for i ∈ 0:n-1
+        C₀[i*m .+ Δ, (n-1)*m .+ Δ] .-= kₙ₋₁ * p[i]
+    end
+
+
+
+    C₁[(n-1)*m .+ Δ, (n-1)*m .+ Δ] .=  kₙ * p[end]
+
+    if symmetrize
+        H₀ = zeros(T, n*m, n*m)
+        for k ∈ 1:n
+            for j ∈ 1:k
+                H₀[(k-j)*m .+ Δ ,(j-1)*m .+ Δ] .= p[k]
+            end
+        end
+        return (C₀*inv(C₁)) * H₀, H₀
+    else
+        return C₀, C₁
+    end
 end
 
 ## -----
@@ -73,91 +155,36 @@ function LinearAlgebra.lmul!(c::AbstractTransform, R, i)
     nothing
 end
 
+## ----
 
-## -----
-
-
-# In SpecialPolynomials we have P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
-# In paper, we have
-# αₖ pₖ = (z  - βₖ) ⋅ pₖ₋₁ - γₖ ⋅ pₖ₋₂
-## Decompose p::P into Cs, B where
-## * Cs -- a vector of Gauss Transfroms
-## * B -- an Upper triangular matrix
-## Matrix(Cs, B) is comrade matrix
-function decompose(P::Type{<:AbstractCCOP}, ps)
-
-    @assert ismonic(P)
-
-    n = length(ps) - 1
-    As = An.(P, 0:n)
-    Bs = Bn.(P, 0:n-1)
-    Cs = Cn.(P, 1:n-1)
-
-    p̂s = copy(ps)
-
-    # αs = [1/A0, 1/A1, ..., 1/An-2]
-    # βs = [B0/A0, ..., Bn-1/An-1]
-    # γs = [C1/A1, ..., Cn-1/An-1]
-    # cs [ 0 ... 0 γ[end] β[end]] - ps[1:end-1]/ps[end] / An-1
-
-
-    aₙ = pop!(As)
-    βs = -Bs ./ As
-    βn = pop!(βs)
-    γs = [Cs[i]/As[i+1] for i ∈ 1:length(Cs)]
-    γn = pop!(γs)
-    αs = 1 ./ As
-
-    p̂n = pop!(p̂s)
-    p̂s ./= p̂n
-    p̂s *= -aₙ
-    p̂s[end-1] += γn
-    p̂s[end] += βn
-
-    decompose(p̂s, αs, βs, γs)
-
+# Helpful for developing
+function Base.show(io::IO, c::AbstractTransform)
+    c11,c12,c21,c22 = splat(c)
+    show(IOContext(io, :compact => true), "text/plain", [c11 c12;
+                                                         c21 c22])
+    println(io)
 end
 
-# The comrade matrix is the following (though the paper flips it for Gaussian elimination)
-# [β₁ γ₂ .  .  c₀;
-#  α₁ β₂ γ₃ .  c₁;
-#  .  α₂ β₃ γ₄ c₂;
-#  .  .  α₃ β₄ c₃;
-#  .  .  .  α₄ c₄]
-# returns Cs, B with eigvals(C1 ⋅ C2 ⋅ ⋯ ⋅ Cn * B) = roots(P(p))
-function decompose(cs::Vector{T}, αs, βs, γs) where {T}
 
-
-    n = length(cs)
-    R = zeros(T, n, n)
-
-    CTs = Vector{CoreTransform{T}}(undef, n-1)
-
-    ĉ₀, ĉ₁ = cs[end+1-1], cs[end+1-2]
-
-    for i ∈ 1:n-2
-        λ = ĉ₀ / αs[end+1-i]
-        ĉ₀ = ĉ₁ - λ * βs[end+1-i]
-        ĉ₁ = cs[end+1 - (i+2)] - λ * γs[end+1-i]
-        CTs[i] = CoreTransform(λ, one(T), one(T), zero(T))
-    end
-    λ = ĉ₀ / αs[1]
-    CTs[end] = CoreTransform(λ, one(T), one(T), zero(T))
-    ĉ₀ = ĉ₁ - λ * βs[1]
-
-    for i ∈ 1:n-2
-        R[i, i]   = αs[end+1-i]
-        R[i, i+1] = βs[end+1-i]
-        R[i, i+2] = γs[end+1-i]
-    end
-
-    R[n-1, n-1] = αs[1]
-    R[n-1, n] = βs[1]
-    R[n,n] = ĉ₀
-
-    CTs, R
+## realize transform as a matrix
+function realize(c::AbstractTransform{T}, i, n) where {T}
+    A = diagm(0 => ones(T, n))
+    a,b,c,d = splat(c)
+    A[i,i] = a
+    A[i,i+1] = b
+    A[i+1,i] = c
+    A[i+1,i+1] = d
+    A
 end
 
+function Base.Matrix(Cs, B)
+    n = length(Cs)
+    m = size(B)[1]
+    for i ∈ n:-1:1
+        B = realize(Cs[i], i,m)*B
+    end
+    B
+end
 
 
 ## ----- primary operations with CoreTransforms
@@ -298,6 +325,9 @@ function L1(Cs, R::Matrix{T}, random::Bool=false) where {T}
     ρ1 = norm(a21 - ρs[1]) < norm(a21 - ρs[2]) ? ρs[1] : ρs[2]
 
     m = a21 / (a11 - ρ1)
+
+    (isinf(m) || isnan(m)) && return GaussTransform(rand(T))
+
     GaussTransform(m)
 end
 
@@ -324,6 +354,8 @@ function L1L2(Cs,R::Matrix{T}, random::Bool=false) where {T}
     x3 = a32 * a21
     m1 = x2/x1
     m2 = x3/x2
+
+    (isinf(m1) || isinf(m2) || isnan(m1) || isnan(m2)) && return (GaussTransform(rand(T)), GaussTransform(rand(T)))
 
     # return l1, l2 (L = L2 * L1 though)
     GaussTransform(m1), GaussTransform(m2)
@@ -381,52 +413,19 @@ function chase_bulge!(Cs, R, l1l2::Tuple)
     nothing
 end
 
-# find roots of P(p) without converting into standard basis
-# using comrade_matrix
-"""
-    roots(p::P) where {P <: AbstractCCOP}
 
-When `P` is a monic family, finds the roots of `p` using the comrade matrix; otherwise falls back to finding the roots after conversion to the `Polynomial` type.
-
-The eigenvalue of the comrade matrix are identified using an algorithm from
-
-*Fast computation of eigenvalues of companion, comrade, and related matrices*
-by Jared L. Aurentz, Raf Vandebril, and David S. Watkins
-DOI 10.1007/s10543-013-0449-x
-BIT Numer Math (2014) 54:7–30
-
-The paper presents both a single- and double-shift version. The paper
-has this caveat: "The double-shift code was less successful. It too is
-very fast, but it is too unstable in its current form. We cannot
-recommend it for accurate computation of roots of high-degree
-polynomials. It could find use as an extremely fast method to get a
-rough estimate of the spectrum"
-
-"""
-Polynomials.roots(p::P) where {P <: AbstractOrthogonalPolynomial} =
-    roots(Val(ismonic(P)), p)
-
-function Polynomials.roots(ISMONIC::Val{true}, p::P) where {P <: AbstractOrthogonalPolynomial}
-    λs = roots(P, coeffs(p))
-    newton_refinement(λs, p)
-end
-
-function Polynomials.roots(ISMONIC::Val{false}, p::P) where {T, P <: AbstractOrthogonalPolynomial{T}}
-    q = convert(Polynomial{T}, p)
-    roots(q)
-end
+# use AVW algorithm to find eigen value of matrix
+# decomposed into Cs::Vector{GaussTransform}, B::UpperTriangular
+function AVW_eigvals(Cs, B)
 
 
-function Polynomials.roots(P::Type{<:AbstractCCOP}, p::Vector{T}) where {T}
-
-    Cs, B = decompose(P, p)
 
     max_ctr = 1
-    ctr = 1
+    ctr = 0
     while length(Cs) > 1
 
         # get L # random if no deflation
-        if ctr < 15
+        if 0 < ctr < 15
             ctr += 1
             l = L(Cs, B)
         else
@@ -439,7 +438,7 @@ function Polynomials.roots(P::Type{<:AbstractCCOP}, p::Vector{T}) where {T}
 
         # check runaway
         max_ctr += 1
-        (!isempty(Cs) && isnan(Cs[end])) && error("NaN")
+        (!isempty(Cs) && isnan(Cs[end])) && break
         max_ctr > 1000 && error("Failure to converge, too many steps")
 
     end
@@ -503,7 +502,7 @@ function deflateQ!(Cs, B::Matrix{T}) where {T}
     return false
 end
 
-# grab eigenvalues from B
+# once algorithm is complete, this grabs eigenvalues from B
 function _eigvals(B::Matrix{T}) where {T}
     m = size(B)[1]
     es = Vector{complex(T)}(undef, m)
@@ -532,7 +531,7 @@ end
 
 # one step improves accuracy
 function newton_refinement(λs, p::P)  where {P <: AbstractCCOP}
-    @assert ismonic(P)
+    #@assert ismonic(P)
     p′ = derivative(p)
     λs .- p.(λs) ./ p′.(λs)
 end
@@ -615,50 +614,140 @@ function qdrtc(b::T, c::T) where {T <: Real}
 end
 
 ## -----
+# In SpecialPolynomials we have P_{n+1} = (An*x + Bn) * P_n + Cn P_{n-1}
+# In paper, we have
+# αₖ pₖ = (z  - βₖ) ⋅ pₖ₋₁ - γₖ ⋅ pₖ₋₂
+## Decompose p::P into Cs, B where
+## * Cs -- a vector of Gauss Transfroms
+## * B -- an Upper triangular matrix
+## Matrix(Cs, B) is comrade matrix
+function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
+
+#    @assert ismonic(P)
+
+    n = length(ps) - 1
+    As = An.(P, 0:n-1)
+    Bs = Bn.(P, 0:n-1)
+    Cs = Cn.(P, 1:n-1)
+    kₙ, kₙ₋₁ = leading_term(P, n), leading_term(P,n-1)
+
+    p̂s = copy(ps)
+
+    # αs = [1/A0, 1/A1, ..., 1/An-2]
+    # βs = [B0/A0, ..., Bn-1/An-1]
+    # γs = [C1/A1, ..., Cn-1/An-1]
+    # cs [ 0 ... 0 γ[end] β[end]] - ps[1:end-1]/ps[end] / An-1
+
+
+    aₙ = An(P,n)
+    βs = -Bs ./ As
+    βn = pop!(βs)
+    γs = [Cs[i]/As[i+1] for i ∈ 1:length(Cs)]
+    γn = pop!(γs)
+    pop!(As)
+    αs = 1 ./ As
+
+    p̂n = pop!(p̂s)
+    p̂s ./= p̂n
+    p̂s *= -kₙ₋₁ / kₙ
+    p̂s[end-1] += γn #* kₙ
+    p̂s[end] += βn #* kₙ
+
+    comrade_decomposition(p̂s, αs, βs, γs)
+
+end
+
+# The comrade matrix is the following (though the paper flips it for Gaussian elimination)
+# [β₁ γ₂ .  .  c₀;
+#  α₁ β₂ γ₃ .  c₁;
+#  .  α₂ β₃ γ₄ c₂;
+#  .  .  α₃ β₄ c₃;
+#  .  .  .  α₄ c₄]
+# returns Cs, B with eigvals(C1 ⋅ C2 ⋅ ⋯ ⋅ Cn * B) = roots(P(p))
+function comrade_decomposition(cs::Vector{T}, αs, βs, γs) where {T}
+
+
+    n = length(cs)
+    R = zeros(T, n, n)
+
+    CTs = Vector{CoreTransform{T}}(undef, n-1)
+
+    ĉ₀, ĉ₁ = cs[end+1-1], cs[end+1-2]
+
+    for i ∈ 1:n-2
+        λ = ĉ₀ / αs[end+1-i]
+        ĉ₀ = ĉ₁ - λ * βs[end+1-i]
+        ĉ₁ = cs[end+1 - (i+2)] - λ * γs[end+1-i]
+        CTs[i] = CoreTransform(λ, one(T), one(T), zero(T))
+    end
+    λ = ĉ₀ / αs[1]
+    CTs[end] = CoreTransform(λ, one(T), one(T), zero(T))
+    ĉ₀ = ĉ₁ - λ * βs[1]
+
+    for i ∈ 1:n-2
+        R[i, i]   = αs[end+1-i]
+        R[i, i+1] = βs[end+1-i]
+        R[i, i+2] = γs[end+1-i]
+    end
+
+    R[n-1, n-1] = αs[1]
+    R[n-1, n] = βs[1]
+    R[n,n] = ĉ₀
+
+    CTs, R
+end
+
+
+# find roots of P(p) without converting into standard basis
+# using comrade_matrix
+"""
+    roots(p::P) where {P <: AbstractCCOP}
+
+When `P` is a monic family, finds the roots of `p` using the comrade matrix; otherwise falls back to finding the roots after conversion to the `Polynomial` type.
+
+The eigenvalue of the comrade matrix are identified using an algorithm from
+
+*Fast computation of eigenvalues of companion, comrade, and related matrices*
+by Jared L. Aurentz, Raf Vandebril, and David S. Watkins
+DOI 10.1007/s10543-013-0449-x
+BIT Numer Math (2014) 54:7–30
+
+The paper presents both a single- and double-shift version. The paper
+has this caveat: "The double-shift code was less successful. It too is
+very fast, but it is too unstable in its current form. We cannot
+recommend it for accurate computation of roots of high-degree
+polynomials. It could find use as an extremely fast method to get a
+rough estimate of the spectrum"
+
+"""
+function Polynomials.roots(p::P) where {P <: AbstractCCOP}
+    Cs, B = comrade_decomposition(P, coeffs(p))
+    ctr = 1
+    while ctr < 4
+        λs = AVW_eigvals(Cs, B)
+        m =  maximum(abs, a_posteriori_check(λs, p))
+        if isnan(m) || isinf(m)
+            ctr += 1
+            continue
+        end
+        return newton_refinement(λs, p)
+    end
+    roots(convert(Polynomial, p))
+end
+
+
+## -----
 
 ## test root quality
 function a_posteriori_check(λs, p::P) where {P <: AbstractCCOP}
-    @assert ismonic(P)
+#    @assert ismonic(P)
     ps = coeffs(p)
     n = length(ps) - 1
     v(λ) = [basis(P, i)(λ) for i ∈ n-1:-1:0]
     αₙ = 1/An(P,  n - 1)
     cₙ = ps[end-1]/ps[end] / αₙ
     p = P(ps)
-    A = comrade_matrix(P,ps)
+    A = comrade_matrix(p)
     Aₒₒ = norm(A, Inf)
     [norm(αₙ * p(λ) / cₙ) /  (Aₒₒ * norm(v(λ), Inf)) for λ ∈ λs]
 end
-
-## ----
-
-# Helpful for developing
-function Base.show(io::IO, c::AbstractTransform)
-    c11,c12,c21,c22 = splat(c)
-    show(IOContext(io, :compact => true), "text/plain", [c11 c12;
-                                                         c21 c22])
-    println(io)
-end
-
-
-## realize transform as a matrix
-function realize(c::AbstractTransform{T}, i, n) where {T}
-    A = diagm(0 => ones(T, n))
-    a,b,c,d = splat(c)
-    A[i,i] = a
-    A[i,i+1] = b
-    A[i+1,i] = c
-    A[i+1,i+1] = d
-    A
-end
-
-function Base.Matrix(Cs, B)
-    n = length(Cs)
-    m = size(B)[1]
-    for i ∈ n:-1:1
-        B = realize(Cs[i], i,m)*B
-    end
-    B
-end
-
-#end

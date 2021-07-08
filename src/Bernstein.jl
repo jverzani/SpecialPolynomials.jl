@@ -83,7 +83,7 @@ function Base.convert(P::Type{<:Bernstein{𝐍}}, p::Bernstein{𝐌, S}) where {
     end
     X = Polynomials.indeterminate(P, p)
     Bernstein{𝐍, R, X}(cs)
-    
+
 end
 
 
@@ -169,14 +169,17 @@ Polynomials.evalpoly(x, p::Bernstein) = simple_deCasteljau_polyval(p, x)
 # for increased accuracy, but is it really necessary here?
 function simple_deCasteljau_polyval(p::Bernstein{𝐍,T,X}, t::S) where {𝐍,T, X, S}
 
+    p₀ = p[0]
+    R = eltype(p₀*t)
+    zR = p₀ * zero(t)
+
     R = promote_type(T, S)
-    𝐍 == -1 && return zero(R)
-    𝐍 == 0  && return p[0] * one(R)
+    𝐍 == -1 && return zR
+    𝐍 == 0  && return p[0] * one(t)
     n = length(coeffs(p))
-    iszero(n) && return zero(R)
+    iszero(n) && return zR
 
-
-    bs = zeros(R, 𝐍+1)  #  pad  out
+    bs = [zR for _ ∈ 1:𝐍+1]
     for i in eachindex(coeffs(p))
         bs[i] = p[i-1]
     end
@@ -193,7 +196,7 @@ end
 
 # function deCasteljau_polyval(p::Bernstein{N,T}, t) where {N, T}
 #     b̂ = coeffs(p) .* one(t)
-#     errb̂ = 0 .* b̂ #zeros(eltype(b̂), N+1) 
+#     errb̂ = 0 .* b̂ #zeros(eltype(b̂), N+1)
 #     r̂,ρ = twoSum(1, -t)
 #     for j in 1:N
 #         for ii in 0:(N-j)
@@ -271,7 +274,7 @@ function Base.:*(p::P, q::Q) where {𝐍,T,X, P<:Bernstein{𝐍,T,X},
     isconstant(q) && return p * constantterm(q)
     Polynomials.assert_same_variable(p, q) || throw(ArgumentError("p1 and p2 must have the same symbol"))
 
-    
+
     R = typeof(one(promote_type(T,S))/1)
     x = variable(Polynomial{R})
     return convert(Bernstein, p(x)*q(x))
@@ -283,11 +286,11 @@ function Base.:*(p::P, q::Q) where {𝐍,T,X, P<:Bernstein{𝐍,T,X},
 
     # for i in 0:𝐍
     #     for j in max(0,i-m):min(n, i)
-    #         cs[1+i] += p[j] * q[i-j] * (one(R) * binomial(n,j)  *  binomial(m,i-j)) 
+    #         cs[1+i] += p[j] * q[i-j] * (one(R) * binomial(n,j)  *  binomial(m,i-j))
     #     end
     #     cs[1+i] /= binomial(m+n, i)
     # end
-  
+
     # Bernstein{𝐍,R}(cs, p.var)
 
 end
@@ -301,7 +304,7 @@ function Polynomials.derivative(p::Bernstein{𝐍, T, X}, order::Integer = 1) wh
 
     cs = zeros(T, 𝐍)
     dp = Bernstein{𝐍-1, T, X}(𝐍 * diff(coeffs(p)))
-    
+
     order > 1 ? derivative(dp, order-1) : dp
 end
 
@@ -311,7 +314,7 @@ end
 function Polynomials.integrate(p::Bernstein{𝐍, T, X}) where {𝐍, T,X}
     R = eltype(one(T) / 1)
     𝐍𝐍 = 𝐍 + 1
-    
+
     cs = zeros(R, 𝐍𝐍+1)
 
     @inbounds for ν in eachindex(p)
@@ -319,7 +322,7 @@ function Polynomials.integrate(p::Bernstein{𝐍, T, X}) where {𝐍, T,X}
             cs[1 + j] += p[ν] / 𝐍𝐍
         end
     end
-    
+
     ∫p = Bernstein{𝐍𝐍, R,X}(cs)
     return ∫p
 
@@ -388,4 +391,71 @@ function Polynomials.roots(p::Bernstein{𝐍,T}) where {𝐍,T}
     eigvals(Ap,Bp)
 end
 
-    
+
+# http://www.cecm.sfu.ca/personal/pborwein/MITACS/papers/LinMatPol.pdf
+# Sec 4.1
+
+function comrade_matrix(p::P) where {𝐍, T, P <: Bernstein{𝐍, T}}
+    C₀, C₁ = comrade_pencil(p)
+    C₀ * inv(C₁)
+end
+
+
+function comrade_pencil(p::P) where {𝐍, T, P <: Bernstein{𝐍, T}}
+    n = 𝐍
+    a,b = 0, 1
+    C₀ = diagm( 0 => a/(b-a) .* ((n:-1:1) ./ (1:n)) .* ones(T, n),
+               -1 => b/(b-a) .* ones(T, n-1))
+    C₁ = diagm( 0 => 1/(b-a) .* ((n:-1:1) ./ (1:n)) .* ones(T, n),
+                -1 => 1/(b-a) .* ones(T, n-1))
+
+    C₀[end,end] *= p[end]
+    C₁[end,end] *= p[end]
+
+    for i ∈ 0:n-1
+        C₀[1+i, end] -= b/(b-a) * p[i]
+        C₁[1+i, end] -= 1/(b-a) * p[i]
+    end
+#    C₁[1,end] = -(n-1)/(b-a) * p[0]
+
+    C₀, C₁
+
+end
+
+# block version
+function comrade_pencil(p::P) where {𝐍, T, M <: AbstractMatrix{T},
+                                     P <: Bernstein{𝐍,M}}
+
+    m,m′ = size(p[0])
+    @assert m == m′
+
+    Iₘ = I(m)
+    n = 𝐍
+
+    a,b = 0, 1 # could generalize with Bernsteing
+    R = eltype(one(T)/1)
+    C₀ = zeros(R, n*m, n*m)
+    C₁ = zeros(R, n*m, n*m)
+    Δ = 1:m
+
+    for i ∈ 1:n-1
+        C₀[(i-1)*m .+ Δ, (i-1)*m .+ Δ] .= (n+1 - i)/i * a/(b-a) .* Iₘ
+        C₀[i*m .+ Δ,     (i-1)*m .+ Δ] .= b/(b-a) .* Iₘ
+
+        C₁[(i-1)*m .+ Δ, (i-1)*m .+ Δ] .= (n+1 - i)/i * 1/(b-a) .* Iₘ
+        C₁[i*m .+ Δ,     (i-1)*m .+ Δ] .= 1/(b-a) .* Iₘ
+    end
+
+    C₀[(n-1)*m .+ Δ, (n-1)*m .+ Δ] .= 1/n * a/(b-a) .* p[n]
+    C₁[(n-1)*m .+ Δ, (n-1)*m .+ Δ] .= 1/n * 1/(b-a) .* p[n]
+
+    for i ∈ 0:n-1
+        C₀[i*m .+ Δ, (n-1)*m .+ Δ] .-= b/(b-a) .* p[i]
+        C₁[i*m .+ Δ, (n-1)*m .+ Δ] .-= 1/(b-a) .* p[i]
+    end
+
+#    C₁[Δ, (n-1)*Δ] .= -(n-1) * 1 / (b-a) .* p[0]
+
+    C₀, C₁
+
+end

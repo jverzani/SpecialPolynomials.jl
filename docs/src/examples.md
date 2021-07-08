@@ -132,7 +132,7 @@ julia> p4,p5 = basis.(P, [4,5])
 2-element Vector{Legendre{Float64, :x, N} where N}:
  Legendre(1.0⋅P₄(x))
  Legendre(1.0⋅P₅(x))
- 
+
 julia> wf, dom = SpecialPolynomials.weight_function(P), domain(P);
 
 julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
@@ -150,7 +150,7 @@ julia> SpecialPolynomials.innerproduct(P, p4, p5)
 
 ## Polynomial methods
 
-For each polynomial type, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible. 
+For each polynomial type, this package implements as many of the methods for polynomials defined in `Polynomials`, as possible.
 
 ### Evaluation
 
@@ -283,7 +283,7 @@ The first uses a method from the `FastTransforms` package. This package can hand
 
 ### Roots
 
-The `roots` function finds the roots of a polynomial 
+The `roots` function finds the roots of a polynomial
 
 ```jldoctest example
 julia> p = Legendre([1,2,2,1])
@@ -301,10 +301,10 @@ julia> p.(rts)
   0.0
   0.0
 ```
- 
- 
+
+
 Here we see `fromroots` and `roots` are related, provided a monic polynomial is used:
- 
+
 ```jldoctest example
 julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
 SpecialPolynomials
@@ -319,16 +319,14 @@ typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ�
 julia> q = SP.monic(p) # monic is not exported
 typename(Jacobi){0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
 
-julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps())) 
+julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps()))
 typename(Jacobi){0.5,-0.5}(0.0)
 ```
- 
-The roots are found from the eigenvalues of the companion matrix,
-which may be directly produced  by `companion`; the default is  to find  it after
-conversion to the standard basis.
- 
-For orthogonal polynomials, the roots of the basis vectors are important for quadrature. For larger values of `n`, the eigenvalues of the unexported `jacobi_matrix` also identify these roots, but the algorithm is more stable.
- 
+
+For many of the orthogonal polynomials, the roots are found from the *comrade matrix* using a ``\mathcal{O}(n^2)`` algorithm of Aurentz, Vandebril, and Watkins, which computes in a more efficient manner the `eigvals(SpecialPolynomials.comrade_matrix(p))`. Alternatively, in theory roots may be identified from the companion matrix of the polynomial, once expressed in the standard basis. This approach is the fallback approach for other polynomial types, but is prone to numeric issues.
+
+For orthogonal polynomials, the roots of the basis vectors are important for quadrature. For larger values of `n`, the eigenvalues of the unexported `jacobi_matrix` also identify these roots, but the algorithm is more stable than conversion to the standard basis
+
 ```jldoctest example
 julia> using LinearAlgebra
 
@@ -355,10 +353,18 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
 At higher degrees, the difference in  stability comes out:
 
 ```jldoctest example
-julia> p50 = basis(Legendre{Float64}, 50); sum(isreal.(roots(p50)))
+julia> using LinearAlgebra
+
+julia> p50 = basis(Legendre{Float64}, 50)
+Legendre(1.0⋅P₅₀(x))
+
+julia> sum(isreal, eigvals(Polynomials.companion(p50)))
 34
 
-julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ))  .|> isreal |> sum
+julia> sum(isreal, roots(p50))
+50
+
+julia> sum(isreal, eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 )))
 50
 ```
 
@@ -442,7 +448,7 @@ polynomial to the function generating the `y` values.
 
 For an orthogonal polynomial type, the zeros of the basis
 polynomial `p_{n+1}`, labeled `x_0, x_1, ..., x_n` are often used as
-nodes, especially for the Chebyshev nodes (of the first kind).  
+nodes, especially for the Chebyshev nodes (of the first kind).
 [Gil, Segura, and Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) say
 "Interpolation with Chebyshev nodes is not as good as the best
 approximation ..., but usually it is the best practical possibility

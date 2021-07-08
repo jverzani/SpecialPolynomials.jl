@@ -38,8 +38,8 @@
 ConvertibleTypes = Union{AbstractCOP, Polynomials.StandardBasisPolynomial,  FallingFactorial}
 kn(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P)))
 k1k0(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P)))
-knk_1(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P))) 
-                         
+knk_1(::Type{P},  n) where{P <: Union{Polynomials.StandardBasisPolynomial,  FallingFactorial}} = one(eltype(one(P)))
+
 
 
 ## If  the connection  coefficients for  (P,Q) satisfy c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ = 0 for some computable
@@ -49,22 +49,22 @@ function _convert_cop(::Type{Q}, p::P) where {P <: ConvertibleTypes,
 
     d = degree(p)
     T,S = eltype(Q), eltype(p)  #
-    R = typeof(one(promote_type(T,S))/1)
-
+    R = typeof(one(T) * p[0]/1)
     as = zeros(R, 1+d)
 
     λⱼⱼ = one(R)  * k0(P) / k0(Q)
-    
+
+
     for j in  0:d
 
-        λ = λⱼⱼ 
+        λ = λⱼⱼ
 
-        λⱼⱼ *= k1k0(P,j) / k1k0(Q,j)  
+        λⱼⱼ *= k1k0(P,j) / k1k0(Q,j)
 
         pⱼ = p[j]
         iszero(pⱼ) && continue
 
-        C̃ʲⱼ = one(R)  
+        C̃ʲⱼ = one(R)
 
         as[1+j] += pⱼ * (λ * C̃ʲⱼ)
 
@@ -112,22 +112,22 @@ end
 #     Q <: Union{Gegenbauer{β}, OrthonormalGegenbauer{β}},
 #     P <: Union{Gegenbauer{α, T}, OrthonormalGegenbauer{α, T}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( ultra2ultra(ps, α, β, norm1=isorthonormal(P), norm2=isorthonormal(Q)) )
-       
+
 # end
-       
+
 # # Jacobi<--Jacobi
 # function _convert(::Type{Q}, p::P) where {
 #     γ, δ, α, β,  T <: AbstractFloat,
 #     Q <: Union{Jacobi{γ, δ}, OrthonormalJacobi{γ, δ}},
 #     P <: Union{Jacobi{α, β, T}, OrthonormalJacobi{α, β, T}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( jac2jac(ps, α, β, γ, δ,  norm1=isorthonormal(P), norm2=isorthonormal(Q)) )
-    
+
 # end
 
 # # Laguerre<--Laguerre
@@ -139,7 +139,7 @@ end
 
 #     ps =  coeffs(p)
 #     Q( lag2lag(ps, α, β,  norm1=isorthonormal(P), norm2=isorthonormal(Q)) )
-    
+
 # end
 
 
@@ -149,10 +149,10 @@ end
 #     Q <: Union{Jacobi{γ, δ}, OrthonormalJacobi{γ, δ}},
 #     P <: Union{Gegenbauer{α, T}, OrthonormalGegenbauer{α, T}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( ultra2jac(ps, α, γ, δ,  normultra=isorthonormal(P), normjac=isorthonormal(Q)) )
-    
+
 # end
 
 # # ultraspherical<--Jacobi
@@ -161,10 +161,10 @@ end
 #     Q <: Union{Gegenbauer{α, T}, OrthonormalGegenbauer{α, T}},
 #     P <: Union{Jacobi{γ, δ}, OrthonormalJacobi{γ, δ}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( jac2ultra(ps,γ, δ, α, normjac=isorthonormal(P), normultra=isorthonormal(Q)) )
-    
+
 # end
 
 # # Jacobi<--Chebyshev
@@ -173,10 +173,10 @@ end
 #     Q <: Union{Jacobi{γ, δ}, OrthonormalJacobi{γ, δ}},
 #     P <: Union{Chebyshev{T}, OrthonormalChebyshev{T}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( cheb2jac(ps,γ, δ, normcheb=isorthonormal(P), normjac=isorthonormal(Q)) )
-    
+
 # end
 
 # # Chebyshev<--Jacobi
@@ -185,10 +185,10 @@ end
 #     Q <: Union{Chebyshev, OrthonormalChebyshev},
 #     P <: Union{Jacobi{γ, δ,T}, OrthonormalJacobi{γ, δ,T}}
 # }
-    
+
 #     ps =  coeffs(p)
 #     Q( jac2cheb(ps,γ, δ, normjac = isorthonormal(P), normcheb=isorthonormal(Q)) )
-    
+
 # end
 
 # # ultraspherical<--Chebyshev
@@ -200,7 +200,7 @@ end
 
 #     ps =  coeffs(p)
 #     Q( cheb2ultra(ps,α, normcheb=isorthonormal(P), normultra=isorthonormal(Q)) )
-    
+
 # end
 
 # # Chebyshev<--ultraspherical
@@ -211,7 +211,7 @@ end
 # }
 #     ps =  coeffs(p)
 #     Q( ultra2cheb(ps,α, normultra=isorthonormal(P), normcheb=isorthonormal(Q)) )
-    
+
 # end
 
 
@@ -225,7 +225,7 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
 
     (a == ā && b == b̄ && c == c̄) || throw(ArgumentError("This connection assume σ = σ̄"))
     a²,b²,c²,d²,d̄²,e²,ē²,m²,n² = a^2, b^2, c^2, d^2, d̄^2, e^2, ē^2, m^2, n^2
-    
+
     c0 = -(m-n) ⋅ (a⋅m + d - a + a⋅n) ⋅ (d̄ + 2a⋅m) ⋅ (d̄ + a + 2a⋅m) ⋅ (d̄ + 3a + 2a⋅m)
     c0 *= (d̄ + 2a⋅m  + 2a)^2
 
@@ -240,7 +240,7 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
     c2a += b⋅ē⋅d̄ - 4⋅a²⋅c + b²⋅d̄
     c2 *= c2a ⋅ (m + 2)
 
-    
+
     return (c0, c1, c2)
 
 end
@@ -257,7 +257,7 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
     c1 = (m + 1) ⋅ (b⋅m + e)
 
     c2 = c ⋅ (m + 1) ⋅ (m + 2)
-                  
+
     return (c0, c1, c2)
 
 end
@@ -269,7 +269,7 @@ function connection_m(::Type{P},::Type{Q},m,n) where {
 
     ā,b̄,c̄,d̄,ē = abcde(Q)
     ā²,b̄²,c̄²,d̄²,ē²,m²,n² = ā^2, b̄^2, c̄^2, d̄^2, ē^2, m^2, n^2
-    
+
     c0 =  (n - m) ⋅ (d̄ + 2ā⋅m) ⋅ (d̄ + 3ā + 2ā⋅m) ⋅ (d̄ + ā + 2ā⋅m) ⋅ (d̄ + 2ā⋅m + 2ā)^2
 
     c1 =  (d̄⋅ē + b̄⋅d̄ +2d̄⋅b̄⋅m + 2ā⋅m²⋅b̄ + 2ā⋅m⋅b̄ +2ē⋅ā⋅n - d̄⋅b̄⋅n) ⋅ (d̄ + 2ā⋅m + 2ā)
@@ -289,7 +289,7 @@ end
 function connection(::Type{P}, q::Q) where
     {P <: Polynomials.AbstractPolynomial,
      Q<:Polynomials.AbstractPolynomial}
-    
+
     n = degree(q)
     T = eltype(q)
     T = eltype(one(eltype(one(P)))*one(q)/1)
@@ -302,6 +302,5 @@ function connection(::Type{P}, q::Q) where
     end
     X = Polynomials.indeterminate(P,q)
     ⟒(P){T,X}(cs)
-    
-end
 
+end
