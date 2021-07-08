@@ -2,7 +2,7 @@
 ## The comrade matrix plays the role of the companion matrix for static basis polynomials
 
 #
-# generate the  matrix for monic polynomial family
+# generate the  matrix for an orhtogonal polynomial family
 # should have eigvals(comrade_matrix(p)) ≈ roots(convert(Polynomial, p))
 # This isn't exported
 function comrade_matrix(p::P) where {P <: AbstractCCOP}
@@ -15,10 +15,11 @@ end
 # can be used with square matrix coefficients
 function comrade_pencil(p::P, symmetrize=false) where {T, P <: AbstractCCOP{T}}
     n = Polynomials.degree(p)
-    𝐏 = ⟒(P)
-    As = An.(𝐏{T}, 0:n-1)
-    Bs = Bn.(𝐏{T}, 0:n-1)
-    Cs = Cn.(𝐏{T}, 1:n-1)
+    𝐏 = _comrade_pencil_type(p)
+
+    As = An.(𝐏, 0:n-1)
+    Bs = Bn.(𝐏, 0:n-1)
+    Cs = Cn.(𝐏, 1:n-1)
     kₙ, kₙ₋₁ = leading_term(𝐏{T}, n), leading_term(𝐏{T},n-1)
 
     # α = 1/A
@@ -32,6 +33,8 @@ function comrade_pencil(p::P, symmetrize=false) where {T, P <: AbstractCCOP{T}}
 
     comrade_pencil(p, α, β, γ, kₙ₋₁, kₙ, symmetrize)
 end
+_comrade_pencil_type(p::P) where {T, P <: AbstractCCOP{T}} =  ⟒(P){T}
+_comrade_pencil_type(p::P) where {T, M<: AbstractMatrix{T}, P <: AbstractCCOP{M}} = ⟒(P){T}
 
 # α = [α₀, α₁, ⋯, αₙ₋₂]
 # β = [β₀, β₁, ⋯, βₙ₋₂, βₙ₋₁]
@@ -531,7 +534,6 @@ end
 
 # one step improves accuracy
 function newton_refinement(λs, p::P)  where {P <: AbstractCCOP}
-    #@assert ismonic(P)
     p′ = derivative(p)
     λs .- p.(λs) ./ p′.(λs)
 end
@@ -623,8 +625,6 @@ end
 ## Matrix(Cs, B) is comrade matrix
 function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
 
-#    @assert ismonic(P)
-
     n = length(ps) - 1
     As = An.(P, 0:n-1)
     Bs = Bn.(P, 0:n-1)
@@ -703,7 +703,7 @@ end
 """
     roots(p::P) where {P <: AbstractCCOP}
 
-When `P` is a monic family, finds the roots of `p` using the comrade matrix; otherwise falls back to finding the roots after conversion to the `Polynomial` type.
+When `P` is a classical orthogonal family, finds the roots of `p` using the comrade matrix; otherwise falls back to finding the roots after conversion to the `Polynomial` type.
 
 The eigenvalue of the comrade matrix are identified using an algorithm from
 
@@ -739,8 +739,8 @@ end
 ## -----
 
 ## test root quality
+## could presumably be much more efficient
 function a_posteriori_check(λs, p::P) where {P <: AbstractCCOP}
-#    @assert ismonic(P)
     ps = coeffs(p)
     n = length(ps) - 1
     v(λ) = [basis(P, i)(λ) for i ∈ n-1:-1:0]
