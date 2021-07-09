@@ -14,6 +14,10 @@ end
 # C₀, C₁ with λ C₁ - C₀ the linearization; and C₀ ⋅ C₁⁻¹ the companion matrix
 # can be used with square matrix coefficients
 function comrade_pencil(p::P, symmetrize=false) where {T, P <: AbstractCCOP{T}}
+    comrade_pencil(p, αβγk(p)..., symmetrize)
+end
+
+function αβγk(p::P) where {T, P <: AbstractCCOP{T}}
     n = Polynomials.degree(p)
     𝐏 = _comrade_pencil_type(p)
 
@@ -31,7 +35,7 @@ function comrade_pencil(p::P, symmetrize=false) where {T, P <: AbstractCCOP{T}}
     β = (-Bs ./ As)
     γ = (Cs ./ As[2:end])
 
-    comrade_pencil(p, α, β, γ, kₙ₋₁, kₙ, symmetrize)
+    (α,β,γ,kₙ₋₁, kₙ)
 end
 _comrade_pencil_type(p::P) where {T, P <: AbstractCCOP{T}} =  ⟒(P){T}
 _comrade_pencil_type(p::P) where {T, M<: AbstractMatrix{T}, P <: AbstractCCOP{M}} = ⟒(P){T}
@@ -43,10 +47,12 @@ _comrade_pencil_type(p::P) where {T, M<: AbstractMatrix{T}, P <: AbstractCCOP{M}
 function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) where {T, P <: Polynomials.AbstractPolynomial{T}}
 
     n = degree(p)
-    C₀ = diagm(1 => γ,
-              0 => β,
-              -1 => α
-              )
+    R = eltype(one(T)/1)
+    C₀ = diagm(2 => zeros(R, n-2),
+               1 => γ,
+               0 => β,
+               -1 => α
+               )
 
     C₀[end-1,end] *= kₙ * p[end]
     C₀[end,end] *= kₙ * p[end]
@@ -55,8 +61,7 @@ function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) wh
         C₀[1+i, end] -= kₙ₋₁ * p[i]
     end
 
-
-    C₁ = diagm(0 => ones(T, n))
+    C₁ = diagm(0 => ones(R, n))
     C₁[end,end] = kₙ * p[end]
 
     C₀, C₁
@@ -70,9 +75,9 @@ function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) wh
     @assert m == m′ # square
     𝐈 = I(m)
 
-
-    C₀ = zeros(T, n*m, n*m)
-    C₁ = diagm(0 => ones(T, n*m))
+    R = eltype(one(T)/1)
+    C₀ = zeros(R, n*m, n*m)
+    C₁ = diagm(0 => ones(R, n*m))
     Δ = 1:m
 
     C₀[0*m .+ Δ, 0*m .+ Δ] .= β[1]
@@ -107,6 +112,103 @@ function comrade_pencil(p::P, α, β, γ, kₙ₋₁, kₙ, symmetrize=false) wh
         return C₀, C₁
     end
 end
+
+"""
+    comrade_pencil_LU(p)
+
+Return an LU decomposition of `λC₁ - C₀`, where `C₀` and `C₁` are
+the pieces of the comrade pencil.
+
+The returned value is a function. We have `L,Ũ = comrade_pencil_LU(p)(λ)`.
+The upper-triangular part, `Ũ` is not quite `U`, as `U` is singluar at eigenvalues. Rather,
+this holds up to floating point
+
+```
+C₀, C₁ = comrade_pencil(p)
+L,Ũ = comrade_pencil_LU(p)(λ)
+@assert det(Ũ) ≈ 1
+Ũ[end,end] *= p(λ)
+L*Ũ - (λ*C₁ - C₀) ≈ 0 # if atol=sqrt(eps())
+```
+"""
+comrade_pencil_LU(p::P) where {P <: AbstractCCOP} =  comrade_pencil_LU(p, αβγk(p)...)
+
+function comrade_pencil_LU(p::P, α, β, γ, kₙ₋₁, kₙ) where {T, P <: Polynomials.AbstractPolynomial{T}}
+    n = degree(p)
+    R = typeof(one(T)/1)
+    # return a function of λ
+    λ -> begin
+        𝐏 = _comrade_pencil_type(p)
+        ϕs = [basis(𝐏,i)(λ) for i ∈ 0:n-1]
+        L = zeros(R, n, n)
+        U = zeros(R, n, n)
+        for i ∈ 1:n-1
+            L[i,i] = one(R)
+            L[i+1,i] = -ϕs[i]/ϕs[i+1]
+
+            U[i,i+1] = -γ[i]
+            U[i,i] = α[i] * ϕs[i+1]/ϕs[i]
+        end
+        L[end,end] = one(R)
+
+        U[1,end] = kₙ₋₁ * p[0]
+        for i ∈ 2:(n-2)
+            j = 1+i
+            U[i,end] = kₙ₋₁ * p[j-2] + ϕs[j-2]/ϕs[j-1] * U[i-1,end]
+        end
+
+        U[n-1,end] = kₙ₋₁ * p[end-2] + ϕs[end-2]/ϕs[end-1]*U[n-2,end] - kₙ*γ[end]*p[end]
+        U[end,end] = ϕs[1]/ϕs[end] / prod(α) * 1 # p(λ)
+        (L=L, U=U)
+    end
+end
+
+
+function comrade_pencil_LU(p::P, α, β, γ, kₙ₋₁, kₙ) where {T, M <: AbstractMatrix{T}, P <: Polynomials.AbstractPolynomial{M}}
+
+    m, m′ = size(p[0])
+    @assert m == m′
+    Iₘ = I(m)
+    Δ = 1:m
+
+    n = degree(p)
+    R = typeof(one(T)/1)
+
+    # return a function of λ
+    λ -> begin
+        𝐏 = _comrade_pencil_type(p)
+        ϕs = [basis(𝐏,i)(λ) for i ∈ 0:n-1]
+        L = zeros(R, n*m, n*m)
+        Ũ = zeros(R, n*m, n*m)
+        for i ∈ 1:n-1
+            i′ = i - 1
+            L[i′*m .+ Δ, i′*m .+ Δ] .= Iₘ
+            L[(i′+1)*m .+ Δ, i′*m .+ Δ] .= -ϕs[i]/ϕs[i+1] * Iₘ
+
+            Ũ[i′*m .+ Δ,(i′+1)*m .+ Δ] .= -γ[i] * Iₘ
+            Ũ[i′*m .+ Δ, i′*m .+ Δ] .= α[i] * ϕs[i+1]/ϕs[i] * Iₘ
+        end
+        END = (n-1)*m .+ Δ
+        L[END, END] .= Iₘ
+
+        Ũ[Δ, END] .= kₙ₋₁ * p[0]
+        for i ∈ 2:(n-2)
+            j = 1+i
+            i′ = i - 1
+            Ũ[i′*m .+ Δ, END] .= kₙ₋₁ * p[j-2] + ϕs[j-2]/ϕs[j-1] * Ũ[(i′-1)*m .+ Δ,END]
+        end
+
+        Ũ[(n-1-1)*m .+ Δ,END] = kₙ₋₁ * p[end-2] +
+            ϕs[end-2]/ϕs[end-1]*Ũ[(n-2-1)*m .+ Δ,END] - kₙ*γ[end]*p[end]
+
+
+        Ũ[END,END] = ϕs[1]/ϕs[end] / prod(α) * Iₘ # use Ũ, not U, which uses p(λ)
+        (L=L, U=Ũ)
+    end
+
+end
+
+
 
 ## -----
 
@@ -740,6 +842,7 @@ end
 
 ## test root quality
 ## could presumably be much more efficient
+## This test backwards stability
 function a_posteriori_check(λs, p::P) where {P <: AbstractCCOP}
     ps = coeffs(p)
     n = length(ps) - 1

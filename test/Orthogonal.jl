@@ -381,8 +381,8 @@ end
     end
 
 
-    # comrade matrix compared to conversion
-    for P ∈ (MonicLegendre, MonicChebyshev, MonicChebyshevU)
+    # comrade matrix approach compared to conversion
+    for P ∈ (Legendre, MonicLegendre, Chebyshev, MonicChebyshev, ChebyshevU, MonicChebyshevU)
         for T ∈ (Float64, Complex{Float64})
             ps = vcat(rand(T, 4), 1)
             p = P(ps)
@@ -391,6 +391,18 @@ end
             γs = sort(norm.(roots(q)))
             @test maximum(abs, λs - γs) < sqrt(eps())
         end
+    end
+
+    # comrade pencil
+    for P ∈ (Legendre, Chebyshev, ChebyshevU)
+        p = P(rand(5))
+        λ = rand()
+        C₀, C₁ = SP.comrade_pencil(p)
+        M = λ*C₁ - C₀
+        L,Ũ = SP.comrade_pencil_LU(p)(λ)
+        @test det(Ũ) ≈ 1
+        Ũ[end,end] *= p(λ)
+        @test L*Ũ ≈ M
     end
 
 end
