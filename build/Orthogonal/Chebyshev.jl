@@ -442,9 +442,9 @@ julia> derivative(p)
 ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> roots(p)
-2-element Vector{ComplexF64}:
- -0.6076252185107651 + 0.0im
- 0.27429188517743175 + 0.0im
+2-element Vector{Float64}:
+ -0.6076252185107651
+  0.27429188517743175
 ```
 """
 ChebyshevU

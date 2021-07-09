@@ -291,15 +291,15 @@ Legendre(1⋅P₀(x) + 2⋅P₁(x) + 2⋅P₂(x) + 1⋅P₃(x))
 
 julia> rts = roots(p)
 3-element Vector{ComplexF64}:
-                   -1.0 + 0.0im
-   -0.20000000000000012 + 0.0im
- 2.1279274638648817e-16 + 0.0im
+                  -1.0 + 0.0im
+  -0.19999999999999987 + 0.0im
+ 5.006882873781531e-17 + 0.0im
 
 julia> p.(rts)
 3-element Vector{ComplexF64}:
- -2.220446049250313e-16 + 0.0im
-                    0.0 + 0.0im
-  6.167905692361979e-17 + 0.0im
+  -2.220446049250313e-16 + 0.0im
+ -1.1102230246251565e-16 + 0.0im
+    6.67584383170871e-17 + 0.0im
 ```
 
 
@@ -334,12 +334,12 @@ julia> p5 = basis(Legendre, 5)
 Legendre(1.0⋅P₅(x))
 
 julia> roots(p5)
-5-element Vector{Float64}:
- -0.9061798459386644
- -0.5384693101056832
-  0.5384693101056831
-  0.9061798459386636
-  0.0
+5-element Vector{ComplexF64}:
+  -0.906179845938664 + 0.0im
+ -0.5384693101056831 + 0.0im
+                 0.0 + 0.0im
+  0.5384693101056831 + 0.0im
+   0.906179845938664 + 0.0im
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
 5-element Vector{Float64}:
