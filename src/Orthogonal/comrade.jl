@@ -733,7 +733,7 @@ function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
     Cs = Cn.(P, 1:n-1)
     kₙ, kₙ₋₁ = leading_term(P, n), leading_term(P,n-1)
 
-    p̂s = copy(ps)
+    p̂s = copy(ps) ./ 1
 
     # αs = [1/A0, 1/A1, ..., 1/An-2]
     # βs = [B0/A0, ..., Bn-1/An-1]
@@ -824,17 +824,18 @@ rough estimate of the spectrum"
 """
 function Polynomials.roots(p::P) where {P <: AbstractCCOP}
     Cs, B = comrade_decomposition(P, coeffs(p))
-    ctr = 1
-    while ctr < 4
-        λs = AVW_eigvals(Cs, B)
-        m =  maximum(abs, a_posteriori_check(λs, p))
-        if isnan(m) || isinf(m)
-            ctr += 1
-            continue
+    λs = AVW_eigvals(Cs, B)
+
+    # hacky check on whether roots are good enough
+    ns = p.(λs) ./ derivative(p).(λs)
+    δ = maximum(abs,ns)
+    if δ  >= sqrt(eps())
+        rts = eigvals(Polynomials.companion(p))
+        if maximum(abs, p.(λs)) > maximum(abs, p.(rts))
+            return complex.(rts)
         end
-        return newton_refinement(λs, p)
     end
-    roots(convert(Polynomial, p))
+    return newton_refinement(λs, p)
 end
 
 

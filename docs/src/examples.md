@@ -78,7 +78,7 @@ julia> u = variable(ChebyshevU)
 ChebyshevU(0.5⋅U₁(x))
 
 julia> p3(u)
-ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
+ChebyshevU(-0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
 For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
@@ -210,10 +210,10 @@ julia> P = Jacobi{1/2, -1/2}
 Jacobi{0.5, -0.5, T, X, N} where {T, X, N}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(-2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q
-typename(Jacobi){0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+typename(Jacobi){0.5,-0.5}(-1.5⋅Jᵅᵝ₀(x) -2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 ```
 
 ### Derivatives and integrals
@@ -237,10 +237,10 @@ julia> P = Jacobi{1//2, -1//2}
 Jacobi{1//2, -1//2, T, X, N} where {T, X, N}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(-2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q # as above, only with rationals for paramters
-typename(Jacobi){1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+typename(Jacobi){1//2,-1//2}(-1.5⋅Jᵅᵝ₀(x) -2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
 Jacobi{1//2, 1//2, T, X, N} where {T, X, N}
@@ -290,16 +290,16 @@ julia> p = Legendre([1,2,2,1])
 Legendre(1⋅P₀(x) + 2⋅P₁(x) + 2⋅P₂(x) + 1⋅P₃(x))
 
 julia> rts = roots(p)
-3-element Vector{Float64}:
- -1.0
- -0.20000000000000007
-  0.0
+3-element Vector{ComplexF64}:
+                   -1.0 + 0.0im
+   -0.20000000000000012 + 0.0im
+ 2.1279274638648817e-16 + 0.0im
 
 julia> p.(rts)
-3-element Vector{Float64}:
- -2.220446049250313e-16
-  0.0
-  0.0
+3-element Vector{ComplexF64}:
+ -2.220446049250313e-16 + 0.0im
+                    0.0 + 0.0im
+  6.167905692361979e-17 + 0.0im
 ```
 
 
@@ -320,7 +320,7 @@ julia> q = SP.monic(p) # monic is not exported
 typename(Jacobi){0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
 
 julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps()))
-typename(Jacobi){0.5,-0.5}(0.0)
+typename(Jacobi){0.5,-0.5}(0.0 + 0.0im)
 ```
 
 For many of the orthogonal polynomials, the roots are found from the *comrade matrix* using a ``\mathcal{O}(n^2)`` algorithm of Aurentz, Vandebril, and Watkins, which computes in a more efficient manner the `eigvals(SpecialPolynomials.comrade_matrix(p))`. Alternatively, in theory roots may be identified from the companion matrix of the polynomial, once expressed in the standard basis. This approach is the fallback approach for other polynomial types, but is prone to numeric issues.
@@ -350,7 +350,7 @@ julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
   0.9061798459386642
 ```
 
-At higher degrees, the difference in  stability comes out:
+At higher degrees, the difference in  stability comes out. For the special case of a basis polynomial, we see this difference in the maximum residual:
 
 ```jldoctest example
 julia> using LinearAlgebra
@@ -358,14 +358,14 @@ julia> using LinearAlgebra
 julia> p50 = basis(Legendre{Float64}, 50)
 Legendre(1.0⋅P₅₀(x))
 
-julia> sum(isreal, eigvals(Polynomials.companion(p50)))
-34
+julia> as = eigvals(Polynomials.companion(p50)); maximum(abs ∘ p50, as)
+68.26073506641114
 
-julia> sum(isreal, roots(p50))
-50
+julia> bs = eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 )); maximum(abs ∘ p50, bs)
+1.84297022087776e-14
 
-julia> sum(isreal, eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 )))
-50
+julia> maximum(abs, roots(p50) - bs)
+5.551115123125783e-16
 ```
 
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
