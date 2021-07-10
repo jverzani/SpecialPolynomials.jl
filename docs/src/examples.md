@@ -289,17 +289,11 @@ The `roots` function finds the roots of a polynomial
 julia> p = Legendre([1,2,2,1])
 Legendre(1⋅P₀(x) + 2⋅P₁(x) + 2⋅P₂(x) + 1⋅P₃(x))
 
-julia> rts = roots(p)
-3-element Vector{ComplexF64}:
-                  -1.0 + 0.0im
-  -0.19999999999999987 + 0.0im
- 5.006882873781531e-17 + 0.0im
+julia> rts = roots(p); rts ≈ [-1, -1/5, 0]
+true
 
-julia> p.(rts)
-3-element Vector{ComplexF64}:
-  -2.220446049250313e-16 + 0.0im
- -1.1102230246251565e-16 + 0.0im
-    6.67584383170871e-17 + 0.0im
+julia> maximum(abs∘p, rts) <= 10eps() # small residual
+true
 ```
 
 
@@ -358,14 +352,18 @@ julia> using LinearAlgebra
 julia> p50 = basis(Legendre{Float64}, 50)
 Legendre(1.0⋅P₅₀(x))
 
-julia> as = eigvals(Polynomials.companion(p50)); maximum(abs ∘ p50, as)
-68.26073506641114
+julia> as = eigvals(Polynomials.companion(p50));
 
-julia> bs = eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 )); maximum(abs ∘ p50, bs)
-1.84297022087776e-14
+julia> maximum(abs ∘ p50, as) < sqrt(eps())
+false
 
-julia> maximum(abs, roots(p50) - bs)
-5.551115123125783e-16
+julia> bs = eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 50 ));
+
+julia> maximum(abs ∘ p50, bs) < sqrt(eps())
+true
+
+julia> maximum(abs, roots(p50) - bs) < sqrt(eps())
+true
 ```
 
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
