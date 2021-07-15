@@ -82,7 +82,7 @@ julia> x = variable(Polynomial{𝐐})
 Polynomials.Polynomial(x)
 
 julia> [basis(MonicLegendre′{𝐐}, i)(x) for i  in 0:5]
-6-element Vector{Polynomial{T, :x} where T}:
+6-element Vector{Polynomial{T, :x} where T<:Number}:
  Polynomials.Polynomial(1//1)
  Polynomials.Polynomial(1.0*x)
  Polynomials.Polynomial(-0.3333333333333333 + 1.0*x^2)

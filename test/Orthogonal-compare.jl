@@ -6,7 +6,7 @@
 
     T = Float64
 
-    for α in  (3/2, 1/2, 1, 2)  
+    for α in  (3/2, 1/2, 1, 2)
         P = Bessel{α,T}
         β =  2
 
@@ -22,7 +22,7 @@
         end
     end
 
-    
+
     x = variable(Polynomial)
     for  α  ∈ (1/4,1/2,3/4, 1, 2)
         P =  Bessel{α}
@@ -118,11 +118,11 @@ end
     P =  ChebyshevHermite
     for n in 2:5
         p  = basis(P,n)
-        @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x)
+        @test  p(x) ≈ SP.classical_hypergeometric(P, n,  x) atol=1e-8
     end
 
 
-    
+
 end
 
 @testset "Legendre" begin
@@ -324,7 +324,7 @@ end
             end
         end
     end
-    
+
 end
 
 

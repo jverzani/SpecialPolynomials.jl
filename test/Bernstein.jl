@@ -49,7 +49,7 @@ end
     c = fromroots(Bernstein, r)
     @test roots(c) ≈ r
 
-    r = [1im, -1im]
+    r = [-1im, 1 + 2im]
     c = fromroots(Bernstein, r)
     @test roots(c) ≈ r
 end
@@ -108,7 +108,7 @@ end
     @test coeffs(z)  ==  zeros(length(z))
 
 
-    # GCD 
+    # GCD
     c1 = Bernstein(Float64[1//1, 2, 3])
     c2 = Bernstein(Float64[3//1, 2, 1])
     @test gcd(c1, c2) ≈ Bernstein([4.0])
@@ -155,5 +155,5 @@ end
         @test degree(truncate(pp, atol=1e-13)) <= 0
         @test degree(truncate(qq, atol=1e-13)) <  0
     end
-    
+
 end

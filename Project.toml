@@ -1,7 +1,7 @@
 name = "SpecialPolynomials"
 uuid = "a25cea48-d430-424a-8ee7-0d3ad3742e9e"
 authors = ["jverzani <jverzani@gmail.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"

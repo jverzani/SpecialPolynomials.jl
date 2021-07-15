@@ -27,10 +27,10 @@ DPs =  (Charlier{1/2},
         Krawchouk{1/2, 10},
         Hahn{1/4,1/2,10}
         )
-       
+
 
 @testset "Construction" begin
-    
+
     for P in union(Ps,  DPs)
         x = variable(P)
         # basic recurrence
@@ -38,7 +38,7 @@ DPs =  (Charlier{1/2},
         for n in 1:6
             @test basis(P,n+1) ≈ (SP.An(P,n) * x + SP.Bn(P,n)) * basis(P,n) - SP.Cn(P,n)*basis(P,n-1)
         end
-                
+
         # leading term and ratios
         x = variable(Polynomial)
         for n = 0:5
@@ -50,7 +50,7 @@ DPs =  (Charlier{1/2},
         for n = 1:5
             @test SP.k1k_1(P,n) ≈ SP.kn(P,n+1)/SP.kn(P,n-1)
         end
-        
+
         # basis
         x = variable(P)
         p0, p1, p2, p3, p4, p5, p6 = ps =  basis.(P,0:6)
@@ -95,7 +95,7 @@ DPs =  (Charlier{1/2},
 end
 
 @testset "Structural equations" begin
-    
+
     for P in Ps
         P  <: Hermite  &&  continue #  Hermite  has issues
         for i in 2:5
@@ -103,28 +103,28 @@ end
             ps = basis.(P, i+1:-1:i-1)
             dps = derivative.(ps)
             pᵢ,dpᵢ = ps[2], dps[2]
-            
+
             a,b,c,d,e = SP.abcde(P)
             x = variable(P)
             σ = a*x^2 + b*x + c
 
-            
+
             # x⋅p_n   = [an, bn, cn]    ⋅ [p_{n+1}, p_n, p_{n-1}]     #  Eqn (7)
             as= SP.an(P,i), SP.bn(P,i), SP.cn(P,i)
             @test x*pᵢ ≈ sum(a*p for (a,p) in zip(as, ps))
 
-            
+
             # σ⋅p'_n  = [αn, βn, γn]    ⋅  [p_{n+1}, p_n, p_{n-1}]    # Eqn (9), n ≥ 1
             αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
             @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
-            
+
             # p_n    = [ân, b̂n, ĉn]    ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn (19)
             âs = SP.ân(P,i), SP.b̂n(P,i), SP.ĉn(P,i)
             @test pᵢ ≈ sum(a*dp for (a,dp) in zip(âs, dps))
-            
+
             # x⋅p'_n  = [αᴵn, βᴵn, γᴵn] ⋅  [p'_{n+1}, p'_n, p'_{n-1}] # Eqn  (14) with  α^*, β^*,  γ^*
             @test (a=a,b=b,c=c,d=d+2a,e=e+b)  == SP.abcdeᴵ(P)
-            αᴵs = SP.αᴵn(P,i), SP.βᴵn(P,i), SP.γᴵn(P,i) 
+            αᴵs = SP.αᴵn(P,i), SP.βᴵn(P,i), SP.γᴵn(P,i)
             @test x * dpᵢ ≈ sum(a*dp for (a,dp) in zip(αᴵs, dps))
         end
     end
@@ -135,7 +135,7 @@ end
             dps  = SP.:∇ₓ.(ps)
             Δps  = SP.:Δₓ.(ps)
             pᵢ,dpᵢ,Δpᵢ = ps[2], dps[2], Δps[2]
-            
+
             a,b,c,d,e = SP.abcde(P)
             x = variable(P)
             σ = a*x^2 + b*x + c
@@ -147,7 +147,7 @@ end
             αs = SP.αn(P,i), SP.βn(P,i), SP.γn(P,i)
             @test σ*dpᵢ ≈ sum(a*p for (a,p) in zip(αs, ps))
 
-            
+
             âs = SP.ân(P,i), SP.b̂n(P,i), SP.ĉn(P,i)  #  Eqn 20
             @test pᵢ ≈ sum(a*dp for (a,dp) in zip(âs, Δps))
 
@@ -157,9 +157,9 @@ end
 
         end
     end
-            
+
 end
-        
+
 
 @testset "Conversion" begin
 
@@ -171,7 +171,7 @@ end
                 p = P(ps)
                 @test convert(P, convert(Q, p)) ≈ p
             end
-        end            
+        end
     end
     # through evaluation
     for PP in (Ps, DPs)
@@ -184,7 +184,7 @@ end
         end
     end
 
-  
+
 
     x = variable(Polynomial)
     # Connections: groupings have same sigma = a⋅x² + b⋅x + c
@@ -193,19 +193,19 @@ end
                (Laguerre{0},  Laguerre{1/2}, Laguerre{1}),
                (Bessel{1/4}, Bessel{1/2}, Bessel{3/4}, Bessel{2})
                )
-        
-        
+
+
         for  P in Ps
             for Q in Ps
                 for n in 2:5
                     q = basis(Q, n)
                     # various ways to convert to P
-                    
+
                     @test q(variable(P))(variable()) ≈ q(variable())  # evaluation
                     @test SP._convert_cop(P, q)(variable()) ≈ q(variable())  # structural  equations
                     @test convert(P, convert(Polynomial, q))(variable()) ≈ q(variable()) # through Standard  basis
-                    @test convert(P, q)(x) ≈ q(x) 
-                    
+                    @test convert(P, q)(x) ≈ q(x)
+
                 end
             end
         end
@@ -219,8 +219,8 @@ end
             @test convert(Q, p)(x) ≈ p(x)
         end
     end
-            
-    
+
+
 end
 
 
@@ -260,7 +260,7 @@ end
                 @test (op(p,q))(x) ≈ op(p(x), q(x))
             end
         end
-        
+
     end
 end
 
@@ -305,8 +305,8 @@ end
         end
     end
 
-    
-        
+
+
 end
 
 
@@ -317,7 +317,7 @@ end
         ps, qs = rand(1:6, 4),rand(1:6, 3)
         p, q = P(ps), P(qs)
         a, b =  divrem(p, q)
-        @test p ≈ q  *  a +  b 
+        @test p ≈ q  *  a +  b
     end
 
 end
@@ -374,12 +374,37 @@ end
     for P in union(Ps, DPs)
         P <: Bessel && continue
         for n in 6:2:10
-            rts = roots(basis(P, n))
+            rts = roots(convert(Polynomial, basis(P, n)))
             evals = eigvals(SP.jacobi_matrix(P, n))
-            @test maximum(abs, sort(rts) - sort(evals)) <= 1e-4
+            @test maximum(abs,  rts - evals) <= 1e-4
         end
     end
-    
+
+
+    # comrade matrix approach compared to conversion
+    for P ∈ (Legendre, MonicLegendre, Chebyshev, MonicChebyshev, ChebyshevU, MonicChebyshevU)
+        for T ∈ (Float64, Complex{Float64})
+            ps = vcat(rand(T, 4), 1)
+            p = P(ps)
+            q = convert(Polynomial, p)
+            λs = sort(norm.(roots(p)))
+            γs = sort(norm.(roots(q)))
+            @test maximum(abs, λs - γs) < sqrt(eps())
+        end
+    end
+
+    # comrade pencil
+    for P ∈ (Legendre, Chebyshev, ChebyshevU)
+        p = P(rand(5))
+        λ = rand()
+        C₀, C₁ = SP.comrade_pencil(p)
+        M = λ*C₁ - C₀
+        L,Ũ = SP.comrade_pencil_LU(p)(λ)
+        @test det(Ũ) ≈ 1
+        Ũ[end,end] *= p(λ)
+        @test L*Ũ ≈ M
+    end
+
 end
 
 
@@ -407,7 +432,7 @@ end
         q = fit(Val(:series), P, f)
         @test maximum(abs, q(x) -  f(x) for x in range(0, stop=1/2, length=10)) <= sqrt(eps())
     end
-        
+
 end
 
 @testset "quadrature" begin
@@ -424,5 +449,3 @@ end
      end
 
 end
-
-
