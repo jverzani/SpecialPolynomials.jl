@@ -15,7 +15,7 @@ A type for orthogonal polynomials relative to some weight
 function. The Wheeler or modified Chebyshev algorithm
 ([Gautschi](https://www.cs.purdue.edu/homes/wxg/Madrid.pdf),
 [Press and Teukolsky](https://doi.org/10.1063/1.4822929))
-is used to generate the three-term recurrence relation. 
+is used to generate the three-term recurrence relation.
 
 If the second order differential equation, `σ⋅p'' + τ⋅p' + λ⋅p=-` is
 known, using that to define the polynomial type would be preferred, as
@@ -28,7 +28,7 @@ weight function.  These values are registered through the
 illustrated in the examples.
 
 
-#  Example. 
+#  Example.
 
 Toy example with `ChebyshevU` being derived using the  `Chebyshev` system.
 
@@ -139,15 +139,15 @@ An(::Type{W}, n) where {W <: AbstractWeightFunction} = one(eltype(W))
 function Bn(::Type{W}, k::Int) where {W <:AbstractWeightFunction}
 
     P = ϟ(W)
-    
+
     if k == 0
         ν₀, ν₁ =  modified_moment(W, 0), modified_moment(W, 1)
         out = Bn(P, 0) + ν₁ / ν₀
     else
-        out = Bn(P, k) - sigma(W, k-1, k)/sigma(W, k-1, k-1)  + sigma(W, k, k+1)/sigma(W, k, k) 
+        out = Bn(P, k) - sigma(W, k-1, k)/sigma(W, k-1, k-1)  + sigma(W, k, k+1)/sigma(W, k, k)
     end
     -out
-    
+
 end
 
 function Cn(::Type{W}, k::Int) where  {W <: AbstractWeightFunction}
@@ -156,10 +156,10 @@ function Cn(::Type{W}, k::Int) where  {W <: AbstractWeightFunction}
 end
 
 
-@memoize function sigma(W::Type{<:AbstractWeightFunction}, k, l) 
+@memoize function sigma(W::Type{<:AbstractWeightFunction}, k, l)
 
     P = ϟ(W)
-    
+
     T = eltype(W)
     k == -1 && return zero(T)/1
     k == 0  && return modified_moment(W, l) # ν_l = ∫π_l dw
@@ -167,7 +167,7 @@ end
 
     # otherwise get through recursion (this uses Gautschi's formula, P&T have apparent error
     sigma(W, k-1, l+1) - (Bn(W, k-1) - Bn(P, l)) * sigma(W, k-1, l) - (Cn(W, k-1))*sigma(W, k-2, l) + Cn(P,l)*sigma(W, k-1, l-1)
-    
+
 end
 
 ## Compute the modified moment
@@ -191,16 +191,6 @@ end
 function ∫(fdw, P; kwargs...)
     dom = domain(P)
     a, b = first(dom), last(dom)
-    if first(bounds_types(dom)) == Open
-        a += eps(float(one(a)))
-    end
-    if last(bounds_types(dom)) == Open    
-        b -= eps(float(one(b)))
-    end
-
-    a,err = quadgk(fdw, a, b;  kwargs...)
-    a
+    out,err = quadgk(fdw, a, b;  kwargs...)
+    out
 end
-    
-
-
