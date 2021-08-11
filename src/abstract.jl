@@ -38,16 +38,19 @@ function unicode_subscript(io, j)
     end
 end
 
+
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: AbstractSpecialPolynomial}
     iszero(pj) && return false
-    !first &&  print(io, " ")
-    if Polynomials.hasneg(T)
-        print(io, Polynomials.isneg(pj) ? "-" :  (!first ? "+ " : ""))
-        print(io, "$(abs(pj))⋅$(basis_symbol(P))")
+
+    if Polynomials.hasneg(T) && Polynomials.isneg(pj)
+        print(io, " - ")
+        pj = -pj
     else
-        print(io, "$(pj)⋅$(basis_symbol(P))")
+        !first && print(io, " + ")
     end
 
+    Polynomials.printcoefficient(io, pj, 1, mimetype) # want to have ()
+    print(io, basis_symbol(P))
 
     unicode_subscript(io, j)
     print(io,"($(var))")
