@@ -41,6 +41,7 @@ end
 
 function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mimetype) where {N, T, P <: AbstractSpecialPolynomial}
     iszero(pj) && return false
+    !first &&  print(io, " ")
 
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)
         print(io, "-")
@@ -49,7 +50,7 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
         !first && print(io, "+")
     end
 
-    Polynomials.printcoefficient(io, pj, 1, mimetype) # want to have ()
+    Polynomials.printcoefficient(io, pj, 1, mimetype) # j != 0; want to have ()
     print(io, "⋅")
     print(io, basis_symbol(P))
 
