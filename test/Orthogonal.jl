@@ -449,3 +449,13 @@ end
      end
 
 end
+
+@testset "Showing" begin
+
+    @test sprint(show, Hermite([1,-2,3])) == "Hermite(1⋅H₀(x) - 2⋅H₁(x) + 3⋅H₂(x))"
+
+    ps = [1.0+2.0im,-0.5,3.7im, 0.1+0.01im]     # issue 26 with complex coefficients
+    p = Hermite(ps)
+    @test sprint(show, p) == "Hermite((1.0 + 2.0im)⋅H₀(x) - 0.5⋅H₁(x) + 3.7im⋅H₂(x) + (0.1 + 0.01im)⋅H₃(x))"
+
+end

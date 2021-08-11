@@ -78,7 +78,7 @@ julia> u = variable(ChebyshevU)
 ChebyshevU(0.5⋅U₁(x))
 
 julia> p3(u)
-ChebyshevU(-0.125⋅U₁(x) + 0.3125⋅U₃(x))
+ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
 For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
@@ -210,10 +210,10 @@ julia> P = Jacobi{1/2, -1/2}
 Jacobi{0.5, -0.5, T, X, N} where {T, X, N}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(-2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q
-typename(Jacobi){0.5,-0.5}(-1.5⋅Jᵅᵝ₀(x) -2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+typename(Jacobi){0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 ```
 
 ### Derivatives and integrals
@@ -237,10 +237,10 @@ julia> P = Jacobi{1//2, -1//2}
 Jacobi{1//2, -1//2, T, X, N} where {T, X, N}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(-2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q # as above, only with rationals for paramters
-typename(Jacobi){1//2,-1//2}(-1.5⋅Jᵅᵝ₀(x) -2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+typename(Jacobi){1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
 Jacobi{1//2, 1//2, T, X, N} where {T, X, N}
@@ -332,7 +332,7 @@ julia> roots(p5)
   -0.906179845938664 + 0.0im
  -0.5384693101056831 + 0.0im
                  0.0 + 0.0im
-  0.5384693101056831 + 0.0im
+   0.538469310105683 + 0.0im
    0.906179845938664 + 0.0im
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
