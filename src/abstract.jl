@@ -44,10 +44,10 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
     !first &&  print(io, " ")
 
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)
-        print(io, "-")
+        print(io, "- ")
         pj = -pj
     else
-        !first && print(io, "+")
+        !first && print(io, "+ ")
     end
 
     Polynomials.printcoefficient(io, pj, 1, mimetype) # j != 0; want to have ()
