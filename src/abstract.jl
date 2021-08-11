@@ -43,13 +43,14 @@ function Polynomials.showterm(io::IO, ::Type{P}, pj::T, var, j, first::Bool, mim
     iszero(pj) && return false
 
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)
-        print(io, " - ")
+        print(io, "-")
         pj = -pj
     else
-        !first && print(io, " + ")
+        !first && print(io, "+")
     end
 
     Polynomials.printcoefficient(io, pj, 1, mimetype) # want to have ()
+    print(io, "⋅")
     print(io, basis_symbol(P))
 
     unicode_subscript(io, j)
