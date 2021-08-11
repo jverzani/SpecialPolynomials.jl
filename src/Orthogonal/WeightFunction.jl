@@ -191,6 +191,14 @@ end
 function ∫(fdw, P; kwargs...)
     dom = domain(P)
     a, b = first(dom), last(dom)
+    # revert #25; have issue with ∞ away from a,b, but near
+    # quadgk would typically handle this, but doesn't get the chance.
+    if first(bounds_types(dom)) == Open
+        a += eps(float(one(a)))
+    end
+    if last(bounds_types(dom)) == Open
+        b -= eps(float(one(b)))
+    end
     out,err = quadgk(fdw, a, b;  kwargs...)
     out
 end
