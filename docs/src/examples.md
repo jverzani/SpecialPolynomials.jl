@@ -81,7 +81,7 @@ julia> p3(u)
 ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
-For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provded. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
+For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provided. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
 
 
 For the basis functions, the `basis` function can be used:
