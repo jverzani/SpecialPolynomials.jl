@@ -176,7 +176,7 @@ end
 """
     monic(p::AbstractOrthogonalPolynomial)
 
-Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`. 
+Return `p` as a monic polynomial *when* represented in the standard basis. Returns the zero polynomial if the degree of `p` is `-1`. 
 """
 function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     n = degree(p)
