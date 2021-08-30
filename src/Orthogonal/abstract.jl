@@ -13,7 +13,7 @@ macro register0(name, parent)
             coeffs::Vector{T}
             function $poly{T,X,N}(coeffs::Vector{T}) where {T, X, N}
                 M = length(coeffs)
-                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size"))
                 new{T,X,N}(coeffs)
 
             end
@@ -43,7 +43,7 @@ macro register0(name, parent)
                 X = Symbol(var)
                 $poly{T,X}(collect(coeffs))
             end
-            
+
             function $poly(coeffs::Vector{S},  var::Polynomials.SymbolLike=:x) where {S}
                 X = Symbol(var)
                 $poly{S,X}(coeffs)
@@ -53,7 +53,7 @@ macro register0(name, parent)
 
         Base.length(p::$poly{T,X,N}) where {T,X,N} = N
         Polynomials.evalpoly(x, p::$poly) = eval_cop(typeof(p), p.coeffs, x)
-        
+
         Polynomials.@register $poly
 
         # work around N parameter in promote(p,q) usage in defaults
@@ -65,7 +65,7 @@ macro register0(name, parent)
     end
 end
 
-    
+
 
 # register macro for polynomial families with parameters
 # would be nice to consolidate, but ...
@@ -79,7 +79,7 @@ macro registerN(name,  parent, params...)
 
             function $poly{$(αs...), T,X,N}(coeffs::Vector{T}) where {$(αs...), T,X,N}
                 M = length(coeffs)
-                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size")) 
+                (M  != N || (N > 0 &&iszero(coeffs[end]))) &&  throw(ArgumentError("wrong  size"))
                 new{$(αs...), T,X,N}(coeffs)
             end
             function $poly{$(αs...),T,X,N}(coeffs::NTuple{N,T}) where {$(αs...), T,X,N}
@@ -116,13 +116,13 @@ macro registerN(name,  parent, params...)
         Base.length(ch::$poly{$(αs...),T,X,N}) where {$(αs...),T,X,N} = N
         Polynomials.evalpoly(x, ch::$poly) = eval_cop(typeof(ch),  ch.coeffs, x)
         (ch::$poly)(x) = evalpoly(x, ch)
-    
+
         Base.convert(::Type{P}, q::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = q
-        Base.convert(::Type{$poly{$(αs...)}}, q::Q) where {$(αs...),T, Q <: $poly{$(αs...),T}} = q        
+        Base.convert(::Type{$poly{$(αs...)}}, q::Q) where {$(αs...),T, Q <: $poly{$(αs...),T}} = q
         Base.promote(p1::P, p2::Q) where {$(αs...),T, P<:$poly{$(αs...),T}, Q <: $poly{$(αs...),T}} = p1,p2
         Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{<:$poly{$(αs...),S}}) where {$(αs...),T,S} =
             $poly{$(αs...),promote_type(T, S)}
-        Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{S}) where {$(αs...),T,S<:Number} = 
+        Base.promote_rule(::Type{<:$poly{$(αs...),T}}, ::Type{S}) where {$(αs...),T,S<:Number} =
             $poly{$(αs...),promote_type(T,S)}
 
         $poly{$(αs...),T,X}(n::Number) where {$(αs...),T,X} =
@@ -153,7 +153,7 @@ end
 """
     ϟ(P) = Q; ϟ(P{T}) where {T} =   Q{T}
 
-Used to delegate methods of P to Q.  ([slash]upkoppa[tab])
+Used internally to delegate methods of `P` to `Q`.  (`[slash]upkoppa[tab]`)
 """
 ϟ(P::Type{<:Polynomials.AbstractPolynomial}) = throw(ArgumentError("No default for  delegation"))
 
@@ -161,7 +161,7 @@ Used to delegate methods of P to Q.  ([slash]upkoppa[tab])
 macro register_monic(name)
 
     monic=esc(name)
-    
+
     quote
         SpecialPolynomials.ismonic(::Type{<:$monic}) = true
         SpecialPolynomials.abcde(P::Type{<:$monic})  = abcde(ϟ(P))
@@ -182,17 +182,17 @@ end
 macro register_orthonormal(name)
 
     orthonormal=esc(name)
-    
+
     quote
         SpecialPolynomials.isorthonormal(::Type{<:$orthonormal}) = true
         SpecialPolynomials.abcde(P::Type{<:$orthonormal})  = abcde(ϟ(P))
         SpecialPolynomials.basis_symbol(P::Type{<:$orthonormal})  = basis_symbol(ϟ(P)) * "̃"
         SpecialPolynomials.weight_function(P::Type{<:$orthonormal}) = weight_function(ϟ(P))
         Polynomials.domain(P::Type{<:$orthonormal}) = domain(ϟ(P))
-        SpecialPolynomials.k0(::Type{P}) where{P <: $orthonormal} = k0(ϟ(P)) / sqrt(norm2(ϟ(P),0)) 
+        SpecialPolynomials.k0(::Type{P}) where{P <: $orthonormal} = k0(ϟ(P)) / sqrt(norm2(ϟ(P),0))
         SpecialPolynomials.k1k0(::Type{P},  n::Int) where{P <: $orthonormal} = k1k0(ϟ(P),n) /  ω₁₀(ϟ(P), n)
         SpecialPolynomials.ω₁₀(P::Type{<:$orthonormal}, n::Int) = one(eltype(P))
-        
+
         SpecialPolynomials.B̃n(P::Type{<:$orthonormal}, n::Int) =  B̃n(ϟ(P),n)
         SpecialPolynomials.B̃n(P::Type{<:$orthonormal}, v::Val{N}) where {N} =  B̃n(ϟ(P),v)
         SpecialPolynomials.C̃n(P::Type{<:$orthonormal}, n::Int) =  C̃n(ϟ(P),n)
@@ -207,7 +207,7 @@ end
 macro register_shifted(name, alpha, beta)
     shifted = esc(name)
     quote
-        function SpecialPolynomials.abcde(P::Type{<:$shifted}) 
+        function SpecialPolynomials.abcde(P::Type{<:$shifted})
             α,β = $alpha, $beta
             oP = one(eltype(P))
             a,b,c,d,e = abcde(ϟ(P))
@@ -218,7 +218,7 @@ macro register_shifted(name, alpha, beta)
             ẽ = (oP * (d*β + e))/α
             NamedTuple{(:a,:b,:c,:d,:e)}((ã, b̃, c̃, d̃, ẽ))
         end
-        
+
         SpecialPolynomials.basis_symbol(P::Type{<:$shifted})  = basis_symbol(ϟ(P)) * "ˢ"
         function  Polynomials.domain(P::Type{<:$shifted})
             α,β = $alpha, $beta
@@ -229,7 +229,7 @@ macro register_shifted(name, alpha, beta)
             α,β = $alpha, $beta
             α * k1k0(ϟ(P), n)
         end
-        
+
     end
 end
 
@@ -238,7 +238,7 @@ macro register_weight_function(W, P, ω)
     W′ = esc(W)
     P′ = esc(P)
     ω′ = esc(ω)
-    
+
     quote
         SpecialPolynomials.:ϟ(::Type{<:$W′}) =  $P′
         SpecialPolynomials.weight_function(::Type{<:$W′}) =  $ω′
@@ -250,7 +250,7 @@ macro register_discrete_weight_function(W, xs, ws)
     W′ = esc(W)
     xs′ = esc(xs)
     ws′ = esc(ws)
-    
+
     quote
         SpecialPolynomials.xs_ws(::Type{<:$W′}) = ($xs′, $ws′)
         SpecialPolynomials.k0(::Type{<:$W′}) = 1

@@ -327,13 +327,13 @@ julia> using LinearAlgebra
 julia> p5 = basis(Legendre, 5)
 Legendre(1.0⋅P₅(x))
 
-julia> roots(p5)
+julia> roots(p5) .|> x -> round(x, digits=10)
 5-element Vector{ComplexF64}:
-  -0.906179845938664 + 0.0im
- -0.5384693101056831 + 0.0im
-                 0.0 + 0.0im
-   0.538469310105683 + 0.0im
-   0.906179845938664 + 0.0im
+ -0.9061798459 + 0.0im
+ -0.5384693101 + 0.0im
+           0.0 + 0.0im
+  0.5384693101 + 0.0im
+  0.9061798459 + 0.0im
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
 5-element Vector{Float64}:

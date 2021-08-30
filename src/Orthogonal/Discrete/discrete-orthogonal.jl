@@ -76,9 +76,6 @@ Polynomials.Polynomial(x)
 
 julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
 
-
-
-
 julia> all(qs .* [p[end] for p  in ps] .≈ ps)
 true
 ```
@@ -103,7 +100,7 @@ function discrete_stieltjes(W::Type{<:AbstractDiscreteWeightFunction})
 
     # k = 0 case
     πk_1, πk = zeros(N), ones(N)
-    
+
     βk = β0 = norm_k = sum(ws)/1 # <π_0, π_0> = ∑ w_k 1 ⋅ 1
     αk = α0 = ∑(ws[k] * xs[k] for k in eachindex(ws)) / norm_k
     αs = [α0]
@@ -113,13 +110,13 @@ function discrete_stieltjes(W::Type{<:AbstractDiscreteWeightFunction})
 
         πk1 = (xs .- αk) .* πk - βk * πk_1 # use just computed αk, βk to find π_{k+1} = (x-αk)⋅π_k - βk⋅π_{k-1}
         norm_k1 =  ∑(ws[k] * πk1[k]^2  for k in eachindex(ws)) # <π_{k+1}, π_{k+1}>
-        
+
         # Darboux
         # α_{k+1} = <x ⋅ π_{k+1}, π_{k+1}> / <π_{k+1}, π_{k+1}>,
         # β_{k+1} = <π_{k+1}, π_{k+1}> / <π_k, π_k>,
         αk1 = ∑(ws[k] * xs[k] * πk1[k]^2 for k in eachindex(ws)) / norm_k1
         βk1 = norm_k1/norm_k
-        
+
         push!(αs, αk1)
         push!(βs, βk1)
 
@@ -131,7 +128,7 @@ function discrete_stieltjes(W::Type{<:AbstractDiscreteWeightFunction})
 
     (-αs, βs)
 end
-       
+
 An(::Type{W}, n) where {W <: AbstractDiscreteWeightFunction} = one(eltype(W))
 
 Bn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stieltjes(W)[1][k+1]
@@ -140,4 +137,3 @@ Cn(::Type{W}, k::Int) where {W <:AbstractDiscreteWeightFunction} = discrete_stie
 Polynomials.domain(::Type{<:DiscreteWeightFunction}) = Polynomials.Interval(-Inf, Inf)
 
 innerproduct(W::Type{<:AbstractDiscreteWeightFunction}, f, g) = ∑(wk * f(xk) * g(xk) for (xk, wk) in zip(xs_ws(W)...))
-

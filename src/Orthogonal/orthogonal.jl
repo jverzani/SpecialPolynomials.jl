@@ -12,7 +12,7 @@ abstract type AbstractDiscreteOrthogonalPolynomial{T,X} <: AbstractOrthogonalPol
 
 Type to represent systems of orthogonal polynomials. These polynomials have  several properties, including an accompanying inner product satsifying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
 
-In addition to methods inherited from the underlying `AbstractPolynomial`  type, orthogonal polynomial  types may have methods   `weight_function`, `generating_function`, `leading_term`, norm2`, `jacobi_matrix`, and `gauss_nodes_weights`,  though none are  exported.
+In addition to methods inherited from the underlying `AbstractPolynomial`  type, orthogonal polynomial  types may have methods   `weight_function`, `generating_function`, `leading_term`, `norm2`, `jacobi_matrix`, and `gauss_nodes_weights`,  though none are  exported.
 
 
 Subtypes of `AbstractCOP <: AbstractOrthogonalPolynomial` utilize the fact that the basis  polynomials  satisfy
@@ -39,7 +39,7 @@ Base.convert(P::Type{<:AbstractOrthogonalPolynomial}, c::Number) = c * one(P)
 Base.one(P::Type{<:AbstractOrthogonalPolynomial}, var::Polynomials.SymbolLike=:x) =   basis(P,0, var) / k0(P)
 
 Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.SymbolLike=:x) =
-    (basis(P,1,var) / k0(P) - Bn(P,0)) / An(P,0) 
+    (basis(P,1,var) / k0(P) - Bn(P,0)) / An(P,0)
 
 ## Evaluation
 
@@ -49,7 +49,7 @@ function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) whe
     p₀ = k0(P)
     R = promote_type(promote_type(T,S), typeof(An(P,0)))
     N == 0 && return zero(R)
-    N == 1 && return (cs[1] * p₀) * one(R) 
+    N == 1 && return (cs[1] * p₀) * one(R)
 
     Δ0::R = cs[end - 1]
     Δ1::R = cs[end]
@@ -82,7 +82,7 @@ end
     weight_function(p)
     weight_function(::Type{P})
 
-For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) dt = 0` when n and m are not equal.
+For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) dt = 0` when `n` and `m` are not equal.
 
 """
 weight_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
@@ -176,7 +176,7 @@ end
 """
     monic(p::AbstractOrthogonalPolynomial)
 
-Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`. 
+Return `p` as a monic polynomial *when* represented in the standard basis. Retursn the zero polynomial if the degree of `p` is `-1`.
 """
 function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
     n = degree(p)
@@ -197,7 +197,7 @@ struct Basis{Π}
     n::Int
 end
 Basis(P,n) =  Basis{P}(n)
-Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P)($(b.n))") 
+Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P)($(b.n))")
 
 function  innerproduct(::P,  f::Basis{P}, g::Basis{P}) where {P}
     n,m  = f.n, g.n
@@ -216,14 +216,14 @@ end
 function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
     {P <:  AbstractOrthogonalPolynomial,
      T <: Number}
-    
+
     A = Matrix{T}(undef, length(x), n + 1)
 
     # for i in 0:n
     #     A[:, i+1] = basis(P, i).(x)
     # end
     # return A
-    
+
     A[:, 1] .= basis(P,0)(one(T)) #P0(P, one(T))
 
     if n > 0
@@ -234,9 +234,9 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
             A[:, n′+1] = (An(p,n′) * x .+ Bn(p,n′)) .* A[:, n′] .- (Cn(p,n′) * A[:, n′ - 1])
         end
     end
-    
+
     return A
-    
+
 end
 
 # Jacobi matrix
@@ -245,8 +245,8 @@ end
 """
     jacobi_matrix(::Type{P}, n)
 
-The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alpha_i` values, the off diagonal entries,
-the square root of the  `beta_i` values. This matrix has the properties that
+The Jacobi Matrix is a symmetric tri-diagonal matrix. The diagonal entries are the `alphaᵢ` values, the off diagonal entries,
+the square root of the  `betaᵢ` values. This matrix has the properties that
 
 * the eigenvalues are the roots of the corresponding basis vector. As these roots are important in quadrature, and finding eigenvalues of a symmetric tri-diagonal matrix yields less error than finding the eigenvalues of the companion matrix, this can be used for higher degree basis polynomials.
 * the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
@@ -265,7 +265,7 @@ Returns a tuple of nodes and weights for Gauss quadrature for the given orthogon
 
 When available, the values are computed through  the `FastGaussQuadratures` package.
 
-For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used. 
+For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used.
 
 For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
 
@@ -281,7 +281,7 @@ end
 
 gauss_nodes_weights(B::Basis{P})  where  {P} = gauss_nodes_weights(B.P, B.n)
 
-    
+
 
 ##
 ## --------------------------------------------------
@@ -295,14 +295,14 @@ Compute  `<f,g> = ∫ f⋅g⋅w dx` where  `w` is the weight function of the  ty
 function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol=sqrt(eps(float(eltype(P)))))
     dom = domain(P)
     a, b = first(dom), last(dom)
-    if first(bounds_types(dom)) == Open    
+    if first(bounds_types(dom)) == Open
         a += eps(float(one(a)))
     end
-    if last(bounds_types(dom)) == Open        
+    if last(bounds_types(dom)) == Open
         b -= eps(float(one(b)))
     end
     fn = x -> f(x) * g(x) * weight_function(P)(x)
-    
+
     return quadgk(fn, a, b; atol=atol)[1]
 end
 
@@ -325,7 +325,7 @@ end
 """
     fit([Val(S)], P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x)
 
-    Find an approximating polynomial of degree `n` or less for a function `f`, that is returns `p(x) = ∑ᵢⁿ cᵢ Pᵢ(x)` for some coefficients `cᵢ`.
+Find an approximating polynomial of degree `n` or less for a function `f`, that is returns `p(x) = ∑ᵢⁿ cᵢ Pᵢ(x)` for some coefficients `cᵢ`.
 
 
 Defaults to an interpolating polynomial. To specify others, use one of `Val(:interpolating)`, `Val(:lsq)` (least squares), or `Val(:series)` (trunated series expansion) as the first argument. See [`SpecialPolynomials.cks`](@ref) for some more detail.
@@ -337,7 +337,7 @@ Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
 """
     fit(val::Val{:interpolating}, P::Type{<:AbstractOrthogonalPolynomial}, f, deg::Int; var=:x)
 
-Fit `f` with an interpolating polynomial of degree `n` orless using nodes
+Fit `f` with an interpolating polynomial of degree `n` or less using nodes
 `x0,x1, ..., xn`, the  zeros of `P_{n+1} = basis(P, n+1)`. and `p(xᵢ)=f(xᵢ)`.
 """
 Polynomials.fit(val::Val{:interpolating},
@@ -363,32 +363,32 @@ If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncate
 """
 Polynomials.fit(val::Val{:series},
                 P::Type{<:AbstractOrthogonalPolynomial}, f;
-                var=:x,kwargs...) = 
+                var=:x,kwargs...) =
                     P(cks(val, P,f; kwargs...), var)
 
 
 """
     cks(::Val{:interpolating}, ::Type{P}, f, n::Int)
 
-Fit `f` with the interpolating polynomial using roots of P_{n+1}.
+Fit `f` with the interpolating polynomial using roots of `P_{n+1}`.
 
-Let xs,ws be the gauss nodes and weights of P (xs are the zeros of P_{n+1}).
+Let `xs`, `ws` be the gauss nodes and weights of `P` (`xs` are the zeros of `P_{n+1}`).
 
 Then if we interpolate `f` at the `xs` to get `p`, then
-`p(xᵢ) = f(xᵢ)` and 
+`p(xᵢ) = f(xᵢ)` and
 
 `∑ p_n(xᵢ) p_m(xᵢ) wᵢ = K_m δ_{nm}` and
 
 `p(x) = ∑ᵢ cᵢ Pᵢ(x)`.
 
 Using this:
-`∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ =` 
+`∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ =`
 `∑ᵢ (∑_j c_j P_j(xᵢ)) P_k(xᵢ) wᵢ =`
-`∑_j c_j (K_k δ_{ik}) = c_k K_k`, So 
+`∑_j c_j (K_k δ_{ik}) = c_k K_k`, So
 `c_k = (1/K_k) ∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ`
 """
 function cks(::Val{:interpolating}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
-    
+
     xs, ws = gauss_nodes_weights(P, n)
     return [sum(f(xⱼ) * basis(P, k)(xⱼ) * wⱼ for (xⱼ,wⱼ) in zip(xs,ws)) / norm2(P,k) for k in 0:n]
 end
@@ -398,11 +398,11 @@ end
     cks(::Val{:lsq}, ::Type{P}, f, n::Int)
 
 Fit `f` with a polynomial `∑ᵢⁿ cᵢ Pᵢ` chosen so `<f-p,f-p>_w` is as small as possible.
- Using the normal equations, the coefficients are found to be `c_k = <f,P_k>_w / <P_k,P_k>_w.` 
+ Using the normal equations, the coefficients are found to be `c_k = <f,P_k>_w / <P_k,P_k>_w.`
 For some types an approximation to the inner product, `<f,P_k>_w` may be used.
 
 
-ref: http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION
+ref: [http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION](http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION)
 """
 function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
 ## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
@@ -412,11 +412,10 @@ end
 """
     cks(::Val{:series}, ::Type{P}, f, n::Int)
 
-If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this 
-tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients. 
+If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this
+tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients.
 
 """
 function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
     throw(ArgumentError("No default method"))
 end
-

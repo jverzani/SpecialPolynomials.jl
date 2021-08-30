@@ -811,7 +811,7 @@ The eigenvalue of the comrade matrix are identified using an algorithm from
 
 *Fast computation of eigenvalues of companion, comrade, and related matrices*
 by Jared L. Aurentz, Raf Vandebril, and David S. Watkins
-DOI 10.1007/s10543-013-0449-x
+DOI [10.1007/s10543-013-0449-x](https://doi.org/10.1007/s10543-013-0449-x)
 BIT Numer Math (2014) 54:7–30
 
 The paper presents both a single- and double-shift version. The paper

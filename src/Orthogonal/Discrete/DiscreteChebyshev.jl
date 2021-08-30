@@ -4,7 +4,7 @@ export DiscreteChebyshev
 """
     DiscreteChebyshev
 
-This uses p22 of [](https://arxiv.org/pdf/math/9703217.pdf)  to define a two-parameter  family of *non* orthogonal polynomials.
+This uses p22 of [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf)  to define a two-parameter  family of *non* orthogonal polynomials.
 See  the example  in [`DiscreteWeightFunction`](@ref) for implementing  the [DiscreteChebyshev](https://en.wikipedia.org/wiki/Discrete_Chebyshev_polynomials)  polynomials  from Wikipedia.
 
 ```jldoctest
@@ -47,5 +47,3 @@ abcde(::Type{<:DiscreteChebyshev{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,
 function k1k0(P::Type{<:DiscreteChebyshev{α,β}}, n::Int) where {α,β}
     α
 end
-
-
