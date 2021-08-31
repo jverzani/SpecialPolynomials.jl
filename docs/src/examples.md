@@ -558,27 +558,3 @@ degree(p)
 
 !!! note
     The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
-
-
-## Plotting
-
-The `plot` recipe from the `Polynomials` package works as expected for
-the polynomial types in this package. The domain to be plotted over
-matches that given by `domain`, unless this is infinite. A plot of the first few
-Chebyshev Polynomials of the second kind can be produced as follows:
-
-```@example
-using Plots, Polynomials, SpecialPolynomials
-# U1, U2, U3, and U4:
-chebs = basis.(ChebyshevU, 1:4)
-colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
-itr = zip(chebs, colors)
-(cheb,col), state = iterate(itr)
-p = plot(cheb, c=col,  lw=5, legend=false, label="")
-for (cheb, col) in Base.Iterators.rest(itr, state)
-  plot!(cheb, c=col, lw=5)
-end
-savefig("chebs.svg"); nothing # hide
-```
-
-![](chebs.svg)
