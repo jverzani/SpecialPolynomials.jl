@@ -324,24 +324,22 @@ For orthogonal polynomials, the roots of the basis vectors are important for qua
 ```jldoctest example
 julia> using LinearAlgebra
 
-julia> p5 = basis(Legendre, 5)
-Legendre(1.0⋅P₅(x))
+julia> p4 = basis(Legendre, 4)
+Legendre(1.0⋅P₄(x))
 
-julia> roots(p5) .|> x -> round(x, digits=10)
-5-element Vector{ComplexF64}:
- -0.9061798459 + 0.0im
- -0.5384693101 + 0.0im
-           0.0 + 0.0im
-  0.5384693101 + 0.0im
-  0.9061798459 + 0.0im
+julia> roots(p4) .|> real .|> x -> round(x, digits=10)
+4-element Vector{Float64}:
+ -0.8611363116
+ -0.3399810436
+  0.3399810436
+  0.8611363116
 
-julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
-5-element Vector{Float64}:
- -0.9061798459386641
- -0.5384693101056831
-  2.6689322308431607e-17
-  0.5384693101056834
-  0.9061798459386642
+julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 4)) .|> x -> round(x, digits=10)
+4-element Vector{Float64}:
+ -0.8611363116
+ -0.3399810436
+  0.3399810436
+  0.8611363116
 ```
 
 At higher degrees, the difference in  stability comes out. For the special case of a basis polynomial, we see this difference in the maximum residual:
