@@ -112,7 +112,7 @@ Bernstein
 # Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`):
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()
+using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
 bs = [[220, 260], [220, 40], [35, 100],  [120, 140]]
 
 p = Bernstein(bs)
@@ -122,7 +122,7 @@ xs, ys = [[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
 p = plot(xs, ys, legend=false)
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 
-show(current()) # hide
+show(current())  # hide
 # savefig("bezier.svg")  # hide
 ```
 
