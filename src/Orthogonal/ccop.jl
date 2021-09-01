@@ -6,7 +6,7 @@ abstract type AbstractCCOP{T,X,N} <: AbstractCOP{T,X,N} end
 """
     AbstractCCOP{T,X,N} <:  AbstractCOP{T,X,N}
 
-Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
 solution of the differential equation
 
@@ -18,7 +18,7 @@ Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e)`.
 From these  5  coefficients several structural  equations are represented. For example
 the three-point recusion.
 
-`P₍ᵢ₊₁) = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎`,
+`P₍ᵢ₊₁₎ = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎`,
 
 where `Aᵢ,Bᵢ,Cᵢ` can be represented in formulas involving just  `a,b,c,d,e` and `i`.
 
@@ -41,8 +41,8 @@ Using (19), expressions for derivatives are found.
 
 Using  (19), expressions for integration are found (p7).
 
-Using their theorems 2,4, and 5, connection coefficients, `C(n,m)` satisfying 
-`P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n)` are  found. These 
+Using their theorems 2,4, and 5, connection coefficients, `C(n,m)` satisfying
+`P_n(x) =  ∑  C(n,m)  Q_m(x) (n ≥ 0, 0 ≤  m ≤ n)` are  found. These
 allow  fallback  definitions for `convert(Polynomial,p)`,  `convert(P, p::Polynomial)`,
 `convert(P{α…}, p::P(β…))` and through composition polynomial  multiplication,  `p*q`.
 
@@ -161,16 +161,16 @@ end
 
 # An, Bn,  Cn
 # p_{n+1} = (An*x + Bn)⋅p_n + Cn⋅p_{n-1}
-An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n) 
+An(P::Type{<:AbstractCOP}, n::Int) = Ãn(P,n) * k1k0(P, n)
 function  Ãn(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    Ãn(P, a,b,c,d,e ,n) 
+    Ãn(P, a,b,c,d,e ,n)
 end
 
-Bn(P::Type{<:AbstractCOP}, n::Int) = B̃n(P,n) * k1k0(P,n) 
+Bn(P::Type{<:AbstractCOP}, n::Int) = B̃n(P,n) * k1k0(P,n)
 function B̃n(P::Type{<:AbstractCOP}, n::Int)
     a,b,c,d,e = abcde(P)
-    B̃n(P, a,b,c,d,e ,n) 
+    B̃n(P, a,b,c,d,e ,n)
 end
 
 Cn(P::Type{<:AbstractCOP}, n::Int) = C̃n(P,n) * k1k_1(P, n)
@@ -188,28 +188,28 @@ end
 function B̃n(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
 
     S = eltype(P)
-    
+
     num = (2b*n*(a*n+d-a)-e*(-d+2a))
     den = (d+2a*n) * (d-2a+2a*n)
 
-    iszero(den) && return B̃n(P, Val(n))  
-    
+    iszero(den) && return B̃n(P, Val(n))
+
     val = (one(S) * num) / den
-    
+
     val
 end
 
 function C̃n(P::Type{<:AbstractCCOP}, a,b,c,d,e, n::Int)
 
     S = eltype(P)
-    
+
     numa = (a*n+d-2a) * n * (4c*a-b^2) + 4a^2*c -a*b^2 + a*e^2 - 4*a*c*d
     numa += d*b^2 - b*e*d + d^2*c
     num = -numa * (a*n + d - 2a) * n
     den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
 
     iszero(den) && return C̃n(P, Val(n))
-    
+
     val = (one(S) * num)  / den
 
     val
@@ -231,13 +231,13 @@ end
 
 # αn, βn,γn
 # σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-αn(P::Type{<:AbstractCOP}, n::Int) = α̃n(P,n) / k1k0(P,n) 
+αn(P::Type{<:AbstractCOP}, n::Int) = α̃n(P,n) / k1k0(P,n)
 function α̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
 
     val = (one(S) *  a) * n
-    
+
     return val
 end
 
@@ -254,7 +254,7 @@ function β̃n(P::Type{<:AbstractCCOP}, n::Int)
     val = (one(S) * num)  / den
 
     return val
-end    
+end
 
 γn(P::Type{<:AbstractCOP}, n::Int) = γ̃n(P,n) *  k1k0(P,n-1)
 function γ̃n(P::Type{<:AbstractCCOP}, n::Int)
@@ -265,9 +265,9 @@ function γ̃n(P::Type{<:AbstractCCOP}, n::Int)
     num *= (a*n + d - a) * (a*n + d - 2a) * n
     den = (d - 2a + 2a*n)^2 * (2a*n - 3a + d) * (2a*n - a + d)
     iszero(den) &&  return γ̃n(P, Val(n))
-    
+
     val = (one(S) * num) / den
-    
+
     return val
 end
 
@@ -280,31 +280,31 @@ ân(P::Type{<:AbstractCOP}, n::Int) = ẫn(P, n) / k1k0(P,n)
 function ẫn(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
-    
+
     val = one(S)
     val /= n+1
     return val
 end
 
-b̂n(P::Type{<:AbstractCOP}, n::Int) =  b̂̃n(P,n) 
+b̂n(P::Type{<:AbstractCOP}, n::Int) =  b̂̃n(P,n)
 function b̂̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
-    
+
     num = (2e*a - d*b)
     den = (d+2a*n)*(d-2a+2a*n)
     iszero(den) && return b̂̃n(P, Val(n))
 
     val = one(S) * num/ den
     return val
-    
+
 end
 
 ĉn(P::Type{<:AbstractCOP}, n::Int) = ĉ̃n(P,n) * k1k0(P,n-1)
 function ĉ̃n(P::Type{<:AbstractCCOP}, n::Int)
     a,b,c,d,e = abcde(P)
     S = eltype(P)
-    
+
     num = ((n-1) * (a*n  + d - a) * (4c*a - b^2) + a*e^2 +  d^2*c - b*e*d) * a* n
     den = (d  - 2a + 2a*n) * (d - 2a + 2a*n) * (2a*n - 3a + d) * (2a*n - a  + d)
     iszero(den)  &&  return ĉ̃n(P, Val(n))
@@ -316,13 +316,13 @@ end
 """
     abcdeᴵ
 
-If P_n is a CCOP, then 
+If P_n is a CCOP, then
 
-x pᵢ = αᵢ p₍ᵢ₊₁₎ + βᵢ pᵢ + γᵢ p₍ᵢ₋₁₎.
+`x pᵢ = αᵢ p₍ᵢ₊₁₎ + βᵢ pᵢ + γᵢ p₍ᵢ₋₁₎`.
 
-Sp will pᵢ' with this  choice of a,b,d,e derived from  those of  pᵢ. (Eqn  (13)
+`Sp` will `pᵢ'` with this  choice of `a`,`b`,`d`,`e` derived from  those of  `pᵢ`. (Eqn  (13))
 """
-function abcdeᴵ(P::Type{<:AbstractCCOP}) 
+function abcdeᴵ(P::Type{<:AbstractCCOP})
     a,b,c,d,e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
     NamedTuple{(:a,:b,:c,:d,:e)}((a,b,c,d+2a,e+b))
 end
@@ -342,13 +342,13 @@ end
 function β̃ᴵn(P::Type{<:AbstractCOP}, n::Int)
     n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
-    Ãᴵn = Ãn(P,a,b,c,d,e,n) 
-    B̃ᴵn = B̃n(P,a,b,c,d,e,n) 
-   
-    - B̃ᴵn / Ãᴵn 
+    Ãᴵn = Ãn(P,a,b,c,d,e,n)
+    B̃ᴵn = B̃n(P,a,b,c,d,e,n)
+
+    - B̃ᴵn / Ãᴵn
 end
 
-γᴵn(P::Type{<:AbstractCOP}, n::Int)  = γ̃ᴵn(P,n) * k1k0(P, n-1) 
+γᴵn(P::Type{<:AbstractCOP}, n::Int)  = γ̃ᴵn(P,n) * k1k0(P, n-1)
 function γ̃ᴵn(P::Type{<:AbstractCOP}, n::Int)
     n = n - 1
     a,b,c,d,e = abcdeᴵ(P)
@@ -392,14 +392,14 @@ function  _convert(::Type{Q}, p::P) where {Q <: AbstractCCOP,  P <: AbstractCCOP
 
     a,b,c,d,e = abcde(P)
     ā,b̄,c̄,d̄,ē = abcde(Q)
-    
+
     if (a,b,c) == (ā,b̄,c̄)  &&  !(Q <: Hermite || P  <: Hermite)  # σ ==  σ̄   and not Hermite
         _convert_cop(Q, p)
     else
         T = eltype(Q)
         convert(Q, convert(Polynomial{T}, p))
     end
-end    
+end
 
 ##
 ## --------------------------------------------------
@@ -425,10 +425,10 @@ end
 #     #@assert  ⟒(P) == ⟒(Q)
 #     #@assert eltype(p) == eltype(q)
 #     R = promote_type(T,S)
-#     Polynomials.isconstant(p)  && return q + p(0) 
-#     Polynomials.isconstant(q)  && return p + q(0) 
+#     Polynomials.isconstant(p)  && return q + p(0)
+#     Polynomials.isconstant(q)  && return p + q(0)
 
-#     X != Y && throw(ArgumentError("Variables don't  match"))    
+#     X != Y && throw(ArgumentError("Variables don't  match"))
 
 #     if N==M
 #         as = [p[i]+q[i] for i in 0:N-1]
@@ -494,7 +494,7 @@ Polynomials.truncate!(p::P;
 function Base.chop(p::P;
                    rtol::Real = Base.rtoldefault(real(T)),
                    atol::Real = 0,) where {T,X,N,P<:AbstractCOP{T,X,N}}
-    
+
     N == 0 && return p
     i = N-1
     while i >= 0
@@ -522,7 +522,7 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
     order < 0 && throw(ArgumentError("order must  be non-negative"))
     order == 0 && return ⟒(P){R,X}(coeffs(p))
     d < order && return zero(⟒(P){R})
-    
+
     as = zeros(R, d)
     ps = R.(coeffs(p))
     for n = d-1:-1:1
@@ -540,11 +540,11 @@ function Polynomials.derivative(p::P, order::Integer=1) where {P <:AbstractCOP}
 
     dp = ⟒(P)(as, Polynomials.indeterminate(p))
     order == 1 ? dp : derivative(dp, order - 1)
-    
+
 end
 
 function Polynomials.integrate(p::P) where {P <: AbstractCOP}
-    
+
     T = eltype(p)
     R = typeof(one(T) / 1)
     X = Polynomials.indeterminate(p)
@@ -559,7 +559,7 @@ function Polynomials.integrate(p::P) where {P <: AbstractCOP}
     elseif n == 0
         return C*one(Q)  + p(0)*variable(Q)
     end
-    
+
     as = zeros(R, n + 2)
 
     # case d=0 we do by hand,  as
@@ -581,5 +581,3 @@ function Polynomials.integrate(p::P) where {P <: AbstractCOP}
     return ∫p
 
 end
-
-
