@@ -1,12 +1,11 @@
 # some utility functions
 const Γ = gamma
 
-
-function generalized_binomial(α::T, n::S) where {T,S <: Integer}
-    R = Base.promote_op(/,T,S)
+function generalized_binomial(α::T, n::S) where {T,S<:Integer}
+    R = Base.promote_op(/, T, S)
     out = one(R)
     for i in n:-1:1
-        out *= α/i
+        out *= α / i
         α -= 1
     end
     out
@@ -15,17 +14,15 @@ end
 ## memoized version of the above
 @memoize function generalized_binomial′(a, k::Int)
     k < 0 && return NaN * one(a)
-    k == 0 && return one(a)/1
-    generalized_binomial′(a,k-1) * (a-k+1)/k
+    k == 0 && return one(a) / 1
+    generalized_binomial′(a, k - 1) * (a - k + 1) / k
 end
 
-
-
 ## x⁽ⁱ⁾ is falling (x)⋅(x-1)⋯(x-n+1)
-function Pochhammer(::Val{:falling}, z::T,n::Int) where {T}
-    iszero(n) && return one(T)    
+function Pochhammer(::Val{:falling}, z::T, n::Int) where {T}
+    iszero(n) && return one(T)
     out = z
-    for i in 1:n-1
+    for i in 1:(n - 1)
         z -= 1
         out *= z
     end
@@ -33,25 +30,24 @@ function Pochhammer(::Val{:falling}, z::T,n::Int) where {T}
 end
 
 ## (x)ᵢ is rising (x)⋅(x+1)⋯(x+n-1) = Γ(z+n)/Γ(z)
-function Pochhammer(::Val{:rising}, z::T,n::Int) where {T}
+function Pochhammer(::Val{:rising}, z::T, n::Int) where {T}
     iszero(n) && return one(T)
     out = z
-    for i in 1:n-1
+    for i in 1:(n - 1)
         z += 1
         out *= z
     end
     out
 end
 # default is (x)ᵢ
-Pochhammer(z,n::Int) = Pochhammer(Val(:rising),  z, n)
-
+Pochhammer(z, n::Int) = Pochhammer(Val(:rising), z, n)
 
 # (x)_n/n!
 Pochhammer_factorial(z, n) = Pochhammer_factorial(Val(:rising), z, n)
 
 function Pochhammer_factorial(::Val{:rising}, z, n)
-    iszero(n) && return one(z)/1
-    prod((z+i)/(n-i) for i in 0:n-1)
+    iszero(n) && return one(z) / 1
+    prod((z + i) / (n - i) for i in 0:(n - 1))
 end
 
 ## Alternative to HypergeometricFunctions.jl so that
@@ -95,7 +91,7 @@ function pFq(as, bs, z; maxevals=1000)
     n = 1
     acc = trm = one(z)
 
-    p,q = length(as), length(bs)
+    p, q = length(as), length(bs)
 
     # element in `as` is negative integer or 0 && converges
     # p ≤ q && converges
@@ -108,7 +104,7 @@ function pFq(as, bs, z; maxevals=1000)
         iszero(a) && return acc
         iszero(b) && return Inf  # check on b
 
-        trm *= a /b * z  /n
+        trm *= a / b * z / n
         acc += trm
 
         as = plus_1(as)
@@ -117,25 +113,22 @@ function pFq(as, bs, z; maxevals=1000)
         n += 1
     end
 
-    if (p > q + 1 || (p == q+1 && abs(z) < 1))
+    if (p > q + 1 || (p == q + 1 && abs(z) < 1))
         return acc
     else
-        NaN*acc
+        NaN * acc
     end
 end
 ## tuples
-@inline plus_1(as) = map(x->x+1, as)
-        
+@inline plus_1(as) = map(x -> x + 1, as)
 
 # use HypergeometricFunction.mFn if possible
 function pFq(as::Tuple{A,B}, bs::Tuple{C}, z::AbstractFloat) where {A,B,C}
-    HypergeometricFunctions._₂F₁(as[1],as[2],bs[1],z)
+    HypergeometricFunctions._₂F₁(as[1], as[2], bs[1], z)
 end
 function pFq(as::Tuple{A,B,C}, bs::Tuple{D,E}, z::AbstractFloat) where {A,B,C,D,E}
-    HypergeometricFunctions._₃F₂(as[1],as[2],as[3],bs[1],bs[2],z)
+    HypergeometricFunctions._₃F₂(as[1], as[2], as[3], bs[1], bs[2], z)
 end
-    
-
 
 ## Try to speed up  quadgk by not specializing on F
 mutable struct Wrapper
@@ -146,5 +139,4 @@ end
 _quadgk(f, a, b) = quadgk(Wrapper(f), a, b)[1]
 const ∫ = _quadgk
 
-
-checked_div(a, b) = (iszero(a) && iszero(b)) ? a : a/b
+checked_div(a, b) = (iszero(a) && iszero(b)) ? a : a / b

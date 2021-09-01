@@ -26,7 +26,7 @@ Polynomials.Polynomial(1.0 - 2.0*x + 1.0*x^3)
 ```
 
 """
-struct Newton{N, S<:Number, T <: Number, X, V} <: AbstractInterpolatingPolynomial{T, X}
+struct Newton{N,S<:Number,T<:Number,X,V} <: AbstractInterpolatingPolynomial{T,X}
     xs::Vector{S}
     tableau::Matrix{T}
     coeffs::V
@@ -35,7 +35,7 @@ struct Newton{N, S<:Number, T <: Number, X, V} <: AbstractInterpolatingPolynomia
         xs = sort(unique(xs))
         N != length(xs) && throw(ArgumentError("xs must be unique"))
         v = view(nt, 1, :)
-        new{N,S,T, Symbol(var), typeof(v)}(xs, nt, v)
+        new{N,S,T,Symbol(var),typeof(v)}(xs, nt, v)
     end
 end
 
@@ -44,13 +44,16 @@ export Newton
 basis_symbol(::Type{<:Newton}) = "p"
 
 ## Boilerplate code reproduced here, as there are two type parameters
-Base.convert(::Type{P}, p::P) where {P <: Newton} =  p
-Base.convert(P::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} = Newton{N,S,T,Polynomial.indeterminate(P,p)}(p.xs, p.tableau)
-Base.promote_rule(::Type{Newton{N, S, T}}, ::Type{U}) where {N, S, T, U <: Number} = Newton{N, S, promote_type(T,U)}
+Base.convert(::Type{P}, p::P) where {P<:Newton} = p
+Base.convert(P::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} =
+    Newton{N,S,T,Polynomial.indeterminate(P, p)}(p.xs, p.tableau)
+Base.promote_rule(::Type{Newton{N,S,T}}, ::Type{U}) where {N,S,T,U<:Number} =
+    Newton{N,S,promote_type(T, U)}
 
 Polynomials.domain(::Type{<:Newton}) = Polynomials.Interval(-Inf, Inf)
-Polynomials.variable(p::Newton{N, S, T}, var::Polynomials.SymbolLike=:x) where {N,S, T} = fit(Newton, p.xs, x -> x, var=var)
-Polynomials.zero(p::Newton{N, S, T}) where {N,S,T} = 0*p
+Polynomials.variable(p::Newton{N,S,T}, var::Polynomials.SymbolLike=:x) where {N,S,T} =
+    fit(Newton, p.xs, x -> x, var=var)
+Polynomials.zero(p::Newton{N,S,T}) where {N,S,T} = 0 * p
 function Polynomials.one(p::Newton)
     xs = sort(p.xs)
     nt = newton_tableau(one, xs)
@@ -66,15 +69,16 @@ Construct the
 form of Newton's divided differences. This assumes the xs are unique. 
 
 """
-newton_tableau(f, xs::AbstractVector{S}) where {S} = newton_tableau(xs, f.(xs)/one(S))
+newton_tableau(f, xs::AbstractVector{S}) where {S} = newton_tableau(xs, f.(xs) / one(S))
 function newton_tableau(xs::AbstractVector{S}, ys::Vector{T}) where {S,T}
     xs = sort(unique(xs))
     n = length(xs)
-    M = diagm(0=>ys/one(S))
+    M = diagm(0 => ys / one(S))
     for i in 2:n
-        for j in 1:n-i+1
-            k = i + j -1
-            M[j, k] = (M[j+1,k] - M[j,k-1]) / (xs[j-1+1+(i-1)] - xs[j-1+1])
+        for j in 1:(n - i + 1)
+            k = i + j - 1
+            M[j, k] =
+                (M[j + 1, k] - M[j, k - 1]) / (xs[j - 1 + 1 + (i - 1)] - xs[j - 1 + 1])
         end
     end
     M
@@ -88,18 +92,18 @@ function `f`. The point `(x,fx)` is a new `x` value (from the `xs`)
 and `fx` the function value.
 
 """
-function update_newton_tableau(x::T, fx::S, xs, nt::Matrix{R}) where {T, S, R}
+function update_newton_tableau(x::T, fx::S, xs, nt::Matrix{R}) where {T,S,R}
     n = size(nt, 1)
-    M = zeros(R, n+1, n+1)
+    M = zeros(R, n + 1, n + 1)
     for i in 1:n
         for j in i:n
-            M[i,j] = nt[i,j]
+            M[i, j] = nt[i, j]
         end
     end
-    M[end,end] = fx
+    M[end, end] = fx
     xxs = vcat(xs, x)
-    for i  in n:-1:1
-        M[i, n+1] = (M[i+1, n+1] - M[i,n]) / (xxs[end] - xxs[end-(n-i+1)])
+    for i in n:-1:1
+        M[i, n + 1] = (M[i + 1, n + 1] - M[i, n]) / (xxs[end] - xxs[end - (n - i + 1)])
     end
 
     xxs, M
@@ -108,37 +112,33 @@ end
 ## We use the forward difference formula
 ## the coefficients are the top row of the upper
 ## triangular tableau
-Polynomials.coeffs(p::Newton) = p.tableau[1,:]
-
-
+Polynomials.coeffs(p::Newton) = p.tableau[1, :]
 
 ## Evaluation
 ## p(x) = f[x0] + f[x0,x1](x-x0) + ... + f[x0,x1,...,x_n](x-x0)(x-x1)...(x-x_{n-1})
 ## use nested evaluation (http://pages.cs.wisc.edu/~amos/412/lecture-notes/lecture08.pdf)
-(p::Newton)(x)  = evalpoly(x,p)
+(p::Newton)(x) = evalpoly(x, p)
 function Polynomials.evalpoly(x, p::Newton{N}) where {N}
     xs, cs = p.xs, coeffs(p)
     tot = cs[end]
-    for j in N-1:-1:1
-        tot = cs[j] + (x - xs[j])*tot
+    for j in (N - 1):-1:1
+        tot = cs[j] + (x - xs[j]) * tot
     end
     tot
 end
 
 ## compute (p,dp)  at x:
 ## http://pages.cs.wisc.edu/~amos/412/lecture-notes/lecture08.pdf
-function _dual(p::Newton{N, S,T}, x) where {N,S,T}
+function _dual(p::Newton{N,S,T}, x) where {N,S,T}
     xs, cs = p.xs, coeffs(p)
     tot = cs[end]
     totp = zero(S)
-    for j in N-1:-1:1
+    for j in (N - 1):-1:1
         delta = (x - xs[j])
         tot, totp = cs[j] + delta * tot, tot + delta * totp
     end
     tot, totp
 end
-
-    
 
 function Base.:+(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1,T1,Y}
     X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
@@ -146,13 +146,12 @@ function Base.:+(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1
         tableau = p1.tableau + p2.tableau
         return Newton(p1.xs, tableau, X)
     else
-        p,q = N >= M ? (p1, p2) : (p2, p1)
+        p, q = N >= M ? (p1, p2) : (p2, p1)
         qq = fit(Newton, p.xs, q) # stretch than add
         ## https://en.wikipedia.org/wiki/Divided_differences
         ## T_{f+g}x = T_fx + T_gx
         p + qq
     end
-
 end
 
 function Base.:*(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1,T1,Y}
@@ -161,7 +160,7 @@ function Base.:*(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1
     ## refit p1 and p2 on this
     ## use  product of tableaus
     Polynomials.assert_same_variable(p1, p2)
-    p,q = N >= M ? (p1, p2) : (p2, p1)
+    p, q = N >= M ? (p1, p2) : (p2, p1)
     xs = p.xs
     new_xs = _new_nodes(xs, q.xs)
 
@@ -173,27 +172,25 @@ function Base.:*(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1
     ## T_{f*g}(x) = T_f(x) * T_g(x)
 
     Newton(pp.xs, pp.tableau * qq.tableau, X)
-    
 end
 
 ## Scalar
 function Base.:+(p::Newton{N,T,S,X}, c::Number) where {N,T,S,X}
     tableau = copy(p.tableau)
     for i in 1:N
-        tableau[i,i] += c
+        tableau[i, i] += c
     end
     Newton(p.xs, tableau, X)
 end
 
-Base.:*(c::Number, p::Newton) = p*c
-function Base.:*(p::P, c::Number) where {P <: Newton}
-    Newton(p.xs, c*p.tableau, Polynomials.indeterminate(p))
+Base.:*(c::Number, p::Newton) = p * c
+function Base.:*(p::P, c::Number) where {P<:Newton}
+    Newton(p.xs, c * p.tableau, Polynomials.indeterminate(p))
 end
 
-Base.:-(p::P) where {P<:Newton} = p*(-1)
+Base.:-(p::P) where {P<:Newton} = p * (-1)
 
-
-function  Base.convert(Q::Type{<:Polynomial},  p::Newton{N, S,T})  where  {N,S, T}
+function Base.convert(Q::Type{<:Polynomial}, p::Newton{N,S,T}) where {N,S,T}
     p(variable(Polynomial{S}))
 end
 
@@ -204,16 +201,15 @@ end
 function Polynomials.derivative(p::Newton{N,S,T}, order::Int=1) where {N,S,T}
     order < 0 && throw(ArgumentError("order must be positive"))
     order == 0 && return p
-    N==1 &&  return fit(Newton, p.xs, zero)
-    
+    N == 1 && return fit(Newton, p.xs, zero)
+
     x = variable(Polynomial{S})
-    q,qq = _dual(p, x)
-    dp = fit(Newton, p.xs[1:end-1], qq)
+    q, qq = _dual(p, x)
+    dp = fit(Newton, p.xs[1:(end - 1)], qq)
     if order > 1
-        dp = derivative(dp, order-1)
+        dp = derivative(dp, order - 1)
     end
     dp
-    
 end
 
 # integrate
@@ -221,20 +217,20 @@ function Polynomials.integrate(p::Newton{N,S,T}, C::Number=0) where {N,S,T}
     q = convert(Polynomial, p)
     Q = integrate(q, C)
     if length(p.xs) >= 2
-        new_x = p.xs[end] + (p.xs[end] - p.xs[end-1])
+        new_x = p.xs[end] + (p.xs[end] - p.xs[end - 1])
         xxs = vcat(p.xs, new_x)
     else
-        xxs = vcat(p.xs, p.xs[1]+1)
+        xxs = vcat(p.xs, p.xs[1] + 1)
     end
     fit(Newton, xxs, Q, var=Polynomial.indeterminate(p))
-    
 end
 
-
-function Polynomials.fit(P::Type{<:Newton},
-                         xs::Vector{S},
-                         ys::AbstractVector{T};
-                         var = :x,) where {S, T}
+function Polynomials.fit(
+    P::Type{<:Newton},
+    xs::Vector{S},
+    ys::AbstractVector{T};
+    var=:x,
+) where {S,T}
     ind = sortperm(xs)
     xs = xs[ind]
     ys = ys[ind]
@@ -242,7 +238,6 @@ function Polynomials.fit(P::Type{<:Newton},
 
     Newton(xs, nt, var)
 end
-
 
 function Polynomials.fit(P::Type{<:Newton}, xs::Vector{S}, f; var=:x) where {S}
     xs = sort(xs)

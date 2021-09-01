@@ -12,11 +12,13 @@ References: [Koekoek and Swarttouw §1.5](https://arxiv.org/pdf/math/9602214.pdf
 """
 Hahn
 
-abcde(::Type{<:Hahn{α,β,𝐍}})  where {α,β,𝐍} = NamedTuple{(:a,:b,:c,:d,:e)}((1, -(β+𝐍+1), 0,  α+β+2, -𝐍*(α+1)))
+abcde(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} =
+    NamedTuple{(:a, :b, :c, :d, :e)}((1, -(β + 𝐍 + 1), 0, α + β + 2, -𝐍 * (α + 1)))
 
 basis_symbol(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} = "Q⁽ᵅᵝ⁾"
-Polynomials.domain(::Type{<:Hahn{α, β, 𝐍}}) where {α, β,  𝐍} = Polynomials.Interval(0, 𝐍)
-weight_function(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} = x -> generalized_binomial(α+x,x) * generalized_binomial(𝐍+β-x,𝐍-x)
+Polynomials.domain(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} = Polynomials.Interval(0, 𝐍)
+weight_function(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} =
+    x -> generalized_binomial(α + x, x) * generalized_binomial(𝐍 + β - x, 𝐍 - x)
 
 # use   recurrence relation  1.5.3 of Koekoek and Swarttouw
 # -xQᵢ = AQᵢ₊₁ -  (A+C)Qᵢ + CQᵢ₋₁
@@ -30,18 +32,15 @@ weight_function(::Type{<:Hahn{α,β,𝐍}}) where {α,β,𝐍} = x -> generalize
 # end
 
 # define kn, k1k_1 through defaults
-function k1k0(P::Type{<:Hahn{α,β, 𝐍}}, n::Int) where {α,β,𝐍}
+function k1k0(P::Type{<:Hahn{α,β,𝐍}}, n::Int) where {α,β,𝐍}
+    num = (2 * n + α + β + 1) * (2 * n + α + β + 2)
+    den = (-n + 𝐍) * (n + α + 1) * (n + α + β + 1)
 
-    num  = (2*n + α + β + 1)*(2*n + α + β + 2)
-    den = (-n + 𝐍)*(n + α + 1)*(n + α + β + 1)
-
-    -(one(eltype(P))*num)/den
-    
+    -(one(eltype(P)) * num) / den
 end
 
 # end
 
-function classical_hypergeometric(::Type{<:Hahn{α,β,𝐍}}, n::Int, x)  where {α,β,𝐍}
-    pFq((-n, -x, n+1+α+β),  (α+1, -𝐍),  1)
+function classical_hypergeometric(::Type{<:Hahn{α,β,𝐍}}, n::Int, x) where {α,β,𝐍}
+    pFq((-n, -x, n + 1 + α + β), (α + 1, -𝐍), 1)
 end
-

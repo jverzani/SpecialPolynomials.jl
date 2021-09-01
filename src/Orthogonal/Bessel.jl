@@ -1,7 +1,6 @@
 ## Bessel
 @registerN Bessel AbstractCCOP1 α
 
-
 """
     Bessel{α}
 
@@ -33,52 +32,52 @@ export Bessel
 basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{<:Bessel{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,α, 2))
+abcde(::Type{<:Bessel{α}}) where {α} = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, α, 2))
 
-
-function k1k0(::Type{P}, k::Int) where {α, P<:Bessel{α}}
-    k < 0 && return zero(eltype(P))/1
-    iszero(k) && return (one(eltype(P))*α)/2
+function k1k0(::Type{P}, k::Int) where {α,P<:Bessel{α}}
+    k < 0 && return zero(eltype(P)) / 1
+    iszero(k) && return (one(eltype(P)) * α) / 2
 
     val = one(eltype(P))
-    val *=  (2k+α)*(2k+α-1)
-    val /= (k+α-1)*2
+    val *= (2k + α) * (2k + α - 1)
+    val /= (k + α - 1) * 2
     val
 end
 
-norm2(::Type{<:Bessel{α}}, n) where  {α} = -1^(n + α -1) * Γ(1+n) * 2^(α-1) / (Γ(n  + α -2) *  (2n +  α - 1))
+norm2(::Type{<:Bessel{α}}, n) where {α} =
+    -1^(n + α - 1) * Γ(1 + n) * 2^(α - 1) / (Γ(n + α - 2) * (2n + α - 1))
 
 # From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
 # kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
 # Koepf suggests kn = (n + α + 1)_n/2^n
 function leading_term(P::Type{<:Bessel{α}}, n::Int) where {α}
-    one(eltype(P))/2^n * Pochhammer(n+α-1,n)
+    one(eltype(P)) / 2^n * Pochhammer(n + α - 1, n)
 end
 
-weight_function(::Type{<:Bessel{α}}) where {α} = z -> (2π*im)^(-1)*z^(α-2) * exp(-2/z)
-generating_function(::Type{<:Bessel}) = (t, x)  -> error("XXX")
+weight_function(::Type{<:Bessel{α}}) where {α} =
+    z -> (2π * im)^(-1) * z^(α - 2) * exp(-2 / z)
+generating_function(::Type{<:Bessel}) = (t, x) -> error("XXX")
 function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
     as = (-n, n + α - 1)
     bs = ()
-    pFq(as, bs, -x/2) #/ kn
+    pFq(as, bs, -x / 2) #/ kn
 end
 
-
 ## Overrides XXX fails wih 1 and 2
-function  B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
-    val =  one(eltype(P))
-    (iszero(n) && α ==  2)  && return val
-    val *=  2*(α - 2)
-    val /= (2*n + α)*(2*n + α - 2)
+function B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
+    val = one(eltype(P))
+    (iszero(n) && α == 2) && return val
+    val *= 2 * (α - 2)
+    val /= (2 * n + α) * (2 * n + α - 2)
     val
 end
 
-function  C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
+function C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
     val = one(eltype(P))
-    n==1 && return -(val*4)/(α^2*(α + 1))
-    
-    val *=  -4*n*(n + α - 2)
-    val /=  (2*n + α - 3)*(2*n + α - 2)^2*(2*n + α - 1)
+    n == 1 && return -(val * 4) / (α^2 * (α + 1))
+
+    val *= -4 * n * (n + α - 2)
+    val /= (2 * n + α - 3) * (2 * n + α - 2)^2 * (2 * n + α - 1)
     val
 end
 
@@ -87,5 +86,5 @@ end
 #iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
 #C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
 
-b̂̃n(::Type{<:Bessel{2}}, n::Int)  = (one(eltype(P)) * 2)/(n*(2n+2))
-b̂̃n(::Type{<:Bessel{2}}, ::Val{0})  = one(eltype(P)) * Inf
+b̂̃n(::Type{<:Bessel{2}}, n::Int) = (one(eltype(P)) * 2) / (n * (2n + 2))
+b̂̃n(::Type{<:Bessel{2}}, ::Val{0}) = one(eltype(P)) * Inf

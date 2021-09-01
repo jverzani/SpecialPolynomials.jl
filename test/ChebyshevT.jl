@@ -5,7 +5,7 @@
     Int64[1, 1, 1, 1],
     Float32[1, -4, 2],
     ComplexF64[1 - 1im, 2 + 3im],
-    [3 // 4, -2 // 1, 1 // 1]
+    [3 // 4, -2 // 1, 1 // 1],
 ]
     p = Chebyshev(coeff)
     @test p.coeffs == coeff
@@ -48,7 +48,7 @@ end
 end
 
 @testset "Roots $i" for i in 1:5
-    roots = cos.(range(-π, 0, length = 2i + 1)[2:2:end])
+    roots = cos.(range(-π, 0, length=2i + 1)[2:2:end])
     target = Chebyshev(vcat(zeros(i), 1))
     res = fromroots(ChebyshevT, roots) .* 2^(i - 1)
     @test res == target
@@ -64,7 +64,6 @@ end
     c = fromroots(ChebyshevT, r)
     @test c ≈ Chebyshev([1.5 + 0im, 0 + 0im, 0.5 + 0im])
     @test roots(c) ≈ r
-
 end
 
 @testset "Values" begin
@@ -80,7 +79,6 @@ end
     p = convert(Polynomial{Float64}, c1)
     @test p == Polynomial{Float64}([1, 2, 3])
     @test convert(ChebyshevT, p) == c1
-
 end
 
 @testset "Companion" begin
@@ -152,7 +150,6 @@ end
     @test d.coeffs ≈ [0, 2]
     @test r.coeffs ≈ [-2, -4]
 
-
     # GCD
     c1 = Chebyshev([1, 2, 3])
     c2 = Chebyshev([3, 2, 1])
@@ -195,15 +192,12 @@ end
     @test r == [0]
 end
 
-
 @testset "Fit" begin
-
     f(x) = exp(x)
     p = fit(Chebyshev{Float64}, f, 16)
-    @test maximum(abs.(p(x) - f(x) for  x in range(0, 1, length=100))) <= 100*eps()
+    @test maximum(abs.(p(x) - f(x) for x in range(0, 1, length=100))) <= 100 * eps()
 
-    f(x) = sin(6x) - sin(60*exp(x)) # chebfun example
+    f(x) = sin(6x) - sin(60 * exp(x)) # chebfun example
     p = fit(Chebyshev{Float64}, f, 150)
-    @test maximum(abs.(p(x) - f(x) for  x in range(0, 1, length=100))) <= 1000*eps()
-
+    @test maximum(abs.(p(x) - f(x) for x in range(0, 1, length=100))) <= 1000 * eps()
 end

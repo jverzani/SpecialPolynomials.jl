@@ -1,5 +1,5 @@
 @registerN Laguerre AbstractCCOP1 α
-export  Laguerre
+export Laguerre
 
 """
    Laguerre{α, T <: Number}
@@ -48,47 +48,46 @@ basis_symbol(::Type{<:Laguerre{α}}) where {α} = "Lᵅ"
 basis_symbol(::Type{<:Laguerre{0}}) = "L"
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{<:Laguerre{α}})  where {α} = NamedTuple{(:a,:b,:c,:d,:e)}((0,1,0,-1,α+1))
+abcde(::Type{<:Laguerre{α}}) where {α} =
+    NamedTuple{(:a, :b, :c, :d, :e)}((0, 1, 0, -1, α + 1))
 
 k0(P::Type{<:Laguerre}) = one(eltype(P))
-k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = -one(eltype(P))/(k+1) # k >=0
+k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = -one(eltype(P)) / (k + 1) # k >=0
 
-
-function norm2(::Type{<:Laguerre{α}}, n) where{α}
+function norm2(::Type{<:Laguerre{α}}, n) where {α}
     iszero(α) && return one(α)
-    Γ(n + α + 1) / Γ(n+1)
+    Γ(n + α + 1) / Γ(n + 1)
 end
 
-function ω₁₀(::Type{<:Laguerre{α}}, n) where{α}
+function ω₁₀(::Type{<:Laguerre{α}}, n) where {α}
     iszero(α) && return 1.0
     val = Γ(n + 1 + α + 1) / Γ(n + α + 1)
     val /= n + 1 # Γ(n+1)/Γ(n+2)
     sqrt(val)
 end
 
-
-weight_function(::Type{<:Laguerre{α}}) where {α} = x  -> x^α * exp(-x)
-generating_function(::Type{<:Laguerre{α}}) where {α} = (t,x) -> begin
-    exp(-t*x/(1-t))/(1-t)^(α-1)
-end
+weight_function(::Type{<:Laguerre{α}}) where {α} = x -> x^α * exp(-x)
+generating_function(::Type{<:Laguerre{α}}) where {α} =
+    (t, x) -> begin
+        exp(-t * x / (1 - t)) / (1 - t)^(α - 1)
+    end
 function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     α > -1 || throw(ArgumentError("α > -1 is required"))
     as = -n
-    bs = α+1
-    Pochhammer_factorial(α+1,n)*pFq(as, bs, x)
+    bs = α + 1
+    Pochhammer_factorial(α + 1, n) * pFq(as, bs, x)
 end
 
-gauss_nodes_weights(p::Type{P}, n) where {α, P <: Laguerre{α}} =
-    FastGaussQuadrature.gausslaguerre(n,α)
-
+gauss_nodes_weights(p::Type{P}, n) where {α,P<:Laguerre{α}} =
+    FastGaussQuadrature.gausslaguerre(n, α)
 
 ## Overrides
 
 # default  connection between Laguerre is popping out  0s
-function Base.iterate(o::Connection{P, Q}, state=nothing) where
-    {β, P <: Laguerre{β},
-     α, Q <: Laguerre{α}}
-
+function Base.iterate(
+    o::Connection{P,Q},
+    state=nothing,
+) where {β,P<:Laguerre{β},α,Q<:Laguerre{α}}
     k, n = o.k, o.n
 
     if state == nothing
@@ -104,10 +103,8 @@ function Base.iterate(o::Connection{P, Q}, state=nothing) where
     K = i - k
     N = α - β - 1 + K
 
-    return (i, generalized_binomial(N,K)), i
-
+    return (i, generalized_binomial(N, K)), i
 end
-
 
 ##
 ## --------------------------------------------------
@@ -117,7 +114,6 @@ export MonicLaguerre
 ϟ(::Type{<:MonicLaguerre{α}}) where {α} = Laguerre{α}
 ϟ(::Type{<:MonicLaguerre{α,T}}) where {α,T} = Laguerre{α,T}
 @register_monic(MonicLaguerre)
-
 
 @registerN OrthonormalLaguerre AbstractCCOP1 α
 export OrthonormalLaguerre
