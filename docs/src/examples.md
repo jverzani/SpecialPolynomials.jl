@@ -454,7 +454,8 @@ interpolation"
 For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate.
 
 
-```example
+```@example
+nothing
 # XXX comment out plotting; it is breaking CI documentation generation....
 # We can see that some interpolation points lead to better fits than others, in the following graphic:
 
@@ -536,6 +537,7 @@ true
 ```
 
 ```@example
+nothing
 #using Plots, Polynomials, SpecialPolynomials
 #f(x) = sin(6x) + sin(60*exp(x))
 #p50 = fit(Chebyshev{Float64}, f, 50);
@@ -571,6 +573,7 @@ the polynomial types in this package. The domain to be plotted over
 matches that given by `domain`, unless this is infinite.
 
 ```@example
+nothing
 #A plot of the first few
 #Chebyshev Polynomials of the second kind can be produced as follows:
 
