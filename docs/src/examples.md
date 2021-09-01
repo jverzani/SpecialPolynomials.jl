@@ -324,24 +324,22 @@ For orthogonal polynomials, the roots of the basis vectors are important for qua
 ```jldoctest example
 julia> using LinearAlgebra
 
-julia> p5 = basis(Legendre, 5)
-Legendre(1.0⋅P₅(x))
+julia> p4 = basis(Legendre, 4)
+Legendre(1.0⋅P₄(x))
 
-julia> roots(p5)
-5-element Vector{ComplexF64}:
-  -0.906179845938664 + 0.0im
- -0.5384693101056831 + 0.0im
-                 0.0 + 0.0im
-   0.538469310105683 + 0.0im
-   0.906179845938664 + 0.0im
+julia> roots(p4) .|> real .|> x -> round(x, digits=10)
+4-element Vector{Float64}:
+ -0.8611363116
+ -0.3399810436
+  0.3399810436
+  0.8611363116
 
-julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 5))
-5-element Vector{Float64}:
- -0.9061798459386641
- -0.5384693101056831
-  2.6689322308431607e-17
-  0.5384693101056834
-  0.9061798459386642
+julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 4)) .|> x -> round(x, digits=10)
+4-element Vector{Float64}:
+ -0.8611363116
+ -0.3399810436
+  0.3399810436
+  0.8611363116
 ```
 
 At higher degrees, the difference in  stability comes out. For the special case of a basis polynomial, we see this difference in the maximum residual:
@@ -453,22 +451,27 @@ approximation ..., but usually it is the best practical possibility
 for interpolation and certainly much better than equispaced
 interpolation"
 
-For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate. We can see that some interpolation points lead to better fits than others, in the following graphic:
+For the orthogonal polynomial types, the default for `fit` for degree `n` will use the zeros of `P_{n+1}` to interpolate.
 
-```example
-f(x) = exp(-x)*sinpi(x)
-plot(f, -1, 1, legend=false, color=:black, linewidth=3)
-p=fit(Val(:interpolating), Chebyshev, f, 3);  plot!(p, color=:blue)
-p=fit(Val(:interpolating), ChebyshevU, f, 3); plot!(p, color=:red)
-fit(Val(:interpolating), Legendre, f, 3);     plot!(p, color=:green)
-xs = [-0.5, 0.0, 0.5]
-p=fit(Newton, xs, f);
-ts = range(-1, 1, length=100);                plot!(ts, p.(ts), color=:brown)
-savefig("fitting.svg"); nothing # hide
+
+```@example
+nothing
+# XXX comment out plotting; it is breaking CI documentation generation....
+# We can see that some interpolation points lead to better fits than others, in the following graphic:
+
+#f(x) = exp(-x)*sinpi(x)
+#plot(f, -1, 1, legend=false, color=:black, linewidth=3)
+#p=fit(Val(:interpolating), Chebyshev, f, 3);  plot!(p, color=:blue)
+#p=fit(Val(:interpolating), ChebyshevU, f, 3); plot!(p, color=:red)
+#fit(Val(:interpolating), Legendre, f, 3);     plot!(p, color=:green)
+#xs = [-0.5, 0.0, 0.5]
+#p=fit(Newton, xs, f);
+#ts = range(-1, 1, length=100);                plot!(ts, p.(ts), color=:brown)
+#savefig("fitting.svg"); nothing # hide
+#```
+#
+#![](fitting.svg)
 ```
-
-![](fitting.svg)
-
 
 
 
@@ -534,19 +537,20 @@ true
 ```
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials
-f(x) = sin(6x) + sin(60*exp(x))
-p50 = fit(Chebyshev{Float64}, f, 50);
-p196 = fit(Chebyshev{Float64}, f, 196);
-plot(f, -1, 1, legend=false, color=:black)
-xs = range(-1, stop=1, length=500) # more points than recipe
-plot!(xs, p50.(xs), color=:blue)
-plot!(xs, p196.(xs), color=:red)
-savefig("wavy.svg"); nothing # hide
+nothing
+#using Plots, Polynomials, SpecialPolynomials
+#f(x) = sin(6x) + sin(60*exp(x))
+#p50 = fit(Chebyshev{Float64}, f, 50);
+#p196 = fit(Chebyshev{Float64}, f, 196);
+#plot(f, -1, 1, legend=false, color=:black)
+#xs = range(-1, stop=1, length=500) # more points than recipe
+#plot!(xs, p50.(xs), color=:blue)
+#plot!(xs, p196.(xs), color=:red)
+#savefig("wavy.svg"); nothing # hide
+#```
+#
+#![](wavy.svg)
 ```
-
-![](wavy.svg)
-
 
 For the  `Chebyshev` type, the  `Val(:series)` argument will fit a heuristically identify truncated series  to the function.
 
@@ -566,21 +570,25 @@ degree(p)
 
 The `plot` recipe from the `Polynomials` package works as expected for
 the polynomial types in this package. The domain to be plotted over
-matches that given by `domain`, unless this is infinite. A plot of the first few
-Chebyshev Polynomials of the second kind can be produced as follows:
+matches that given by `domain`, unless this is infinite.
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials
-# U1, U2, U3, and U4:
-chebs = basis.(ChebyshevU, 1:4)
-colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
-itr = zip(chebs, colors)
-(cheb,col), state = iterate(itr)
-p = plot(cheb, c=col,  lw=5, legend=false, label="")
-for (cheb, col) in Base.Iterators.rest(itr, state)
-  plot!(cheb, c=col, lw=5)
-end
-savefig("chebs.svg"); nothing # hide
-```
+nothing
+#A plot of the first few
+#Chebyshev Polynomials of the second kind can be produced as follows:
 
-![](chebs.svg)
+#using Plots, Polynomials, SpecialPolynomials
+## U1, U2, U3, and U4:
+#chebs = basis.(ChebyshevU, 1:4)
+#colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
+#itr = zip(chebs, colors)
+#(cheb,col), state = iterate(itr)
+#p = plot(cheb, c=col,  lw=5, legend=false, label="")
+#for (cheb, col) in Base.Iterators.rest(itr, state)
+#  plot!(cheb, c=col, lw=5)
+#end
+#savefig("chebs.svg"); nothing # hide
+#```
+
+#![](chebs.svg)
+```

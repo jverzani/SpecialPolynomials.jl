@@ -25,7 +25,7 @@ function  gauss_nodes_weights(P::Type{<:Jacobi{α,β}}, n)  where {α,β}
     end
 
 end
-    
+
 
 pqr_start(P::Type{MonicJacobi{α,α}}, n) where {α} =  0.0 # zero(eltype(P))
 pqr_symmetry(P::Type{<:MonicJacobi{α,α}}) where {α} = true
@@ -35,7 +35,7 @@ function pqr_weight(P::Type{<:MonicJacobi{α,α}}, n, x, dπx) where {α}
     # Cnαβ should be  computed  using asymptotic formula  for larger n (§3.2.3)
     # XXX TThere i ss ome constant  that  makes this not work....
     β = α
-    Cnαβ = 2^(α+β+1)  
+    Cnαβ = 2^(α+β+1)
     Cnαβ *= gamma(n + α +  1) * gamma(n + β + 1) / gamma(n + α + β + 1)
     Cnαβ /= gamma(1 + n)
     val = Cnαβ / (1-x^2) / dπx^2
@@ -82,7 +82,7 @@ pqr_symmetry(::Type{P}) where {P <: AbstractCCOP} = false
 """
     pqr_weight(p::P, x, dx)
 
-Compute weight from x, dπx, x a node and dπx the derivative's value at the node
+Compute weight from `x`, `dπx` -- `x` a node and `dπx` the derivative's value at the node
 """
 pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 
@@ -94,7 +94,7 @@ pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 #     T = eltype(p)
 #     oS = one(x)
 #     R = eltype(one(T) * oS)
-    
+
 #     length(p) == 0 && return (zero(R), zero(R))
 #     d = length(p) - 1
 
@@ -104,8 +104,8 @@ pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
 
 #     ptot = p[0]*P0(P,x)
 #     dptot  = p[0]*dP0(P,x)
-    
-    
+
+
 #     ## we compute  forward here, finding pi, dp_i,  p_{i+1}, dp_{i+1}, ...
 #     for i in 0:d-1
 #         an, bn, cn=  An(p,i), Bn(p,i), Cn(p,i)
@@ -161,7 +161,7 @@ function prufer(Π::Type{P},n) where {P <: AbstractCCOP}
     end
 end
 
-## Compute gauss node using  algorithm from  
+## Compute gauss node using  algorithm from
 ## A Fast Algorithm for the Calculation of the Roots of Special Functions
 ## by Glaser, Liu, Rokhlin
 ## DOI: 10.1137/06067016X
@@ -194,10 +194,10 @@ function glaser_liu_rokhlin_gauss_nodes(π::P, x0=pqr_start(P,degree(π));
             dπrts = vcat(-reverse(dπrts), dπrts)
         else
             rts = vcat(-reverse(rts[2:end]), rts)
-            dπrts = vcat(-reverse(dπrts[2:end]), dπrts)            
+            dπrts = vcat(-reverse(dπrts[2:end]), dπrts)
         end
     end
-    # get weights 
+    # get weights
     weights = pqr_weight.(P, n, rts, dπrts)
     rts,  weights
 end

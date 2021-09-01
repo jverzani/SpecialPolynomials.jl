@@ -26,7 +26,7 @@ function ⊕(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,
         cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
         return P′(cs)
     end
-end    
+end
 
 # multiplication of polynomials of type P
 function ⊗(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X,N} , q::AbstractCOP{S,X,M}) where {T,S,X,N,M}
@@ -62,7 +62,7 @@ Polynomials.domain(::Type{<:AbstractCOP}) = Polynomials.Interval(-Inf, Inf)
 classical_hypergeometric(P::Type{<:AbstractCOP}, n, x) = throw(ArgumentError("No default method"))
 
 """
-   abcde
+    abcde
 
 A named tuple returning  the  constants a,b,c,d,e  for a CCOP type with
 (a⋅x²+b⋅x+c)*P₍ᵢ₊₂₎'' + (d⋅x + e) * P₍ᵢ₊₁₎ + λᵢ Pᵢ = 0.
@@ -73,7 +73,7 @@ abcde(::Type{<:AbstractCOP}) = throw(ArgumentError("No default method"))
 """
     k1k0
 
-Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis. 
+Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis.
 This  function implements  `k₍ᵢ₊₁₎/kᵢ` for `i ≥ 0`.
 
 The values `kᵢ` and `k₍ᵢ₊₁₎/k₍ᵢ₋₁₎` can  be generated.
@@ -95,7 +95,7 @@ k0(::Type{P}) where {P <: Polynomials.StandardBasisPolynomial} = one(eltype(P))
 # For non-monic subtypes of `AbstractCOP` only need k1k0  to be defined, as `kn` and `k1k_1` come for free
 
 # kn = prod(k1k0(i) for i in 0:n-1)  *  k0(P)
-kn(::Type{P},  n::Int) where{P <: AbstractCOP} = foldr(*, (k1k0(P,i) for i in 0:n-1), init=k0(P)) 
+kn(::Type{P},  n::Int) where{P <: AbstractCOP} = foldr(*, (k1k0(P,i) for i in 0:n-1), init=k0(P))
 
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{P},  i::Int) where {P<:AbstractCOP}
@@ -131,7 +131,7 @@ Polynomials.isconstant(p::AbstractCOP) = degree(p) <=  0
 ##  Evaluation
 
 """
-    Clenshaw evaluation of an orthogonal polynomial 
+    Clenshaw evaluation of an orthogonal polynomial
 """
 function eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
     N == 0 && return zero(T) * zero(S)

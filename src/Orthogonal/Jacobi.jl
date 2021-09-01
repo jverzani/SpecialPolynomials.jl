@@ -34,7 +34,7 @@ abcde(::Type{<:Jacobi{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((-1
 
 k0(P::Type{<:Jacobi}) = one(eltype(P))
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
-    n == -1  &&  return one(eltype(P))/1 
+    n == -1  &&  return one(eltype(P))/1
     γ = 2n + α + β
     val = one(eltype(P))
     if n == 0
@@ -59,7 +59,7 @@ function leading_term(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}
         nn -= 1
     end
     tot
-    
+
 end
 
 
@@ -72,11 +72,11 @@ end
 """
     jacobi_eval(α, β, n, z)
 
-Evaluate the nth basis element of Pᵅᵝ at z using
+Evaluate the nth basis element of `Pᵅᵝ` at `z` using
 
 `Pₙᵅᵝ(z) = 2⁻ⁿ∑ (α+n, k) × (β+n, n-k) ⋅ (z+1)ᵏ ⋅ (z-1)ⁿ⁻ᵏ`
 
-This alternate evaluation is  useful when α or β ≤ -1 (and consequently the polynomials are not orthogonal)
+This alternate evaluation is  useful when `α` or `β ≤ -1` (and consequently the polynomials are not orthogonal)
 """
 function jacobi_eval(α, β, n, z)
     T = eltype(z/2)
@@ -94,10 +94,10 @@ end
 function classical_hypergeometric(::Type{<:Jacobi{α, β}}, n, x) where {α,β}
 
     (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
-    
+
     as = (-n, n+α+β+1)
     bs = (α+1,)
-    
+
     Pochhammer_factorial(α+1,n) * pFq(as, bs, (1 - x)/2)
 end
 
@@ -145,5 +145,3 @@ export OrthonormalJacobi
 ϟ(::Type{<:OrthonormalJacobi{α,β,T}}) where {α,β,T} = Jacobi{α,β,T}
 
 @register_orthonormal(OrthonormalJacobi)
-
-

@@ -47,7 +47,7 @@ Interpolating polynomials suffer from the Runge phenomenon unless the
 nodes are well chosen. For `P=Chebyshvev` and `P=ChebyshevU`, the
 function `SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)`
 will return a good choice of `n+1` points over `[-1,1]` along with
-precomputed weights. 
+precomputed weights.
 
 ```jldoctest Lagrange
 julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
@@ -157,9 +157,9 @@ end
 
 ## return w⁻¹s = {1/w_j, 0 <= j <= n} as 1 based ws[j+1] = w_j
 """
-   lagrange_barycentric_weights(xs)
+    lagrange_barycentric_weights(xs)
 
-return [1/w_i for 0 <i <= n] where wi = ∏_{j≠i} (xi - xj)
+Return `[1/w_i for 0 <i <= n]` where `wi = ∏_{j≠i} (xi - xj)`.
 """
 function lagrange_barycentric_weights(xs)
     n =  length(xs)
@@ -184,7 +184,7 @@ function lagrange_barycentric_weights(xs::Union{AbstractRange{T},AbstractUnitRan
     end
     ws
 end
-    
+
 ##  add a new point
 ## check for  xk ∈ xs?
 """
