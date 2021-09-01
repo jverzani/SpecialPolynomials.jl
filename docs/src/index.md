@@ -109,25 +109,21 @@ Newton
 Bernstein
 ```
 
-
-
+# Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`):
 
 ```@example
-nothing
-#Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve  (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`:
+using Plots, Polynomials, SpecialPolynomials; unicodeplots()
+bs = [[220, 260], [220, 40], [35, 100],  [120, 140]]
 
-#using Plots, Polynomials, SpecialPolynomials
-#bs =[[220, 260], [220, 40], [35, 100],  [120, 140]]
+p = Bernstein(bs)
+ts = range(0, stop=1, length=500)
+ps = p.(ts)
+xs, ys = [[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
+p = plot(xs, ys, legend=false)
+scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 
-#p = Bernstein(bs)
-#ts = range(0, stop=1, length=500)
-#ps = p.(ts)
-#xs,ys=[[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
-#p = plot(xs, ys, legend=false)
-
-#scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
-#savefig("bezier.svg"); nothing # hide
-#```
-
-#![](bezier.svg)
+show(current()) # hide
+# savefig("bezier.svg")  # hide
 ```
+
+<!-- ![](bezier.svg) -->

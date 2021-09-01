@@ -537,30 +537,27 @@ true
 ```
 
 ```@example
-nothing
-#using Plots, Polynomials, SpecialPolynomials
-#f(x) = sin(6x) + sin(60*exp(x))
-#p50 = fit(Chebyshev{Float64}, f, 50);
-#p196 = fit(Chebyshev{Float64}, f, 196);
-#plot(f, -1, 1, legend=false, color=:black)
-#xs = range(-1, stop=1, length=500) # more points than recipe
-#plot!(xs, p50.(xs), color=:blue)
-#plot!(xs, p196.(xs), color=:red)
-#savefig("wavy.svg"); nothing # hide
-#```
-#
-#![](wavy.svg)
+using Plots, Polynomials, SpecialPolynomials; unicodeplots()
+f(x) = sin(6x) + sin(60*exp(x))
+p50 = fit(Chebyshev{Float64}, f, 50);
+p196 = fit(Chebyshev{Float64}, f, 196);
+plot(f, -1, 1, legend=false, color=:black)
+xs = range(-1, stop=1, length=500) # more points than recipe
+plot!(xs, p50.(xs), color=:blue)
+plot!(xs, p196.(xs), color=:red)
+show(current())  # hide
+# savefig("wavy.svg")  # hide
 ```
+<!-- ![](wavy.svg) -->
 
 For the  `Chebyshev` type, the  `Val(:series)` argument will fit a heuristically identify truncated series  to the function.
 
 ```
 using Polynomials, SpecialPolynomials
 f(x) = sin(6x) + sin(60*exp(x))
-p  = fit(Val(:series), Chebyshev, f);
+p = fit(Val(:series), Chebyshev, f);
 degree(p)
 ```
-
 
 !!! note
     The [ApproxFun](https://github.com/JuliaApproximation/ApproxFun.jl) package provides a framework to quickly and accuratately approximate functions using certain polynomial types. The choice of order and methods for most of Julia's built-in functions are conveniently provided.
@@ -572,23 +569,20 @@ The `plot` recipe from the `Polynomials` package works as expected for
 the polynomial types in this package. The domain to be plotted over
 matches that given by `domain`, unless this is infinite.
 
+A plot of the first few Chebyshev Polynomials of the second kind can be produced as follows:
 ```@example
-nothing
-#A plot of the first few
-#Chebyshev Polynomials of the second kind can be produced as follows:
-
-#using Plots, Polynomials, SpecialPolynomials
-## U1, U2, U3, and U4:
-#chebs = basis.(ChebyshevU, 1:4)
-#colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
-#itr = zip(chebs, colors)
-#(cheb,col), state = iterate(itr)
-#p = plot(cheb, c=col,  lw=5, legend=false, label="")
-#for (cheb, col) in Base.Iterators.rest(itr, state)
-#  plot!(cheb, c=col, lw=5)
-#end
-#savefig("chebs.svg"); nothing # hide
-#```
-
-#![](chebs.svg)
+using Plots, Polynomials, SpecialPolynomials; unicodeplots()
+# U1, U2, U3, and U4:
+chebs = basis.(ChebyshevU, 1:4)
+colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
+itr = zip(chebs, colors)
+(cheb,col), state = iterate(itr)
+p = plot(cheb, c=col,  lw=5, legend=false, label="")
+for (cheb, col) in Base.Iterators.rest(itr, state)
+  plot!(cheb, c=col, lw=5)
+end
+show(current())  # hide
+# savefig("chebs.svg")  # hide
 ```
+
+<!-- ![](chebs.svg) -->

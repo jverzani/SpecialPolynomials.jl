@@ -3,7 +3,7 @@ using SpecialPolynomials
 
 makedocs(
     sitename = "SpecialPolynomials",
-    format = Documenter.HTML(),
+    format = Documenter.HTML(ansicolor=true),
     modules = [SpecialPolynomials]
 )
 
