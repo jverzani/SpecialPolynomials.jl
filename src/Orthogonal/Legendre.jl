@@ -3,10 +3,8 @@
 # cf FastGaussquadrature.jl
 #include("FastLegendre.jl")
 
-
 @register0 Legendre AbstractCCOP0
 export Legendre
-
 
 """
     Legendre{T}
@@ -49,23 +47,22 @@ julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 """
 Legendre
 
-abcde(::Type{<:Legendre})  = NamedTuple{(:a,:b,:c,:d,:e)}((-1,0,1,-2,0))
+abcde(::Type{<:Legendre}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -2, 0))
 
-basis_symbol(::Type{<:Legendre})  = "P"
+basis_symbol(::Type{<:Legendre}) = "P"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
 
-
 k0(P::Type{<:Legendre}) = one(eltype(P))
-k1k0(P::Type{<:Legendre}, n::Int) = (one(eltype(P))*(2n+1))/(n+1) #k1k0(Gegenbauer{1/2, eltype(P)}, n)
+k1k0(P::Type{<:Legendre}, n::Int) = (one(eltype(P)) * (2n + 1)) / (n + 1) #k1k0(Gegenbauer{1/2, eltype(P)}, n)
 
-norm2(::Type{<:Legendre}, n) = 2/(2n+1)
-ω₁₀(P::Type{<:Legendre}, n) = sqrt((one(eltype(P))*(2n+1))/(2n+3))
-weight_function(::Type{<:Legendre})  = x -> one(x)
-generating_function(::Type{<:Legendre}) = (t, x)  -> 1/sqrt(1 - 2x*t +t^2)
+norm2(::Type{<:Legendre}, n) = 2 / (2n + 1)
+ω₁₀(P::Type{<:Legendre}, n) = sqrt((one(eltype(P)) * (2n + 1)) / (2n + 3))
+weight_function(::Type{<:Legendre}) = x -> one(x)
+generating_function(::Type{<:Legendre}) = (t, x) -> 1 / sqrt(1 - 2x * t + t^2)
 function classical_hypergeometric(::Type{<:Legendre}, n, x)
-    as = (-n, n+1)
-    bs = (1, )
-    pFq(as, bs, (1-x)/2)
+    as = (-n, n + 1)
+    bs = (1,)
+    pFq(as, bs, (1 - x) / 2)
 end
 #eval_basis(::Type{P}, n, x::Float64) where {P <: Legendre} = FastLegendre.fastlegendre(n,x)
 # cf. fastgauss.jl
@@ -74,16 +71,15 @@ end
 #    FastGaussQuadrature.gausslegendre(n)
 # overrides
 
-
 B̃n(P::Type{<:Legendre}, n::Int) = zero(eltype(P))
-C̃n(P::Type{<:Legendre}, n::Int) = (one(eltype(P))*n^2) / (4n^2-1)
+C̃n(P::Type{<:Legendre}, n::Int) = (one(eltype(P)) * n^2) / (4n^2 - 1)
 
-B̃n(P::Type{<:Legendre}, ::Val{0}) = B̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
+B̃n(P::Type{<:Legendre}, ::Val{0}) = B̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
 C̃n(P::Type{<:Legendre}, ::Val{0}) = zero(eltype(P))
-b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
-ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1/2, eltype(P)}, Val(0))
+b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
+ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
 
-function Polynomials.derivative(p::Legendre{T,X}, order::Integer = 1) where {T,X}
+function Polynomials.derivative(p::Legendre{T,X}, order::Integer=1) where {T,X}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     order == 0 && return convert(Legendre{T}, p)
     hasnan(p) && return Legendre{T,X}(T[NaN])
@@ -91,19 +87,18 @@ function Polynomials.derivative(p::Legendre{T,X}, order::Integer = 1) where {T,X
 
     d = degree(p)
     qs = zeros(T, d)
-    for i in 0:d-1
-        gamma = 2*i+1
-        qs[i+1] = gamma * sum(p[j] for j in (i+1):2:d)
+    for i in 0:(d - 1)
+        gamma = 2 * i + 1
+        qs[i + 1] = gamma * sum(p[j] for j in (i + 1):2:d)
     end
 
     q = Legendre{T,X}(qs)
 
     if order > 1
-        derivative(q, order-1)
+        derivative(q, order - 1)
     else
         q
     end
-
 end
 
 ##
@@ -119,7 +114,7 @@ export MonicLegendre
 
 ## fast  gauss nodes
 pqr_symmetry(::Type{<:MonicLegendre}) = true
-pqr_weight(P::Type{<:MonicLegendre}, n, x, dπx) = (one(eltype(P)) * 2)/(1-x^2)/dπx^2
+pqr_weight(P::Type{<:MonicLegendre}, n, x, dπx) = (one(eltype(P)) * 2) / (1 - x^2) / dπx^2
 
 ##
 ## --------------------------------------------------
@@ -133,12 +128,12 @@ Type for the shifted Legendre polynomials: `Pˢᵢ(x) =  Pᵢ(2x-1)` for `x ∈ 
 """
 ShiftedLegendre
 
-ϟ(::Type{<:ShiftedLegendre})=Legendre
+ϟ(::Type{<:ShiftedLegendre}) = Legendre
 ϟ(::Type{<:ShiftedLegendre{T}}) where {T} = Legendre{T}
 export ShiftedLegendre
 @register_shifted(ShiftedLegendre, 2, -1)
 
-B̃n(P::Type{<:ShiftedLegendre}, ::Val{0}) = -one(eltype(P))/2
+B̃n(P::Type{<:ShiftedLegendre}, ::Val{0}) = -one(eltype(P)) / 2
 
 ##
 ## --------------------------------------------------
@@ -150,10 +145,8 @@ export MonicShiftedLegendre
 ϟ(::Type{<:MonicShiftedLegendre{T}}) where {T} = ShiftedLegendre{T}
 @register_monic(MonicShiftedLegendre)
 
-
 @register0 OrthonormalLegendre AbstractCCOP0
 export OrthonormalLegendre
 ϟ(::Type{<:OrthonormalLegendre}) = Legendre
 ϟ(::Type{<:OrthonormalLegendre{T}}) where {T} = Legendre{T}
 @register_orthonormal(OrthonormalLegendre)
-

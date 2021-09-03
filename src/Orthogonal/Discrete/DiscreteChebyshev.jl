@@ -41,8 +41,10 @@ true
 DiscreteChebyshev
 
 basis_symbol(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} = "K⁽ᵅᵝ⁾"
-Polynomials.domain(::Type{<:DiscreteChebyshev{α, β}}) where {α, β} = Polynomials.Interval(-Inf, Inf)
-abcde(::Type{<:DiscreteChebyshev{α,β}})  where {α,β} = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,α,β))
+Polynomials.domain(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} =
+    Polynomials.Interval(-Inf, Inf)
+abcde(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} =
+    NamedTuple{(:a, :b, :c, :d, :e)}((0, 0, 1, α, β))
 
 function k1k0(P::Type{<:DiscreteChebyshev{α,β}}, n::Int) where {α,β}
     α

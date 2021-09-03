@@ -34,75 +34,71 @@ Chebyshev(1.0⋅T₀(x))
 """
 Chebyshev
 
-
-
-basis_symbol(::Type{<:Chebyshev})  = "T"
-Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval{Open, Open}(-1, 1)
-weight_function(::Type{<: Chebyshev}) = x -> one(x)/sqrt(one(x) - x^2)
-generating_function(::Type{<: Chebyshev}) =  (t,x) -> (1-t*x)/(1-2*t*x - t^2)
+basis_symbol(::Type{<:Chebyshev}) = "T"
+Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval{Open,Open}(-1, 1)
+weight_function(::Type{<:Chebyshev}) = x -> one(x) / sqrt(one(x) - x^2)
+generating_function(::Type{<:Chebyshev}) = (t, x) -> (1 - t * x) / (1 - 2 * t * x - t^2)
 function classical_hypergeometric(P::Type{<:Chebyshev}, n, x) where {α}
-    as = (-n,n)
-    bs = (one(eltype(P))/2, )
-    pFq(as, bs, (1-x)/2)
+    as = (-n, n)
+    bs = (one(eltype(P)) / 2,)
+    pFq(as, bs, (1 - x) / 2)
 end
 
 function eval_basis(::Type{Chebyshev}, n, x)
     if abs(x) <= 1
         cos(n * acos(x))
     elseif x > 1
-        cosh(n*acosh(x))
+        cosh(n * acosh(x))
     else
-        (-1)^n * cosh(n*acosh(-x))
+        (-1)^n * cosh(n * acosh(-x))
     end
 end
 
-abcde(::Type{<:Chebyshev}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -1, 0))
+abcde(::Type{<:Chebyshev}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -1, 0))
 
 k0(P::Type{<:Chebyshev}) = one(eltype(P))
-k1k0(P::Type{<:Chebyshev}, n::Int)  = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
+k1k0(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P))
 
-norm2(P::Type{<:Chebyshev}, n::Int) = (iszero(n) ? 1 : 1/2) * pi
-ω₁₀(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P))/sqrt(2) : one(eltype(P)) # √(norm2(n+1)/norm2(n)
+norm2(P::Type{<:Chebyshev}, n::Int) = (iszero(n) ? 1 : 1 / 2) * pi
+ω₁₀(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) / sqrt(2) : one(eltype(P)) # √(norm2(n+1)/norm2(n)
 
-
-leading_term(P::Type{<:Chebyshev}, n::Int)    = iszero(n) ? one(eltype(P)) : (2*one(eltype(P)))^(n-1)
+leading_term(P::Type{<:Chebyshev}, n::Int) =
+    iszero(n) ? one(eltype(P)) : (2 * one(eltype(P)))^(n - 1)
 
 # directly adding these gives a large (20x) speed up in polynomial evaluation
-An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2*one(eltype(P))
+An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P))
 Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
 
 # 
-C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P))/2
-ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P))/4
+C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P)) / 2
+ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P)) / 4
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
-γ̃n(P::Type{<:Chebyshev}, n::Int) = (n==1) ? one(eltype(P))/2 : n*one(eltype(P))/4
+γ̃n(P::Type{<:Chebyshev}, n::Int) = (n == 1) ? one(eltype(P)) / 2 : n * one(eltype(P)) / 4
 
 function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
+    isconstant(p1) && return p2 * p1[0]
+    isconstant(p2) && return p1 * p2[0]
+    assert_same_variable(X, Y)
 
-    isconstant(p1) &&  return p2 * p1[0]
-    isconstant(p2) &&  return p1 * p2[0]
-    assert_same_variable(X,Y)
-
-    R = promote_type(T,S)
+    R = promote_type(T, S)
     z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
     z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
     prod = Polynomials.fastconv(z1, z2)
     ret = Chebyshev(_z_to_c(prod), X)
     return truncate(ret)
-    
 end
 
 ## Defining p' and ∫dp directly speeds things up, and works around an issue with ĉ
-function Polynomials.derivative(p::Chebyshev{T,X,N}, order::Int = 1) where {T,X,N}
+function Polynomials.derivative(p::Chebyshev{T,X,N}, order::Int=1) where {T,X,N}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
-    R  = eltype(one(T)/1)
+    R = eltype(one(T) / 1)
     P = Chebyshev{R,X}
     order == 0 && return P(coeffs(p))
     hasnan(p) && return P([NaN])
     order > length(p) && return zero(P)
 
-    q =  P(copy(coeffs(p)))
+    q = P(copy(coeffs(p)))
     n = length(p)
     der = Vector{R}(undef, n)
 
@@ -116,11 +112,10 @@ function Polynomials.derivative(p::Chebyshev{T,X,N}, order::Int = 1) where {T,X,
     der[1] = q[1]
 
     dp = P(der)
-    return order > 1 ?  derivative(dp, order - 1) : dp
-
+    return order > 1 ? derivative(dp, order - 1) : dp
 end
 
-function Polynomials.integrate(p::P, C::S) where {T, X, P<:Chebyshev{T,X}, S <: Number}
+function Polynomials.integrate(p::P, C::S) where {T,X,P<:Chebyshev{T,X},S<:Number}
     R = promote_type(eltype(one(T) / 1), S)
     if hasnan(p) || isnan(C)
         return ⟒{P}{R,X}([NaN])
@@ -133,15 +128,14 @@ function Polynomials.integrate(p::P, C::S) where {T, X, P<:Chebyshev{T,X}, S <: 
     a2[1] = zero(R)
     a2[2] = p[0]
     a2[3] = p[1] / 4
-    @inbounds for i in 2:n - 1
+    @inbounds for i in 2:(n - 1)
         a2[i + 2] = p[i] / (2 * (i + 1))
         a2[i] -= p[i] / (2 * (i - 1))
     end
-    a2[1] = C - sum(a2[1+i] for i in 2:2:n)
+    a2[1] = C - sum(a2[1 + i] for i in 2:2:n)
 
     return ⟒(P){R,X}(a2)
 end
-
 
 function Polynomials.companion(p::Chebyshev{T}) where {T}
     d = length(p) - 1
@@ -152,8 +146,7 @@ function Polynomials.companion(p::Chebyshev{T}) where {T}
     scl = vcat(1.0, fill(R(√0.5), d - 1))
 
     diag = vcat(√0.5, fill(R(0.5), d - 2))
-    comp = diagm(1 => diag,
-                 -1 => diag)
+    comp = diagm(1 => diag, -1 => diag)
     monics = p.coeffs ./ p.coeffs[end]
     comp[:, end] .-= monics[1:d] .* scl ./ scl[end] ./ 2
     return R.(comp)
@@ -186,13 +179,11 @@ end
 ## --------------------------------------------------
 ##
 
-
 # nodes/weights for fitting a polynomial using Lagrange polynomial
 # cf. https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
-function lagrange_barycentric_nodes_weights(::Type{<: Chebyshev}, n::Int)
-
-    xs = [cospi((j+1/2)/(n+1)) for j in 0:n]
-    ws = [(-1)^j*sinpi((j+1/2)/(n+1)) for j in 0:n]  # XX one loop
+function lagrange_barycentric_nodes_weights(::Type{<:Chebyshev}, n::Int)
+    xs = [cospi((j + 1 / 2) / (n + 1)) for j in 0:n]
+    ws = [(-1)^j * sinpi((j + 1 / 2) / (n + 1)) for j in 0:n]  # XX one loop
 
     xs, ws
 end
@@ -210,9 +201,10 @@ end
 
 ##
 ## fitting coefficients
-cks(val::Val{:interpolating},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
-cks(val::Val{:lsq},::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
-cks(val::Val{:series},::Type{Chebyshev}, f) = cks(val, Chebyshev{Float64}, f)
+cks(val::Val{:interpolating}, ::Type{Chebyshev}, f, n::Int) =
+    cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:lsq}, ::Type{Chebyshev}, f, n::Int) = cks(val, Chebyshev{Float64}, f, n)
+cks(val::Val{:series}, ::Type{Chebyshev}, f) = cks(val, Chebyshev{Float64}, f)
 
 # march forward to compute ck; c0 needs division by 1/2, as used
 # ck = 2/(n+1) ∑ f(xⱼ) ⋅ T_j(xⱼ)
@@ -221,21 +213,21 @@ cks(val::Val{:series},::Type{Chebyshev}, f) = cks(val, Chebyshev{Float64}, f)
 function cks(::Val{:interpolating}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
     R = float(T)
     k = R(0):n
-    ks = (k .+ 1/2)/(n+1)
+    ks = (k .+ 1 / 2) / (n + 1)
     xks = cospi.(ks)
     fs = f.(xks)
-    a = ones(R,n+1)
+    a = ones(R, n + 1)
     b = copy(xks)
-    cks = zeros(R, n+1)
-    cks[0+1] = dot(a, fs)/2
-    cks[1+1] = dot(b, fs)
-    for r = 2:n
-        for j in 1:n+1
-            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+    cks = zeros(R, n + 1)
+    cks[0 + 1] = dot(a, fs) / 2
+    cks[1 + 1] = dot(b, fs)
+    for r in 2:n
+        for j in 1:(n + 1)
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j], -a[j])
         end
-        cks[r+1] = dot(b, fs)
+        cks[r + 1] = dot(b, fs)
     end
-    (2/(n+1))*cks
+    (2 / (n + 1)) * cks
 end
 
 ## use discrete cosine  transformation to compute the ck.
@@ -253,32 +245,31 @@ end
 #     ck
 # end
 
-
 # march forward to compute ck
 # https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
 # ck ≈ 2/n ∑'' f(xⱼ) ⋅ T_k(xⱼ)
 # xⱼ = cos(jπ/n)
 function cks(::Val{:lsq}, P::Type{Chebyshev{T}}, f, n::Int) where {T}
     R = float(T)
-    ks = (R(0):n)/n
+    ks = (R(0):n) / n
     xks = cospi.(ks)
     fs = f.(xks)
-    fs[1],fs[end] = fs[1]/2, fs[end]/2  # handle end point ''s
-  
-    a = ones(R,n+1)
+    fs[1], fs[end] = fs[1] / 2, fs[end] / 2  # handle end point ''s
+
+    a = ones(R, n + 1)
     b = copy(xks)
-    out = zeros(R, n+1)
+    out = zeros(R, n + 1)
 
-    out[0+1] = dot(a, fs)/2
-    out[1+1] = dot(b, fs)
+    out[0 + 1] = dot(a, fs) / 2
+    out[1 + 1] = dot(b, fs)
 
-    for r = 2:n
-        for j in 1:n+1
-            a[j], b[j] = b[j], muladd(xks[j], 2b[j],- a[j])
+    for r in 2:n
+        for j in 1:(n + 1)
+            a[j], b[j] = b[j], muladd(xks[j], 2b[j], -a[j])
         end
-        out[r+1] = dot(b, fs)
+        out[r + 1] = dot(b, fs)
     end
-    (2/n)*out
+    (2 / n) * out
 end
 
 ## Fit to a series
@@ -289,14 +280,13 @@ end
 # other words, Chebyshev series can be a good approximation to near minimax approximations
 # (Chebyshev), which in turn are close to minimax approximations.
 function cks(::Val{:series}, P::Type{Chebyshev{T}}, f) where {T}
-
     n = 3
     thresh = 2^n * 10 * eps(T)
-    
+
     p = fit(Val(:interpolating), P, f, 2^n)
 
     while n < 10
-        if maximum(abs, coeffs(p)[end-2^(n-1):end]) <= thresh
+        if maximum(abs, coeffs(p)[(end - 2^(n - 1)):end]) <= thresh
             break
         end
         p = fit(Val(:interpolating), P, f, 2^n)
@@ -304,8 +294,7 @@ function cks(::Val{:series}, P::Type{Chebyshev{T}}, f) where {T}
         thresh *= 2
     end
 
-    coeffs(chop(p, atol= thresh))
-
+    coeffs(chop(p, atol=thresh))
 end
 
 # ## Chebyshev interpolation of the second kind
@@ -323,11 +312,11 @@ end
 #     j=0
 #     θⱼ = j/n
 #     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
-    
+
 #     j = n
 #     θⱼ = j/n
 #     tot += f(cospi(θⱼ)) * cospi(k*θⱼ)/2
-    
+
 #     for j in 1:n-1
 #         θⱼ = j/n
 #         tot += f(cospi(θⱼ)) * cospi(k*θⱼ)
@@ -335,7 +324,7 @@ end
 
 #     ck = (2/n) * tot
 #     ck
-    
+
 # end
 
 ##
@@ -347,7 +336,6 @@ export MonicChebyshev
 ϟ(::Type{<:MonicChebyshev{T}}) where {T} = Chebyshev{T}
 @register_monic(MonicChebyshev)
 C̃n(P::Type{<:MonicChebyshev}, ::Val{1}) = one(eltype(P))
-
 
 ##
 
@@ -400,8 +388,8 @@ function _z_division(z1::AbstractVector{T}, z2::AbstractVector{S}) where {T,S}
         quo[i] = z1[i]
         quo[end - i + 1] = r
         tmp = r .* z2
-        z1[i:i + length(z2) - 1] .-= tmp
-        z1[j:j + length(z2) - 1] .-= tmp
+        z1[i:(i + length(z2) - 1)] .-= tmp
+        z1[j:(j + length(z2) - 1)] .-= tmp
         i += 1
         j -= 1
     end
@@ -409,9 +397,9 @@ function _z_division(z1::AbstractVector{T}, z2::AbstractVector{S}) where {T,S}
     r = z1[i]
     quo[i] = r
     tmp = r * z2
-    z1[i:i + length(z2) - 1] .-= tmp
+    z1[i:(i + length(z2) - 1)] .-= tmp
     quo ./= scl
-    rem = z1[i + 1:i - 2 + length(z2)]
+    rem = z1[(i + 1):(i - 2 + length(z2))]
     return quo, rem
 end
 
@@ -449,38 +437,37 @@ julia> roots(p)
 """
 ChebyshevU
 
-basis_symbol(::Type{<:ChebyshevU})  = "U"
-weight_function(::Type{<:ChebyshevU})  = x -> sqrt(one(x) - x^2)
-generating_function(::Type{<: ChebyshevU}) = (t, x) -> 1 /  (1 - 2t*x + t^2)
+basis_symbol(::Type{<:ChebyshevU}) = "U"
+weight_function(::Type{<:ChebyshevU}) = x -> sqrt(one(x) - x^2)
+generating_function(::Type{<:ChebyshevU}) = (t, x) -> 1 / (1 - 2t * x + t^2)
 function classical_hypergeometric(P::Type{<:ChebyshevU}, n, x) where {α}
-    as = (-n,n+2)
-    bs = ((3one(eltype(P)))/2, )
-    (n+1)*pFq(as, bs, (1-x)/2)
+    as = (-n, n + 2)
+    bs = ((3one(eltype(P))) / 2,)
+    (n + 1) * pFq(as, bs, (1 - x) / 2)
 end
 
 Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a,:b,:c,:d,:e)}((-1, 0, 1, -3, 0))
+abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -3, 0))
 
 kn(P::Type{<:ChebyshevU}, n::Int) = (2 * one(eltype(P)))^n
-k1k0(P::Type{<:ChebyshevU}, n::Int)  = 2 * one(eltype(P))
-k1k_1(P::Type{<:ChebyshevU}, n::Int)  = 4 * one(eltype(P))
+k1k0(P::Type{<:ChebyshevU}, n::Int) = 2 * one(eltype(P))
+k1k_1(P::Type{<:ChebyshevU}, n::Int) = 4 * one(eltype(P))
 
-norm2(P::Type{<:ChebyshevU}, n::Int) = pi/2
+norm2(P::Type{<:ChebyshevU}, n::Int) = pi / 2
 ω₁₀(P::Type{<:ChebyshevU}, n::Int) = one(eltype(P))
-
 
 # directly adding these gives a 5x speed up in polynomial evaluation
 An(::Type{<:ChebyshevU}, n::Int) = 2
 Bn(::Type{<:ChebyshevU}, n::Int) = 0
 Cn(::Type{<:ChebyshevU}, n::Int) = 1
 # work around cancellation
-ĉ̃n(P::Type{<:ChebyshevU}, n::Int)  = -one(eltype(P)) /(4n+4)
+ĉ̃n(P::Type{<:ChebyshevU}, n::Int) = -one(eltype(P)) / (4n + 4)
 
 function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
-    isconstant(p) &&  return q * p[0]
-    isconstant(q) &&  return p * q[0]
-    assert_same_variable(X,Y)
+    isconstant(p) && return q * p[0]
+    isconstant(q) && return p * q[0]
+    assert_same_variable(X, Y)
 
     M, N = degree(p), degree(q)
     R = promote_type(T, S)
@@ -491,9 +478,9 @@ function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where
         pᵢ = p[i]
         for j in 0:N
             qⱼ = q[j]
-            pᵢqⱼ = pᵢ*qⱼ
-            for k in max(i,j)-min(i,j):2:i+j
-                out[k+1] += pᵢqⱼ
+            pᵢqⱼ = pᵢ * qⱼ
+            for k in (max(i, j) - min(i, j)):2:(i + j)
+                out[k + 1] += pᵢqⱼ
             end
         end
     end
@@ -501,12 +488,9 @@ function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where
     ChebyshevU{R,X}(out)
 end
 
-
-
 ## σ_P = σ_Q:e
-Base.convert(::Type{Q}, p::P) where {Q <: Chebyshev, P<: ChebyshevU} = _convert_cop(Q,p)
-Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_cop(Q,p)
-
+Base.convert(::Type{Q}, p::P) where {Q<:Chebyshev,P<:ChebyshevU} = _convert_cop(Q, p)
+Base.convert(::Type{Q}, p::P) where {Q<:ChebyshevU,P<:Chebyshev} = _convert_cop(Q, p)
 
 # function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
 
@@ -531,11 +515,11 @@ Base.convert(::Type{Q}, p::P) where {Q <: ChebyshevU, P<: Chebyshev} = _convert_
 
 ## return xs ws
 function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevU}, n::Int)
-    xs = cospi.((0:n)/n)
-    ws = ones(eltype(P), n+1)
+    xs = cospi.((0:n) / n)
+    ws = ones(eltype(P), n + 1)
     ws[1] /= 2
     ws[end] /= 2
-    for i in  2:2:n+1
+    for i in 2:2:(n + 1)
         ws[i] *= -1
     end
     xs, ws
@@ -547,12 +531,8 @@ export MonicChebyshevU
 ϟ(::Type{<:MonicChebyshevU{T}}) where {T} = ChebyshevU{T}
 @register_monic(MonicChebyshevU)
 
-
 @register0 OrthonormalChebyshevU AbstractCCOP0
 export OrthonormalChebyshevU
 ϟ(::Type{<:OrthonormalChebyshevU}) = ChebyshevU
 ϟ(::Type{<:OrthonormalChebyshevU{T}}) where {T} = ChebyshevU{T}
 @register_orthonormal(OrthonormalChebyshevU)
-
-
-

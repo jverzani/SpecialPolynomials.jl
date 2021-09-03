@@ -2,8 +2,8 @@
     Int64[1, 1, 1, 1],
     Float32[1, -4, 2],
     ComplexF64[1 - 1im, 2 + 3im],
-    [3 // 4, -2 // 1, 1 // 1]
-                                      ]
+    [3 // 4, -2 // 1, 1 // 1],
+]
     p = Bernstein(coeff)
     @test p.coeffs == coeff
     @test coeffs(p) == coeff
@@ -12,7 +12,7 @@
     @test length(p) == length(coeff)
     @test size(p) == size(coeff)
     @test size(p, 1) == size(coeff, 1)
-    @test typeof(p).parameters[end-1] == eltype(coeff)
+    @test typeof(p).parameters[end - 1] == eltype(coeff)
     @test eltype(p) == eltype(coeff)
 end
 
@@ -22,22 +22,22 @@ end
     @test p.coeffs == [1, 2]
 
     # Different type
-    p = Bernstein{3, Float64}(ones(Int32, 4))
+    p = Bernstein{3,Float64}(ones(Int32, 4))
     @test p.coeffs == ones(Float64, 4)
 
-    p = Bernstein{1, Int}(30)
+    p = Bernstein{1,Int}(30)
     @test p.coeffs == [30, 30]
 
-    p = zero(Bernstein{1, Int})
+    p = zero(Bernstein{1,Int})
     @test p.coeffs == Int[]
 
-    p = zero(Bernstein{5, Int})
-    @test length(p.coeffs)  ==  0
+    p = zero(Bernstein{5,Int})
+    @test length(p.coeffs) == 0
 
-    p = one(Bernstein{1, Int})
-    @test p.coeffs == ones(Int,  2)
+    p = one(Bernstein{1,Int})
+    @test p.coeffs == ones(Int, 2)
 
-    @test iszero(Bernstein{2, Int}(Int[]))
+    @test iszero(Bernstein{2,Int}(Int[]))
 
     p0 = Bernstein([0])
     @test iszero(p0)
@@ -45,7 +45,7 @@ end
 end
 
 @testset "Roots" begin
-    r = [1/4, 1/2, 3/4]
+    r = [1 / 4, 1 / 2, 3 / 4]
     c = fromroots(Bernstein, r)
     @test roots(c) ≈ r
 
@@ -56,18 +56,17 @@ end
 
 @testset "Values" begin
     c1 = Bernstein([2.5, 2.0, 1.5]) # 1 + 2x + 3x^2
-    x =  [1/4, 1/2, 3/4]
+    x = [1 / 4, 1 / 2, 3 / 4]
     expected = [2.25, 2, 1.75]
     @test c1.(x) ≈ expected
 end
 
 @testset "Conversions" begin
     c1 = Bernstein([2.5, 2.0, 1.5])
-    @test c1 ≈ Polynomial([2.5,  -1.0])
+    @test c1 ≈ Polynomial([2.5, -1.0])
     p = convert(Polynomial{Float64}, c1)
     @test p == Polynomial{Float64}([2.5, -1.0])
-    @test convert(Bernstein{2, Float64}, p) == c1
-
+    @test convert(Bernstein{2,Float64}, p) == c1
 end
 
 @testset "Mapdomain" begin
@@ -84,13 +83,12 @@ end
     # multiplication
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([3, 2, 1])
-    @test convert(Polynomial, c1 * c2) ≈ convert(Polynomial, c1) * convert(Polynomial,c2)
+    @test convert(Polynomial, c1 * c2) ≈ convert(Polynomial, c1) * convert(Polynomial, c2)
 
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([1, 2, 3, 4])
-    p1, p2 = convert(Polynomial,c1), convert(Polynomial,c2)
-    @test p1*p2 ≈ convert(Polynomial, c1 * c2)
-
+    p1, p2 = convert(Polynomial, c1), convert(Polynomial, c2)
+    @test p1 * p2 ≈ convert(Polynomial, c1 * c2)
 
     c1 = Bernstein([1, 2, 3])
     c2 = Bernstein([3, 2, 1])
@@ -104,13 +102,12 @@ end
 
     @test d.coeffs ≈ [1.5]
     @test r.coeffs ≈ [-1.5]
-    z = d *  c1  +  r - c2
-    @test coeffs(z)  ==  zeros(length(z))
-
+    z = d * c1 + r - c2
+    @test coeffs(z) == zeros(length(z))
 
     # GCD
-    c1 = Bernstein(Float64[1//1, 2, 3])
-    c2 = Bernstein(Float64[3//1, 2, 1])
+    c1 = Bernstein(Float64[1 // 1, 2, 3])
+    c2 = Bernstein(Float64[3 // 1, 2, 1])
     @test gcd(c1, c2) ≈ Bernstein([4.0])
 
     for i in 0:5, j in 0:5
@@ -128,7 +125,6 @@ end
         @test res ≈ target
     end
 end
-
 
 @testset "integrals derivatives" begin
     c1 = one(Bernstein{1,Int})
@@ -149,11 +145,10 @@ end
     end
 
     for i in 1:10
-        p = Bernstein{5, Float64}(rand(1:5, 6))
+        p = Bernstein{5,Float64}(rand(1:5, 6))
         pp = p - (integrate ∘ derivative)(p)
         qq = p - (derivative ∘ integrate)(p)
         @test degree(truncate(pp, atol=1e-13)) <= 0
-        @test degree(truncate(qq, atol=1e-13)) <  0
+        @test degree(truncate(qq, atol=1e-13)) < 0
     end
-
 end

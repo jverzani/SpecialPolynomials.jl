@@ -2,8 +2,6 @@
 @register0 Hermite AbstractCCOP0
 export Hermite
 
-
-
 """
     Hermite
 
@@ -42,87 +40,83 @@ julia> [basis(ChebyshevHermite, i)(x) for i in 0:5]
 """
 Hermite
 
-
 basis_symbol(::Type{<:Hermite}) = "H"
 Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
 
-abcde(::Type{<:Hermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((1,0,0,-2,0))
+abcde(::Type{<:Hermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, -2, 0))
 
 k0(P::Type{<:Hermite}) = one(eltype(P))
 function k1k0(P::Type{<:Hermite}, k::Int)
-    val = 2*one(eltype(P))
+    val = 2 * one(eltype(P))
     val
 end
 
-norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n+1)
-weight_function(::Type{<: Hermite})  = x -> exp(-x^2)
-generating_function(::Type{<:Hermite}) = (t, x)  -> exp(2*t*x - t^2)
+norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n + 1)
+weight_function(::Type{<:Hermite}) = x -> exp(-x^2)
+generating_function(::Type{<:Hermite}) = (t, x) -> exp(2 * t * x - t^2)
 function classical_hypergeometric(::Type{<:Hermite}, n, x)
-    as = iseven(n) ? (-n ÷ 2, -(n-1)/2) : (-n/2, -(n-1)÷2)
+    as = iseven(n) ? (-n ÷ 2, -(n - 1) / 2) : (-n / 2, -(n - 1) ÷ 2)
     bs = ()
     (2x)^n * pFq(as, bs, -inv(x)^2)
 end
 
-gauss_nodes_weights(p::Type{P}, n) where {P <: Hermite} =
-    FastGaussQuadrature.gausshermite(n)
-
+gauss_nodes_weights(p::Type{P}, n) where {P<:Hermite} = FastGaussQuadrature.gausshermite(n)
 
 ## Overrides
 # Use override here, as we get  An,Bn,Cn =  1, 0,0, otherwise
-An(P::Type{<:Hermite}, n::Int) = 2*one(eltype(P))
+An(P::Type{<:Hermite}, n::Int) = 2 * one(eltype(P))
 Bn(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
-Cn(P::Type{<:Hermite}, n::Int) = 2*n*one(eltype(P))
+Cn(P::Type{<:Hermite}, n::Int) = 2 * n * one(eltype(P))
 
-β̃n(P::Type{<:Hermite},  n::Int) = zero(eltype(P))
-γ̃n(P::Type{<:Hermite},  n::Int) = zero(eltype(P))
+β̃n(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
+γ̃n(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
 b̂̃n(P::Type{<:Hermite}, ::Val{N}) where {N} = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
-ĉ̃n(P::Type{<:Hermite}, ::Val{N}) where {N}  = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
+ĉ̃n(P::Type{<:Hermite}, ::Val{N}) where {N} = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
 
 ## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
 
-Base.convert(P::Type{<:Hermite}, q::Polynomial) = connection(P,q)
-function Base.iterate(o::Connection{P, Q}, state=nothing) where
-    {P<:Hermite,
-     Q<:Polynomials.StandardBasisPolynomial}
-
+Base.convert(P::Type{<:Hermite}, q::Polynomial) = connection(P, q)
+function Base.iterate(
+    o::Connection{P,Q},
+    state=nothing,
+) where {P<:Hermite,Q<:Polynomials.StandardBasisPolynomial}
     k, n = o.k, o.n
 
     if state == nothing
         i = k
         j = 0
         i > n && return nothing
-        val = __hermite_lambda(i,k)
+        val = __hermite_lambda(i, k)
     elseif state[1] + 2 > n # terminate
         return nothing
     else
-        j,val1 = state
+        j, val1 = state
         #val1 *= (i+1)*(i+2)/4/(j+1/4)
         j += 1
         i = k + 2j
-        val = __hermite_lambda(i,k)
+        val = __hermite_lambda(i, k)
     end
 
-    return(i, val), (j, val)
+    return (i, val), (j, val)
 end
 
-function __hermite_lambda(n,k)
-    val = gamma(1+n)/2^n
-    val /= gamma(1+k)
-    val /= gamma(1 + (n-k)/2)
+function __hermite_lambda(n, k)
+    val = gamma(1 + n) / 2^n
+    val /= gamma(1 + k)
+    val /= gamma(1 + (n - k) / 2)
     val
 end
-
 
 # 2x more performant
 function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
     # int H_n = 1/(n+1) H_{n+1}
-    R = eltype(one(T)/1)
+    R = eltype(one(T) / 1)
     d = degree(p)
-    qs = zeros(R, d+2)
+    qs = zeros(R, d + 2)
 
     for i in 0:d
-        qs[i+2] = p[i]/(2(i+1))
+        qs[i + 2] = p[i] / (2(i + 1))
     end
 
     q = ⟒(P){R,X}(qs)
@@ -143,11 +137,7 @@ export MonicHermite
 
 pqr_start(::Type{<:MonicHermite}) = 0
 pqr_symmetry(::Type{<:MonicHermite}) = true
-pqr_weight(P::Type{<:MonicHermite}, n, x, dπx) = (one(P)*2)*exp(-x^2)/(dπx*dπx)
-
-
-
-
+pqr_weight(P::Type{<:MonicHermite}, n, x, dπx) = (one(P) * 2) * exp(-x^2) / (dπx * dπx)
 
 ##
 ## --------------------------------------------------
@@ -166,29 +156,28 @@ basis_symbol(::Type{<:ChebyshevHermite}) = "Hₑ"
 Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
 
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
-abcde(::Type{<:ChebyshevHermite})  = NamedTuple{(:a,:b,:c,:d,:e)}((0,0,1,-1,0))
+abcde(::Type{<:ChebyshevHermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((0, 0, 1, -1, 0))
 
-kn(P::Type{<:ChebyshevHermite}, n::Int) =  one(eltype(P))
+kn(P::Type{<:ChebyshevHermite}, n::Int)    = one(eltype(P))
 k1k0(P::Type{<:ChebyshevHermite}, k::Int)  = one(eltype(P))
-k1k_1(P::Type{<:ChebyshevHermite}, k::Int) =  one(eltype(P))
-ismonic(::Type{<:ChebyshevHermite}) = true
+k1k_1(P::Type{<:ChebyshevHermite}, k::Int) = one(eltype(P))
+ismonic(::Type{<:ChebyshevHermite})        = true
 
-weight_function(P::Type{ChebyshevHermite})  = x -> exp(-(one(eltype(P))*x^2)/2)
-generating_function(::Type{<:ChebyshevHermite}) = (t, x)  -> exp(t*x - t^2/2)
+weight_function(P::Type{ChebyshevHermite}) = x -> exp(-(one(eltype(P)) * x^2) / 2)
+generating_function(::Type{<:ChebyshevHermite}) = (t, x) -> exp(t * x - t^2 / 2)
 function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
-    2^(-n/2)*classical_hypergeometric(Hermite, n,  x/sqrt(2))
+    2^(-n / 2) * classical_hypergeometric(Hermite, n, x / sqrt(2))
 end
 
-
-function  gauss_nodes_weights(P::Type{<:ChebyshevHermite}, n)  where {α,β}
+function gauss_nodes_weights(P::Type{<:ChebyshevHermite}, n) where {α,β}
     xs, ws = glaser_liu_rokhlin_gauss_nodes(basis(ChebyshevHermite, n))
     xs, ws
 end
 
 pqr_start(::Type{<:ChebyshevHermite}) = 0
 pqr_symmetry(::Type{<:ChebyshevHermite}) = true
-pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =  sqrt(2)*gamma(1+n)*sqrt(pi)/(dπx)^2
-
+pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =
+    sqrt(2) * gamma(1 + n) * sqrt(pi) / (dπx)^2
 
 ## Overrides
 #An(P::Type{<:ChebyshevHermite}, n::Int) = one(eltype(P))
@@ -201,42 +190,46 @@ pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =  sqrt(2)*gamma(1+n)*sqrt(p
 
 ##  Multiplication
 ## TODO: work  on  types
-AbstractHermite{T,X} = Union{Hermite{T,X}, ChebyshevHermite{T,X}}
+AbstractHermite{T,X} = Union{Hermite{T,X},ChebyshevHermite{T,X}}
 
 # Default is slow. Instead
 # directly use a linearization formula from
 # https://arxiv.org/pdf/1901.01648.pdf
 # and  for Hermite, Hn(x) =2^(n/2)Hₑ_n(sqrt(2) x)
 # so Hm⋅Hn = ∑ C_{m,n,j} 2^j H_{m+n-2j}
-function ⊗(::Type{<:AbstractHermite}, p::P, q::Q) where {T,X,S,Y, P<:AbstractHermite{T,X}, Q<:AbstractHermite{S,Y}}
-    R = eltype(one(promote_type(T,S))/1)
-    N,M = degree(p), degree(q)
+function ⊗(
+    ::Type{<:AbstractHermite},
+    p::P,
+    q::Q,
+) where {T,X,S,Y,P<:AbstractHermite{T,X},Q<:AbstractHermite{S,Y}}
+    R = eltype(one(promote_type(T, S)) / 1)
+    N, M = degree(p), degree(q)
     N == -1 && return zero(⟒(P){R,Y})
     M == -1 && return zero(⟒(P){R,X})
-    N == 0  && return q * p[0]
-    M == 0  && return p * q[0]
+    N == 0 && return q * p[0]
+    M == 0 && return p * q[0]
     X != Y && throw(ArgumentError("Variable names must match"))
 
-    as =  zeros(R, 1+N+M)
-    for i  in eachindex(p)
+    as = zeros(R, 1 + N + M)
+    for i in eachindex(p)
         pᵢ = p[i]
         iszero(pᵢ) && continue
-        for  j in eachindex(q)
+        for j in eachindex(q)
             qⱼ = q[j]
-            pᵢqⱼ = pᵢ*qⱼ
-            iszero(qⱼ) &&  continue
+            pᵢqⱼ = pᵢ * qⱼ
+            iszero(qⱼ) && continue
             λᵤ = one(R)
-            for  k in 0:min(i,j)
-                as[1 + i  +  j - 2k] += pᵢqⱼ * λᵤ 
-                λᵤ *= (i-k) * (j-k) / (k+1) * hermite_α(P)
+            for k in 0:min(i, j)
+                as[1 + i + j - 2k] += pᵢqⱼ * λᵤ
+                λᵤ *= (i - k) * (j - k) / (k + 1) * hermite_α(P)
             end
         end
     end
     ⟒(P){R,X}(as)
 end
-                    
+
 hermite_α(P::Type{<:ChebyshevHermite}) = 1
-hermite_α(P::Type{<:Hermite}) = 2 
+hermite_α(P::Type{<:Hermite}) = 2
 
 #⊗(p::Hermite, q::Hermite) = linearization_product(p, q)
 #⊗(p::ChebyshevHermite, q::ChebyshevHermite) = linearization_product(p, q)
@@ -245,7 +238,7 @@ hermite_α(P::Type{<:Hermite}) = 2
 
 #     l, m, n = o.l, o.m, o.n
 #     l  > m + n && return nothing
-    
+
 #     if state == nothing
 
 #         #k =  0
@@ -274,10 +267,9 @@ hermite_α(P::Type{<:Hermite}) = 2
 #         end
 
 #     end
-                
+
 #     return (p,q,val), (j, p, q, val)
 # end
-
 
 # #  https://arxiv.org/pdf/1901.01648.pdf equation (74)
 # function linearization_α(P::Type{<:AbstractHermite}, R, j, l, n, m)

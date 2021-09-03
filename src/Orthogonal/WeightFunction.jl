@@ -124,60 +124,57 @@ WeightFunction
 
 ## We need w, π
 ## w a function; π a *monic* system (ismonic(P) == true)
-weight_function(::Type{<:AbstractWeightFunction}) = throw(ArgumentError("No default method"))
+weight_function(::Type{<:AbstractWeightFunction}) =
+    throw(ArgumentError("No default method"))
 ϟ(P::Type{<:AbstractWeightFunction}) = throw(ArgumentError("No default method"))
 
-Polynomials.domain(W::Type{<:AbstractWeightFunction}) = (domain∘ϟ)(W)
+Polynomials.domain(W::Type{<:AbstractWeightFunction}) = (domain ∘ ϟ)(W)
 basis_symbol(::Type{<:AbstractWeightFunction}) = "W"
-
-
 
 ## An,Bn,Cn for the monic orthogonal polynomials for the given weight function
 ## We  have An=1;  α(n) =  -Bn(n); β(n) = Cn(n)
-An(::Type{W}, n) where {W <: AbstractWeightFunction} = one(eltype(W))
+An(::Type{W}, n) where {W<:AbstractWeightFunction} = one(eltype(W))
 
-function Bn(::Type{W}, k::Int) where {W <:AbstractWeightFunction}
-
+function Bn(::Type{W}, k::Int) where {W<:AbstractWeightFunction}
     P = ϟ(W)
 
     if k == 0
-        ν₀, ν₁ =  modified_moment(W, 0), modified_moment(W, 1)
+        ν₀, ν₁ = modified_moment(W, 0), modified_moment(W, 1)
         out = Bn(P, 0) + ν₁ / ν₀
     else
-        out = Bn(P, k) - sigma(W, k-1, k)/sigma(W, k-1, k-1)  + sigma(W, k, k+1)/sigma(W, k, k)
+        out =
+            Bn(P, k) - sigma(W, k - 1, k) / sigma(W, k - 1, k - 1) +
+            sigma(W, k, k + 1) / sigma(W, k, k)
     end
     -out
-
 end
 
-function Cn(::Type{W}, k::Int) where  {W <: AbstractWeightFunction}
+function Cn(::Type{W}, k::Int) where {W<:AbstractWeightFunction}
     iszero(k) && return innerproduct(W, one, one)
-    (sigma(W, k, k)/sigma(W, k-1, k-1))
+    (sigma(W, k, k) / sigma(W, k - 1, k - 1))
 end
-
 
 @memoize function sigma(W::Type{<:AbstractWeightFunction}, k, l)
-
     P = ϟ(W)
 
     T = eltype(W)
-    k == -1 && return zero(T)/1
-    k == 0  && return modified_moment(W, l) # ν_l = ∫π_l dw
-    k > l   && return zero(T)/1
+    k == -1 && return zero(T) / 1
+    k == 0 && return modified_moment(W, l) # ν_l = ∫π_l dw
+    k > l && return zero(T) / 1
 
     # otherwise get through recursion (this uses Gautschi's formula, P&T have apparent error
-    sigma(W, k-1, l+1) - (Bn(W, k-1) - Bn(P, l)) * sigma(W, k-1, l) - (Cn(W, k-1))*sigma(W, k-2, l) + Cn(P,l)*sigma(W, k-1, l-1)
-
+    sigma(W, k - 1, l + 1) - (Bn(W, k - 1) - Bn(P, l)) * sigma(W, k - 1, l) -
+    (Cn(W, k - 1)) * sigma(W, k - 2, l) + Cn(P, l) * sigma(W, k - 1, l - 1)
 end
 
 ## Compute the modified moment
 ## v_j =  ∫ π_j ω(x) dx
 ## (The moment is ∫ x^j ω(x) dx)
 ## This can  be overridden when an exact calculuation is known, e.g.:
-function modified_moment(::Type{W},  j::Int) where {W <: AbstractWeightFunction}
+function modified_moment(::Type{W}, j::Int) where {W<:AbstractWeightFunction}
     P = ϟ(W)
     @assert ismonic(P)
-    modified_moment(basis(P,j), W)
+    modified_moment(basis(P, j), W)
 end
 
 @memoize function modified_moment(πⱼ::AbstractOrthogonalPolynomial, W)
@@ -199,6 +196,6 @@ function ∫(fdw, P; kwargs...)
     if last(bounds_types(dom)) == Open
         b -= eps(float(one(b)))
     end
-    out,err = quadgk(fdw, a, b;  kwargs...)
+    out, err = quadgk(fdw, a, b; kwargs...)
     out
 end

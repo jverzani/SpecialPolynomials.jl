@@ -4,7 +4,8 @@ export Basis
 
 ## Has An(P), Bn(P), Cn(P)
 abstract type AbstractOrthogonalPolynomial{T,X} <: AbstractSpecialPolynomial{T,X} end
-abstract type AbstractContinuousOrthogonalPolynomial{T,X} <: AbstractOrthogonalPolynomial{T,X} end
+abstract type AbstractContinuousOrthogonalPolynomial{T,X} <:
+              AbstractOrthogonalPolynomial{T,X} end
 abstract type AbstractDiscreteOrthogonalPolynomial{T,X} <: AbstractOrthogonalPolynomial{T,X} end
 
 """
@@ -25,21 +26,26 @@ A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx + 
 """
 AbstractOrthogonalPolynomial
 
-
 ##
 ## --------------------------------------------------
 ##
-function Polynomials.fromroots(P::Type{<:AbstractOrthogonalPolynomial}, roots::AbstractVector; var::Polynomials.SymbolLike = :x)
+function Polynomials.fromroots(
+    P::Type{<:AbstractOrthogonalPolynomial},
+    roots::AbstractVector;
+    var::Polynomials.SymbolLike=:x,
+)
     x = variable(P, var)
-    p =  prod(x - r for r in roots)
+    p = prod(x - r for r in roots)
 end
 
-
 Base.convert(P::Type{<:AbstractOrthogonalPolynomial}, c::Number) = c * one(P)
-Base.one(P::Type{<:AbstractOrthogonalPolynomial}, var::Polynomials.SymbolLike=:x) =   basis(P,0, var) / k0(P)
+Base.one(P::Type{<:AbstractOrthogonalPolynomial}, var::Polynomials.SymbolLike=:x) =
+    basis(P, 0, var) / k0(P)
 
-Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.SymbolLike=:x) =
-    (basis(P,1,var) / k0(P) - Bn(P,0)) / An(P,0)
+Polynomials.variable(
+    P::Type{<:AbstractOrthogonalPolynomial},
+    var::Polynomials.SymbolLike=:x,
+) = (basis(P, 1, var) / k0(P) - Bn(P, 0)) / An(P, 0)
 
 ## Evaluation
 
@@ -47,19 +53,19 @@ Polynomials.variable(P::Type{<:AbstractOrthogonalPolynomial},  var::Polynomials.
 function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) where {T,S}
     N = length(cs)
     p₀ = k0(P)
-    R = promote_type(promote_type(T,S), typeof(An(P,0)))
+    R = promote_type(promote_type(T, S), typeof(An(P, 0)))
     N == 0 && return zero(R)
     N == 1 && return (cs[1] * p₀) * one(R)
 
     Δ0::R = cs[end - 1]
     Δ1::R = cs[end]
-    @inbounds for i in N-1:-1:2
-        Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i-1), Δ0 + Δ1 * muladd(x, An(P,i-1),Bn(P,i-1))
+    @inbounds for i in (N - 1):-1:2
+        Δ0, Δ1 =
+            cs[i - 1] - Δ1 * Cn(P, i - 1), Δ0 + Δ1 * muladd(x, An(P, i - 1), Bn(P, i - 1))
     end
-    p₁ =  muladd(x, An(P,0),  Bn(P,0)) * p₀
-    return Δ0 * p₀  + Δ1 * p₁
+    p₁ = muladd(x, An(P, 0), Bn(P, 0)) * p₀
+    return Δ0 * p₀ + Δ1 * p₁
 end
-
 
 ## Connection/Linearization
 
@@ -75,7 +81,6 @@ struct Linearization{P,V}
     m::Int
 end
 
-
 ## Collect facts  about  the orthogonal polynomial system
 
 """
@@ -85,8 +90,9 @@ end
 For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) dt = 0` when `n` and `m` are not equal.
 
 """
-weight_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
-weight_function(::P) where {P <: AbstractOrthogonalPolynomial} = weight_function(P)
+weight_function(::Type{P}) where {P<:AbstractOrthogonalPolynomial} =
+    throw(MethodError("Not implemented"))
+weight_function(::P) where {P<:AbstractOrthogonalPolynomial} = weight_function(P)
 
 """
     generating_function(p)
@@ -94,24 +100,24 @@ weight_function(::P) where {P <: AbstractOrthogonalPolynomial} = weight_function
 
 The generating function is a function defined by: `(t,x) -> sum(t^n Pn(x) for n in 0:oo)`.
 """
-generating_function(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = throw(MethodError("Not implemented"))
-generating_function(::P) where {P <: AbstractOrthogonalPolynomial} = generating_function(P)
-
+generating_function(::Type{P}) where {P<:AbstractOrthogonalPolynomial} =
+    throw(MethodError("Not implemented"))
+generating_function(::P) where {P<:AbstractOrthogonalPolynomial} = generating_function(P)
 
 """
     leading_term(::Type{P},n)
 
 Return leading term of `basis(P,n)` in the  standard basis. By default this is generated through the three-point recursion.
 """
-function leading_term(::Type{P}, n::Int) where {P <: AbstractOrthogonalPolynomial}
+function leading_term(::Type{P}, n::Int) where {P<:AbstractOrthogonalPolynomial}
     n < 0 && throw(ArgumentError("n must be a non-negative integer"))
     n == 0 && return one(eltype(P))
-    prod(An(P,i) for i in n-1:-1:0)
+    prod(An(P, i) for i in (n - 1):-1:0)
 end
 
 # is P a monic polynomial system?
-ismonic(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
-isorthonormal(::Type{P}) where {P <: AbstractOrthogonalPolynomial} = false
+ismonic(::Type{P}) where {P<:AbstractOrthogonalPolynomial} = false
+isorthonormal(::Type{P}) where {P<:AbstractOrthogonalPolynomial} = false
 
 # cf. https://en.wikipedia.org/wiki/Orthogonal_polynomials#Recurrence_relation
 # Orthogonal polynomials have a three-point recursion formula
@@ -133,7 +139,8 @@ If the polynomials are monic, this is usually parameterized as:
 
 These functions are used through recursion when evaluating the polynomials, converting to `Polynomial` format, for constructing the Vandermonde matrix, for construction the Jacobi matrix, and elsewhere.
 """
-An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
+An(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial} =
+    throw(ArgumentError("No default method"))
 
 """
     Bn(::Type{P},n)
@@ -141,8 +148,8 @@ An(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError
 
 cf. [`An()`](@ref)
 """
-Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
-
+Bn(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial} =
+    throw(ArgumentError("No default method"))
 
 """
     Cn(::Type{P},n)
@@ -150,8 +157,8 @@ Bn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError
 
 cf. [`An()`](@ref)
 """
-Cn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError("No default method"))
-
+Cn(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial} =
+    throw(ArgumentError("No default method"))
 
 ## For monic polynomials, we have
 ## π_{n+1} = (x - α̃(n)) π_{n} - β̃(n)π_{n-1}
@@ -160,7 +167,7 @@ Cn(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = throw(ArgumentError
 
 cf. [`An()`](@ref)
 """
-π̃αn(P::Type{<:AbstractOrthogonalPolynomial}, n)        = - Bn(P,n) / An(P,n)
+π̃αn(P::Type{<:AbstractOrthogonalPolynomial}, n) = -Bn(P, n) / An(P, n)
 
 """
     β̃n(::Type{P}, n)
@@ -168,20 +175,19 @@ cf. [`An()`](@ref)
 cf. [`An()`](@ref)
 """
 function π̃βn(P::Type{<:AbstractOrthogonalPolynomial}, n)
-    iszero(n) &&  return innerproduct(P, one, one)
-    Cn(P,n)/An(P,n)/An(P, n-1)
+    iszero(n) && return innerproduct(P, one, one)
+    Cn(P, n) / An(P, n) / An(P, n - 1)
 end
-
 
 """
     monic(p::AbstractOrthogonalPolynomial)
 
 Return `p` as a monic polynomial *when* represented in the standard basis. Returns the zero polynomial if the degree of `p` is `-1`.
 """
-function monic(p::P) where {P <: AbstractOrthogonalPolynomial}
+function monic(p::P) where {P<:AbstractOrthogonalPolynomial}
     n = degree(p)
-    n == -1 && return ⟒(P)(0/one(eltype(p)))
-    p / (p[end]*leading_term(P, n))
+    n == -1 && return ⟒(P)(0 / one(eltype(p)))
+    p / (p[end] * leading_term(P, n))
 end
 
 ##
@@ -196,11 +202,12 @@ The  command `basis(P,n, [var])` realizes the polynomial. `Basis(P,n)` does  not
 struct Basis{Π}
     n::Int
 end
-Basis(P,n) =  Basis{P}(n)
-Base.show(io::IO,  mimetype::MIME"text/plain", b::Basis{P})  where  {P} = print(io, "$(P)($(b.n))")
+Basis(P, n) = Basis{P}(n)
+Base.show(io::IO, mimetype::MIME"text/plain", b::Basis{P}) where {P} =
+    print(io, "$(P)($(b.n))")
 
-function  innerproduct(::P,  f::Basis{P}, g::Basis{P}) where {P}
-    n,m  = f.n, g.n
+function innerproduct(::P, f::Basis{P}, g::Basis{P}) where {P}
+    n, m = f.n, g.n
     if n == m
         return norm2(P, n)
     else
@@ -208,15 +215,14 @@ function  innerproduct(::P,  f::Basis{P}, g::Basis{P}) where {P}
     end
 end
 
-
-
 ##
 ## Vandermonde matrix can be generated through the 3-point recursion formula
 ##
-function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
-    {P <:  AbstractOrthogonalPolynomial,
-     T <: Number}
-
+function Polynomials.vander(
+    p::Type{P},
+    x::AbstractVector{T},
+    n::Integer,
+) where {P<:AbstractOrthogonalPolynomial,T<:Number}
     A = Matrix{T}(undef, length(x), n + 1)
 
     # for i in 0:n
@@ -224,19 +230,19 @@ function Polynomials.vander(p::Type{P}, x::AbstractVector{T}, n::Integer) where
     # end
     # return A
 
-    A[:, 1] .= basis(P,0)(one(T)) #P0(P, one(T))
+    A[:, 1] .= basis(P, 0)(one(T)) #P0(P, one(T))
 
     if n > 0
-        A[:, 2] .= basis(P,1).(x) #P1(P, x)
-        @inbounds for i in 1:n-1
+        A[:, 2] .= basis(P, 1).(x) #P1(P, x)
+        @inbounds for i in 1:(n - 1)
             # `P_{n+1} = (A_n x + B_n) P_{n} - C_n P_{n-1}`
-            n′ = i+1
-            A[:, n′+1] = (An(p,n′) * x .+ Bn(p,n′)) .* A[:, n′] .- (Cn(p,n′) * A[:, n′ - 1])
+            n′ = i + 1
+            A[:, n′ + 1] =
+                (An(p, n′) * x .+ Bn(p, n′)) .* A[:, n′] .- (Cn(p, n′) * A[:, n′ - 1])
         end
     end
 
     return A
-
 end
 
 # Jacobi matrix
@@ -252,10 +258,13 @@ the square root of the  `betaᵢ` values. This matrix has the properties that
 * the normalized eigenvectors have initial term proportional to the weights in a quadrature formula
 
 """
-function jacobi_matrix(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
-    LinearAlgebra.SymTridiagonal([π̃αn(P,i) for i in 0:n-1], [sqrt(π̃βn(P,i)) for i in 1:n-1])
+function jacobi_matrix(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial}
+    LinearAlgebra.SymTridiagonal(
+        [π̃αn(P, i) for i in 0:(n - 1)],
+        [sqrt(π̃βn(P, i)) for i in 1:(n - 1)],
+    )
 end
-jacobi_matrix(p::P, n) where {P <: AbstractOrthogonalPolynomial} = jacobi_matrix(P,n)
+jacobi_matrix(p::P, n) where {P<:AbstractOrthogonalPolynomial} = jacobi_matrix(P, n)
 
 ##  Compute weights and nodes for quadrature
 """
@@ -270,18 +279,16 @@ For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algori
 For others the Jacobi matrix, J_n, for which the Golub-Welsch] algorithm The nodes  are computed from the eigenvalues of J_n, the weights a scaling of the first component of the normalized eigen vectors (β_0 * [v[1] for v in vs])
 
 """
-function gauss_nodes_weights(p::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
+function gauss_nodes_weights(p::Type{P}, n) where {P<:AbstractOrthogonalPolynomial}
     J = jacobi_matrix(P, n)
     eig = eigen(J, extrema(P)...)
     # Is this necessary?
     nm  = 1 #diag(eig.vectors * eig.vectors')
-    wts =  π̃βn(P,0) * (eig.vectors[1,:] ./ nm).^2
-    eig.values,  wts
+    wts = π̃βn(P, 0) * (eig.vectors[1, :] ./ nm) .^ 2
+    eig.values, wts
 end
 
-gauss_nodes_weights(B::Basis{P})  where  {P} = gauss_nodes_weights(B.P, B.n)
-
-
+gauss_nodes_weights(B::Basis{P}) where {P} = gauss_nodes_weights(B.P, B.n)
 
 ##
 ## --------------------------------------------------
@@ -292,7 +299,12 @@ gauss_nodes_weights(B::Basis{P})  where  {P} = gauss_nodes_weights(B.P, B.n)
 
 Compute  `<f,g> = ∫ f⋅g⋅w dx` where  `w` is the weight function of the  type  `P`  and the integral is  taken  over  the domain of the type `P`.
 """
-function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol=sqrt(eps(float(eltype(P)))))
+function innerproduct(
+    P::Type{<:Union{AbstractOrthogonalPolynomial}},
+    f,
+    g;
+    atol=sqrt(eps(float(eltype(P)))),
+)
     dom = domain(P)
     a, b = first(dom), last(dom)
     if first(bounds_types(dom)) == Open
@@ -306,21 +318,19 @@ function innerproduct(P::Type{<:Union{AbstractOrthogonalPolynomial}}, f, g; atol
     return quadgk(fn, a, b; atol=atol)[1]
 end
 
-
 ## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
-Base.abs2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial} = norm2(P, n)
+Base.abs2(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial} = norm2(P, n)
 
 ## Compute <p_i, p_i> = \| p \|^2
 ## Slow default; generally should  be directly expressed for each type
-function norm2(::Type{P}, n) where {P <: AbstractOrthogonalPolynomial}
-    p = basis(P,n)
+function norm2(::Type{P}, n) where {P<:AbstractOrthogonalPolynomial}
+    p = basis(P, n)
     innerproduct(P, p, p)
 end
 
 ##
 ## --------------------------------------------------
 ##
-
 
 """
     fit([Val(S)], P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x)
@@ -340,20 +350,26 @@ Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
 Fit `f` with an interpolating polynomial of degree `n` or less using nodes
 `x0,x1, ..., xn`, the  zeros of `P_{n+1} = basis(P, n+1)`. and `p(xᵢ)=f(xᵢ)`.
 """
-Polynomials.fit(val::Val{:interpolating},
-                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
-                var=:x) =
-                    P(cks(val, P,f,n), var)
+Polynomials.fit(
+    val::Val{:interpolating},
+    P::Type{<:AbstractOrthogonalPolynomial},
+    f,
+    n::Int;
+    var=:x,
+) = P(cks(val, P, f, n), var)
 
 """
     fit(Val(:lsq), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
 
 Fit `f` with `p(x)=∑ d_i P_i(x)` where `p` had degree `n` or less using least squares.
 """
-Polynomials.fit(val::Val{:lsq},
-                P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int;
-                var=:x) =
-                    P(cks(val, P,f,n), var)
+Polynomials.fit(
+    val::Val{:lsq},
+    P::Type{<:AbstractOrthogonalPolynomial},
+    f,
+    n::Int;
+    var=:x,
+) = P(cks(val, P, f, n), var)
 
 """
     fit(Val(:series), P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int)
@@ -361,11 +377,13 @@ Polynomials.fit(val::Val{:lsq},
 If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncated sum `∑_0^n c̃_k P_k(x)` where `n` is chosen algorithmically and `c̃_k` is chosen using an efficient manner, not necessarily through the orthogonality condition, `<f,p_k>/<p_k,p_k>`.
 
 """
-Polynomials.fit(val::Val{:series},
-                P::Type{<:AbstractOrthogonalPolynomial}, f;
-                var=:x,kwargs...) =
-                    P(cks(val, P,f; kwargs...), var)
-
+Polynomials.fit(
+    val::Val{:series},
+    P::Type{<:AbstractOrthogonalPolynomial},
+    f;
+    var=:x,
+    kwargs...,
+) = P(cks(val, P, f; kwargs...), var)
 
 """
     cks(::Val{:interpolating}, ::Type{P}, f, n::Int)
@@ -387,12 +405,18 @@ Using this:
 `∑_j c_j (K_k δ_{ik}) = c_k K_k`, So
 `c_k = (1/K_k) ∑ᵢ f(xᵢ)P_k(xᵢ) wᵢ`
 """
-function cks(::Val{:interpolating}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
-
+function cks(
+    ::Val{:interpolating},
+    ::Type{P},
+    f,
+    n::Int,
+) where {P<:AbstractOrthogonalPolynomial}
     xs, ws = gauss_nodes_weights(P, n)
-    return [sum(f(xⱼ) * basis(P, k)(xⱼ) * wⱼ for (xⱼ,wⱼ) in zip(xs,ws)) / norm2(P,k) for k in 0:n]
+    return [
+        sum(f(xⱼ) * basis(P, k)(xⱼ) * wⱼ for (xⱼ, wⱼ) in zip(xs, ws)) / norm2(P, k) for
+        k in 0:n
+    ]
 end
-
 
 """
     cks(::Val{:lsq}, ::Type{P}, f, n::Int)
@@ -404,9 +428,9 @@ For some types an approximation to the inner product, `<f,P_k>_w` may be used.
 
 ref: [http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION](http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION)
 """
-function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
-## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
-    [innerproduct(P, f, basis(P,k)) /norm2(P,k) for k in 0:n]
+function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P<:AbstractOrthogonalPolynomial}
+    ## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
+    [innerproduct(P, f, basis(P, k)) / norm2(P, k) for k in 0:n]
 end
 
 """
@@ -416,6 +440,6 @@ If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this
 tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients.
 
 """
-function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P  <:  AbstractOrthogonalPolynomial}
+function cks(::Val{:series}, ::Type{P}, f, n::Int) where {P<:AbstractOrthogonalPolynomial}
     throw(ArgumentError("No default method"))
 end
