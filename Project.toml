@@ -15,6 +15,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
+FastGaussQuadrature = "0.4"
 HypergeometricFunctions = "0.2, 0.3"
 Intervals = "0.5, 1"
 Memoize = "0.4"
