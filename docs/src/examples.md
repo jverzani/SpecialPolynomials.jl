@@ -34,20 +34,20 @@ julia> p3 = Legendre([0,0,0,1])
 Legendre(1⋅P₃(x))
 ```
 
-```
-@example
+A plot recipe is useful for a graphical view:
+
+```@example
 using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
-r = collect(-1:.1:+1)
 n = 6
 ψ₁, ψ₂, ψ₃, ψ₄, ψ₅, ψ₆ = basis.(Legendre, 0:n - 1)
 kw = (xlabel="r", ylabel="ψₙ(r)")
 sps = [
-  plot(r, ψ₁.(r), label="ψ₁(r)"; kw...),
-  plot(r, ψ₂.(r), label="ψ₂(r)"; kw...),
-  plot(r, ψ₃.(r), label="ψ₃(r)"; kw...),
-  plot(r, ψ₄.(r), label="ψ₄(r)"; kw...),
-  plot(r, ψ₅.(r), label="ψ₅(r)"; kw...),
-  plot(r, ψ₆.(r), label="ψ₆(r)"; kw...),
+  plot( ψ₁(r), label="ψ₁(r)"; kw...),
+  plot( ψ₂(r), label="ψ₂(r)"; kw...),
+  plot( ψ₃(r), label="ψ₃(r)"; kw...),
+  plot( ψ₄(r), label="ψ₄(r)"; kw...),
+  plot( ψ₅(r), label="ψ₅(r)"; kw...),
+  plot( ψ₆(r), label="ψ₆(r)"; kw...),
 ]
 plot(sps..., layout=(3, 2))
 show(current())  # hide
@@ -114,8 +114,9 @@ Polynomials.Polynomial(-12.0*x + 8.0*x^3)
 
 For numeric evaluation of just a basis polynomial of a classical orthogonal polynomial system, the `Basis` constructor provides a direct evaluation without the construction of an intermediate polynomial:
 
-```
-Basis(Hermite, 3)(0.5)
+```jldoctest example
+julia> Basis(Hermite, 3)(0.5)
+-5.0
 ```
 
 
@@ -184,7 +185,7 @@ julia> p(0.4)
 -4.016
 ```
 
-By default, for classical orthogonal polynomials,  the Clenshaw reduction formula is used. For such polynomials, an alternative is to use the hypergoemetric formulation. (The evaluation `Basis(P,n)(x)` uses this.) There is an unexported method to compute through this means:
+By default, for classical orthogonal polynomials,  the Clenshaw reduction formula is used. For such polynomials, an alternative is to use the hypergeometric formulation. (The evaluation `Basis(P,n)(x)` uses this.) There is an unexported method to compute through this means:
 
 ```
 julia> SpecialPolynomials.eval_hyper(P, coeffs(p),  0.4)
@@ -485,9 +486,8 @@ p=fit(Newton, xs, f);
 ts = range(-1, 1, length=100); plot!(ts, p.(ts), color=:brown)
 show(current())  # hide
 # savefig("fitting.svg")  # hide
+#  ![](fitting.svg) # hide
 ```
-
-<!-- ![](fitting.svg) -->
 
 
 
@@ -564,8 +564,9 @@ plot!(xs, p50.(xs), color=:blue)
 plot!(xs, p196.(xs), color=:red)
 show(current())  # hide
 # savefig("wavy.svg")  # hide
+#![](wavy.svg) # hide
 ```
-<!-- ![](wavy.svg) -->
+
 
 For the  `Chebyshev` type, the  `Val(:series)` argument will fit a heuristically identify truncated series  to the function.
 
@@ -593,13 +594,12 @@ using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
 chebs = basis.(ChebyshevU, 1:4)
 colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
 itr = zip(chebs, colors)
-(cheb,col), state = iterate(itr)
-p = plot(cheb, c=col,  lw=5, legend=false, label="")
-for (cheb, col) in Base.Iterators.rest(itr, state)
+cheb1, chebs2_4... = ite
+p = plot(cheb1, c=col,  lw=5, legend=false, label="")
+for (cheb, col) in chebs2_4
   plot!(cheb, c=col, lw=5)
 end
 show(current())  # hide
 # savefig("chebs.svg")  # hide
+#![](chebs.svg) --> #hide
 ```
-
-<!-- ![](chebs.svg) -->
