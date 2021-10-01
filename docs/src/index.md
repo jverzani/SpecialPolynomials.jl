@@ -125,5 +125,5 @@ scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 show(current())  # hide
 
 # savefig("bezier.svg")  # hide
-#![](bezier.svg)
+#![](bezier.svg) # hide
 ```

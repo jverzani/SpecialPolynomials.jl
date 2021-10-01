@@ -42,12 +42,12 @@ n = 6
 ψ₁, ψ₂, ψ₃, ψ₄, ψ₅, ψ₆ = basis.(Legendre, 0:n - 1)
 kw = (xlabel="r", ylabel="ψₙ(r)")
 sps = [
-  plot( ψ₁(r), label="ψ₁(r)"; kw...),
-  plot( ψ₂(r), label="ψ₂(r)"; kw...),
-  plot( ψ₃(r), label="ψ₃(r)"; kw...),
-  plot( ψ₄(r), label="ψ₄(r)"; kw...),
-  plot( ψ₅(r), label="ψ₅(r)"; kw...),
-  plot( ψ₆(r), label="ψ₆(r)"; kw...),
+  plot( ψ₁, label="ψ₁(r)"; kw...),
+  plot( ψ₂, label="ψ₂(r)"; kw...),
+  plot( ψ₃, label="ψ₃(r)"; kw...),
+  plot( ψ₄, label="ψ₄(r)"; kw...),
+  plot( ψ₅, label="ψ₅(r)"; kw...),
+  plot( ψ₆, label="ψ₆(r)"; kw...),
 ]
 plot(sps..., layout=(3, 2))
 show(current())  # hide
@@ -588,15 +588,14 @@ the polynomial types in this package. The domain to be plotted over
 matches that given by `domain`, unless this is infinite.
 
 A plot of the first few Chebyshev Polynomials of the second kind can be produced as follows:
+
 ```@example
 using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
 # U1, U2, U3, and U4:
-chebs = basis.(ChebyshevU, 1:4)
-colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
-itr = zip(chebs, colors)
-cheb1, chebs2_4... = ite
-p = plot(cheb1, c=col,  lw=5, legend=false, label="")
-for (cheb, col) in chebs2_4
+cheb, chebs... = basis.(ChebyshevU, 1:4)
+col, colors... = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
+p = plot(cheb, c=col,  lw=5, legend=false, label="")
+for (cheb, col) in zip(chebs, colors)
   plot!(cheb, c=col, lw=5)
 end
 show(current())  # hide
