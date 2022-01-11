@@ -342,15 +342,18 @@ For orthogonal polynomials, the roots of the basis vectors are important for qua
 ```jldoctest example
 julia> using LinearAlgebra
 
+julia> round′(p) = map(x -> round(x, digits=6), p)
+round′ (generic function with 1 method)
+
 julia> p4 = basis(Legendre, 4)
 Legendre(1.0⋅P₄(x))
 
-julia> roots(p4) .|> real .|> x -> round(x, digits=10)
+julia> roots(p4) .|> real .|> round′
 4-element Vector{Float64}:
- -0.8611363116
- -0.3399810436
-  0.3399810436
-  0.8611363116
+ -0.861136
+ -0.339981
+  0.339981
+  0.861136
 
 julia> eigvals(SpecialPolynomials.jacobi_matrix(Legendre, 4)) .|> x -> round(x, digits=10)
 4-element Vector{Float64}:
@@ -418,8 +421,8 @@ For any set of points `(x0,y0), (x1,y1), ..., (xn, yn)` with unique `x` values, 
 julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
-julia> p1 = fit(Polynomial,  xs, ys)
-Polynomials.Polynomial(1.0 + 8.666666666666666*x - 23.999999999999996*x^2 + 21.333333333333332*x^3)
+julia> p1 = fit(Polynomial,  xs, ys) |> round′
+Polynomials.Polynomial(1.0 + 8.666667*x - 24.0*x^2 + 21.333333*x^3)
 ```
 
 The `Lagrange` and `Newton` types represent the polynomial in
@@ -438,10 +441,10 @@ These all represent the same interpolating polynomial:
 ```jldoctest example
 julia> [p1.(xs)-ys  p2.(xs)-ys p3.(xs)-ys]
 4×3 Matrix{Float64}:
- 0.0          0.0  0.0
- 0.0          0.0  0.0
- 4.44089e-16  0.0  0.0
- 8.88178e-16  0.0  0.0
+ 0.0         0.0  0.0
+ 7.8125e-8   0.0  0.0
+ 1.25e-7     0.0  0.0
+ 1.09375e-7  0.0  0.0
 ```
 
 
@@ -503,14 +506,14 @@ If there are a lot of points, it is common  to  fit with a  lower  degree polyno
 julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
-julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomials.Polynomial(1.5 + 0.40000000000000013*x)
+julia> p1 =  fit(Polynomial, xs,  ys, 1) |> round′ # degree 1  or less
+Polynomials.Polynomial(1.5 + 0.4*x)
 
-julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomials.Polynomial(4.000000000000013 - 2.1000000000000107*x + 0.500000000000002*x^2)
+julia> p1 =  fit(Polynomial, xs,  ys, 2) |> round′ # degree 2 or less
+Polynomials.Polynomial(4.0 - 2.1*x + 0.5*x^2)
 
-julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
-Polynomials.Polynomial(-10.0 + 20.166666666666664*x - 9.5*x^2 + 1.3333333333333333*x^3)
+julia> p1 =  fit(Polynomial, xs,  ys) |> round′    # degree 3 or less (length(xs) - 1)
+Polynomials.Polynomial(-10.0 + 20.166667*x - 9.5*x^2 + 1.333333*x^3)
 ```
 
 For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial
