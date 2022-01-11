@@ -1,4 +1,5 @@
 ## General test for orthogonal polynomials
+import SpecialPolynomials: domain
 
 T = Float64
 Ps = (
