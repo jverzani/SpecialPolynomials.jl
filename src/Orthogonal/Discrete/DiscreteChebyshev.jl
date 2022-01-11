@@ -16,7 +16,7 @@ julia> α,β = 1/2, 1
 (0.5, 1)
 
 julia> P  = DiscreteChebyshev{α,β}
-DiscreteChebyshev{0.5, 1, T, X, N} where {T, X, N}
+DiscreteChebyshev{0.5, 1}
 
 julia> i = 5
 5
