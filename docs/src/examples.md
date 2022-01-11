@@ -147,11 +147,11 @@ julia> P = Legendre
 Legendre
 
 julia> p4,p5 = basis.(P, [4,5])
-2-element Vector{Legendre{Float64, :x, N} where N}:
+2-element Vector{Legendre{Float64, :x}}:
  Legendre(1.0⋅P₄(x))
  Legendre(1.0⋅P₅(x))
 
-julia> wf, dom = SpecialPolynomials.weight_function(P), domain(P);
+julia> wf, dom = SpecialPolynomials.weight_function(P), Polynomials.domain(P);
 
 julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
 (6.071532165918825e-18, 0.0)
@@ -225,7 +225,7 @@ Multiplication formulas may not be defined for each type, and a fall back may be
 
 ```jldoctest example
 julia> P = Jacobi{1/2, -1/2}
-Jacobi{0.5, -0.5, T, X, N} where {T, X, N}
+Jacobi{0.5, -0.5}
 
 julia> p,q = P([1,2]), P([-2,1])
 (typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
@@ -240,7 +240,7 @@ The classic continuous orthogonal polynomials  have  the `derivative`  and `inte
 
 ```jldoctest example
 julia> P = ChebyshevU{Float64}
-ChebyshevU{Float64, X, N} where {X, N}
+ChebyshevU{Float64}
 
 julia> p = P([1,2,3])
 ChebyshevU(1.0⋅U₀(x) + 2.0⋅U₁(x) + 3.0⋅U₂(x))
@@ -252,7 +252,7 @@ julia> convert.(Polynomial, (p, dp))
 (Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomials.Polynomial(4.0 + 24.0*x))
 
 julia> P = Jacobi{1//2, -1//2}
-Jacobi{1//2, -1//2, T, X, N} where {T, X, N}
+Jacobi{1//2, -1//2}
 
 julia> p,q = P([1,2]), P([-2,1])
 (typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
@@ -261,7 +261,7 @@ julia> p * q # as above, only with rationals for paramters
 typename(Jacobi){1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
-Jacobi{1//2, 1//2, T, X, N} where {T, X, N}
+Jacobi{1//2, 1//2}
 
 julia> p = P([1,2,3])
 typename(Jacobi){1//2,1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
@@ -282,7 +282,7 @@ Expressing a polynomial in type `P` in type `Q` is done through several possible
 
 ```jldoctest example
 julia> P,Q = Gegenbauer{1//3}, Gegenbauer{2//3}
-(Gegenbauer{1//3, T, X, N} where {T, X, N}, Gegenbauer{2//3, T, X, N} where {T, X, N})
+(Gegenbauer{1//3}, Gegenbauer{2//3})
 
 julia> p = P([1,2,3.0])
 typename(Gegenbauer){1//3}(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
@@ -322,7 +322,7 @@ julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
 SpecialPolynomials
 
 julia> P = Jacobi{1/2,-1/2}
-Jacobi{0.5, -0.5, T, X, N} where {T, X, N}
+Jacobi{0.5, -0.5}
 
 
 julia> p = P([1,1,2,3])
@@ -504,10 +504,10 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1)  # degree 1  or less
-Polynomials.Polynomial(1.4999999999999978 + 0.4000000000000007*x)
+Polynomials.Polynomial(1.5 + 0.40000000000000013*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2)  # degree 2 or less
-Polynomials.Polynomial(4.000000000000002 - 2.1000000000000023*x + 0.5000000000000006*x^2)
+Polynomials.Polynomial(4.000000000000013 - 2.1000000000000107*x + 0.500000000000002*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys)     # degree 3 or less (length(xs) - 1)
 Polynomials.Polynomial(-10.0 + 20.166666666666664*x - 9.5*x^2 + 1.3333333333333333*x^3)
@@ -585,7 +585,7 @@ degree(p)
 
 The `plot` recipe from the `Polynomials` package works as expected for
 the polynomial types in this package. The domain to be plotted over
-matches that given by `domain`, unless this is infinite.
+matches that given by `Polynomials.domain`, unless this is infinite.
 
 A plot of the first few Chebyshev Polynomials of the second kind can be produced as follows:
 
