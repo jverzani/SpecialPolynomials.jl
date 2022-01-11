@@ -9,8 +9,9 @@ import Polynomials:
     basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒
 export basis
 
-import Intervals
-import Intervals: Open, Closed, Unbounded, bounds_types
+#import Intervals
+#import Intervals: Open, Closed, Unbounded, bounds_types
+import Polynomials: domain, Interval, Open, Closed, Unbounded, bounds_types
 using QuadGK
 using Memoize
 

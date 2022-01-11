@@ -69,7 +69,7 @@ end
 weight_function(::Type{<:Laguerre{α}}) where {α} = x -> x^α * exp(-x)
 generating_function(::Type{<:Laguerre{α}}) where {α} =
     (t, x) -> begin
-        exp(-t * x / (1 - t)) / (1 - t)^(α - 1)
+        exp(-t * x / (1 - t)) / (1 - t)^(α + 1)
     end
 function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     α > -1 || throw(ArgumentError("α > -1 is required"))
