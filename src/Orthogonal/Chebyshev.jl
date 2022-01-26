@@ -3,7 +3,7 @@
 @register0 Chebyshev AbstractCCOP0
 export Chebyshev
 """
-   Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
+    Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
 
 Chebyshev polynomial of the first kind.
 
