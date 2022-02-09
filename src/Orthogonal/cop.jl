@@ -156,7 +156,7 @@ function _eval_cop(P::Type{<:AbstractCOP{T,X,N}}, cs, x::S) where {T,X,N,S}
         quote
             Δ0 = cs[end - 1]
             Δ1 = cs[end]
-            @inbounds for i in Int(N - 1)::Int:-1:2
+            @inbounds for i in (Int(N)::Int - 1):-1:2
                 Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i - 1),
                 Δ0 + Δ1 * muladd(x, An(P, i - 1), Bn(P, i - 1))
             end
