@@ -21,13 +21,13 @@ abstract type AbstractSpecialPolynomial{T,X} <: Polynomials.AbstractPolynomial{T
 Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T
 Base.eltype(::Type{<:AbstractSpecialPolynomial}) = Float64
 
-# to strip off type parameters. See Polynomials.constructorof
-# We want ⟒(P{α,T,N}) = P{α} where {T, N}x
-@generated function constructorof(::Type{T}) where {T}
-    getfield(parentmodule(T), nameof(T))
-end
-⟒(P::Type{<:AbstractSpecialPolynomial}) = constructorof(P)
-⟒(::Type{<:Polynomial}) = Polynomial
+# use ArgumentError to give message. Also could use hint.
+Base.convert(::Type{Q}, p::P) where {P<:AbstractPolynomial, Q<:AbstractSpecialPolynomial} =
+    throw(ArgumentError("There is no `convert` method defined for a polynomial of type $P to one of type $Q. Maybe try converting through the `Polynomial` type (e.g `convert(Q, convert(Polynomial, p))`)"))
+
+# import ⟒ now
+#⟒(P::Type{<:AbstractSpecialPolynomial}) = constructorof(P)
+#⟒(::Type{<:Polynomial}) = Polynomial
 
 ## Display
 
