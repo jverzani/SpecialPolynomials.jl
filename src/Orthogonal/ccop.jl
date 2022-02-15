@@ -405,13 +405,13 @@ end
 #  avoid dispatch when N is known
 function Base.:+(p::P, c::S) where {T,X,P<:AbstractCOP{T,X},S<:Number}
     c′ = c / k0(P) #one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
-    R = promote_type(promote_type(T, S), typeof(inv(k0(P))))
+    R = promote_type(T, typeof(c′))
     N = length(p)
     iszero(c) && return (N == 0 ? zero(⟒(P){R,X}) : ⟒(P){R,X}(R.(p.coeffs)))
     N == 0 && return ⟒(P){R,X}(R(c))
-    N == 1 && return ⟒(P)(R[p[0] + c′], X)
+    N == 1 && return ⟒(P){R,X}(R[p[0] + c′])
     cs = R[iszero(i) ? p[0] + c′ : p[i] for i in 0:(N - 1)]
-    return ⟒(P){R,X}(cs)
+    return ⟒(P){R,X}(Val(false), cs)
 end
 
 # ##

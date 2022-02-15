@@ -110,7 +110,7 @@ kn(::Type{P}, n::Int) where {P<:AbstractCOP} =
 
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{P}, i::Int) where {P<:AbstractCOP}
-    @assert i > 0
+    i > 0 || throw(ArgumentError("i needs to be positive"))
     k1k0(P, i) * k1k0(P, i - 1)
 end
 
@@ -155,22 +155,23 @@ function eval_cop(P::Type{<:AbstractCOP{T,X}}, cs, x::S) where {T,X,S}
 end
 
 function _eval_cop(P::Type{<:AbstractCOP{T,X}}, cs, x::S) where {T,X,S}
-    if @generated
-        quote
-            N = length(cs) # lastindex?
-            Δ0 = cs[end - 1]
-            Δ1 = cs[end]
-            @inbounds for i in (Int(N)::Int - 1):-1:2
-                Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i - 1),
-                Δ0 + Δ1 * muladd(x, An(P, i - 1), Bn(P, i - 1))
-            end
-            p₀ = k0(P)
-            p₁ = muladd(x, An(P, 0), Bn(P, 0)) * p₀
-            Δ0 * p₀ + Δ1 * p₁
-        end
-    else
-        clenshaw_eval(P, cs, x)
-    end
+    return clenshaw_eval(P, cs, x)
+    # if @generated
+    #     quote
+    #         N = length(cs) # lastindex?
+    #         Δ0 = cs[end - 1]
+    #         Δ1 = cs[end]
+    #         @inbounds for i in (Int(N)::Int - 1):-1:2
+    #             Δ0, Δ1 = cs[i - 1] - Δ1 * Cn(P, i - 1),
+    #             Δ0 + Δ1 * muladd(x, An(P, i - 1), Bn(P, i - 1))
+    #         end
+    #         p₀ = k0(P)
+    #         p₁ = muladd(x, An(P, 0), Bn(P, 0)) * p₀
+    #         Δ0 * p₀ + Δ1 * p₁
+    #     end
+    # else
+    #     clenshaw_eval(P, cs, x)
+    # end
 end
 
 #  evaluate  basis vector through hypergeometric formulation

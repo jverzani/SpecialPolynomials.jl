@@ -12,9 +12,11 @@ macro register0(name, parent)
         struct $poly{T,X} <: $parent_type{T,X}
             coeffs::Vector{T}
             function $poly{T,X}(::Val{false}, coeffs::Vector{T}) where {T,X}
-                N = findlast(!iszero, coeffs)
-                N == nothing && return new{T,X}(T[])
-                resize!(coeffs, N)
+                if iszero(coeffs[end])
+                    N = findlast(!iszero, coeffs)
+                    N == nothing && return new{T,X}(T[])
+                    resize!(coeffs, N)
+                end
                 new{T,X}(coeffs)
             end
             function $poly{T,X}(coeffs::Vector{T}) where {T,X}
@@ -91,7 +93,7 @@ macro registerN(name, parent, params...)
             end
         end
 
-        Base.length(ch::$poly{$(αs...),T,X}) where {$(αs...),T,X,N} = length(ch.coeffs)
+        Base.length(ch::$poly{$(αs...),T,X}) where {$(αs...),T,X} = length(ch.coeffs)
         Polynomials.evalpoly(x, ch::$poly) = eval_cop(typeof(ch), ch.coeffs, x)
         (ch::$poly)(x) = evalpoly(x, ch)
 
