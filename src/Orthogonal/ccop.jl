@@ -2,9 +2,9 @@
 ## --------------------------------------------------
 ##
 ## Classic Continuos Orthogonal Polynomials
-abstract type AbstractCCOP{T,X,N} <: AbstractCOP{T,X,N} end
+abstract type AbstractCCOP{T,X} <: AbstractCOP{T,X} end
 """
-    AbstractCCOP{T,X,N} <:  AbstractCOP{T,X,N}
+    AbstractCCOP{T,X} <:  AbstractCOP{T,X}
 
 Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
@@ -101,14 +101,14 @@ AbstractCCOP
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
-abstract type AbstractCCOP0{T,X,N} <: AbstractCCOP{T,X,N} end
-abstract type AbstractCCOP1{α,T,X,N} <: AbstractCCOP{T,X,N} end
-abstract type AbstractCCOP2{α,β,T,X,N} <: AbstractCCOP{T,X,N} end
-abstract type AbstractCCOP3{α,β,γ,T,X,N} <: AbstractCCOP{T,X,N} end
+abstract type AbstractCCOP0{T,X} <: AbstractCCOP{T,X} end
+abstract type AbstractCCOP1{α,T,X} <: AbstractCCOP{T,X} end
+abstract type AbstractCCOP2{α,β,T,X} <: AbstractCCOP{T,X} end
+abstract type AbstractCCOP3{α,β,γ,T,X} <: AbstractCCOP{T,X} end
 
-# We want to  be able to strip  off T,N  or α,...,T,N
-# * constructorof(P{α,..,T,N}) =  P
-# * ⟒(P(α,...,T,N)) =  P(α...)  #  \upin[tab]
+# We want to  be able to strip  off T  or α,...,T
+# * constructorof(P{α,..,T}) =  P
+# * ⟒(P(α,...,T)) =  P(α...)  #  \upin[tab]
 ⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
 ⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α,β} = constructorof(P){α,β}
 ⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α,β,γ} = constructorof(P){α,β,γ}
@@ -403,21 +403,22 @@ end
 # # scalar ops
 
 #  avoid dispatch when N is known
-function Base.:+(p::P, c::S) where {T,X,N,P<:AbstractCOP{T,X,N},S<:Number}
+function Base.:+(p::P, c::S) where {T,X,P<:AbstractCOP{T,X},S<:Number}
     c′ = c / k0(P) #one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
     R = promote_type(promote_type(T, S), typeof(inv(k0(P))))
-    iszero(c) && return (N == 0 ? zero(⟒(P){R,X}) : ⟒(P){R,X,N}(R.(p.coeffs)))
+    N = length(p)
+    iszero(c) && return (N == 0 ? zero(⟒(P){R,X}) : ⟒(P){R,X}(R.(p.coeffs)))
     N == 0 && return ⟒(P){R,X}(R(c))
     N == 1 && return ⟒(P)(R[p[0] + c′], X)
     cs = R[iszero(i) ? p[0] + c′ : p[i] for i in 0:(N - 1)]
-    return ⟒(P){R,X,N}(cs)
+    return ⟒(P){R,X}(cs)
 end
 
 # ##
-# ## multiply/addition/divrem with P{α…,T,N} =  Q{α...,T, M}
+# ## multiply/addition/divrem with P{α…,T} =  Q{α...,T, M}
 # ## We don't have (p::P{N},q::P{M}) where  {N,M, P<:AbstractCOP} as an available signature
 # ## so we create these fall  backs, and direct +,  *, divrem to ⊕, ⊗, _divrrem  in the `register` macros
-# function ⊕(p::P, q::Q) where {T,X,N,S,Y,M, P <: AbstractCOP{T,X,N}, Q <: AbstractCOP{S,Y,M}}
+# function ⊕(p::P, q::Q) where {T,X,S,Y,M, P <: AbstractCOP{T,X}, Q <: AbstractCOP{S,Y,M}}
 
 #     #@assert  ⟒(P) == ⟒(Q)
 #     #@assert eltype(p) == eltype(q)
@@ -437,7 +438,7 @@ end
 # end
 
 # # assumes N >  M
-# @generated  function ⊕′(p1::P, p2::Q) where {T,X,N,S,Y,M, P<:AbstractCOP{T,X,N}, Q<:AbstractCOP{S,Y,M}}
+# @generated  function ⊕′(p1::P, p2::Q) where {T,X,S,Y,M, P<:AbstractCOP{T,X}, Q<:AbstractCOP{S,Y,M}}
 
 #     #@assert  ⟒(P) == ⟒(Q)
 #     R = promote_type(T,S)
@@ -475,7 +476,7 @@ function Polynomials.truncate(
     p::P;
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
-) where {T,X,N,P<:AbstractCOP{T,X,N}}
+) where {T,X,P<:AbstractCOP{T,X}}
     ps = coeffs(p)
     max_coeff = maximum(abs, ps)
     thresh = max_coeff * rtol + atol
@@ -493,7 +494,8 @@ function Base.chop(
     p::P;
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
-) where {T,X,N,P<:AbstractCOP{T,X,N}}
+) where {T,X,P<:AbstractCOP{T,X}}
+    N = length(p)
     N == 0 && return p
     i = N - 1
     while i >= 0

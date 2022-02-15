@@ -2,8 +2,8 @@
 """
     FallingFactorial{T}
 
-Construct  a  polynomial with   respect to the basis `x⁰̲,  x¹̲, x²̲, …` where 
-`xⁱ̲ = x  ⋅  (x-1) ⋅  (x-2)  ⋯ (x-i+1)` is the falling Pochhammer  symbol.  See 
+Construct  a  polynomial with   respect to the basis `x⁰̲,  x¹̲, x²̲, …` where
+`xⁱ̲ = x  ⋅  (x-1) ⋅  (x-2)  ⋯ (x-i+1)` is the falling Pochhammer  symbol.  See
 [Falling factorial](https://en.wikipedia.org/wiki/Falling_and_rising_factorials)  for several  facts
 about this  polynomial basis.
 
@@ -64,7 +64,7 @@ function Polynomials.showterm(
     j,
     first::Bool,
     mimetype,
-) where {N,T,P<:FallingFactorial}
+) where {T,P<:FallingFactorial}
     iszero(pj) && return false
     !first && print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " : (!first ? "+ " : ""))
