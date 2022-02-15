@@ -1,7 +1,7 @@
 name = "SpecialPolynomials"
 uuid = "a25cea48-d430-424a-8ee7-0d3ad3742e9e"
 authors = ["jverzani <jverzani@gmail.com>"]
-version = "0.2.8"
+version = "0.2.9"
 
 [deps]
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
@@ -17,7 +17,7 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 FastGaussQuadrature = "0.4"
 HypergeometricFunctions = "0.2, 0.3"
 Memoize = "0.4"
-Polynomials = "2, 3"
+Polynomials = "2.0.21, 3"
 QuadGK = "1,2"
 Requires = "1"
 SpecialFunctions = "0.09, 0.10, 1"

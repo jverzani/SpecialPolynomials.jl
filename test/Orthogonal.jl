@@ -204,6 +204,9 @@ end
             @test convert(Q, p)(x) ≈ p(x)
         end
     end
+
+    # Issue #43 conversion from Polynomials.ChebyshevT
+    @test_throws ArgumentError convert(Legendre, ChebyshevT([0,1]))
 end
 
 @testset "Evaluation" begin

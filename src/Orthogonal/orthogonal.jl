@@ -101,7 +101,7 @@ weight_function(::P) where {P<:AbstractOrthogonalPolynomial} = weight_function(P
 The generating function is a function defined by: `(t,x) -> sum(t^n Pn(x) for n in 0:oo)`.
 """
 generating_function(::Type{P}) where {P<:AbstractOrthogonalPolynomial} =
-    throw(MethodError("Not implemented"))
+    throw(ArgumentError("Not implemented"))
 generating_function(::P) where {P<:AbstractOrthogonalPolynomial} = generating_function(P)
 
 """
