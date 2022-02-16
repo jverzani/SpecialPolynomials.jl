@@ -29,17 +29,29 @@ macro register0(name, parent)
             function $poly{T,X}(coeffs::Tuple) where {T,X}
                 $poly{T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{T}(coeffs::Vector{S}, var::Polynomials.SymbolLike=:x) where {T,S}
+            function $poly{T}(coeffs::Vector{S}, var::Polynomials.SymbolLike) where {T,S}
                 $poly{T, Symbol(var)}(coeffs)
             end
-            function $poly{T}(coeffs::Tuple,var::Polynomials.SymbolLike=:x) where {T,N,S}
+            function $poly{T}(coeffs::Vector{S}) where {T,S}
+                $poly{T, :x}(coeffs)
+            end
+            function $poly{T}(coeffs::Tuple,var::Polynomials.SymbolLike) where {T,N,S}
                 $poly{T,Symbol(var)}(coeffs)
             end
-            function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x,) where {T}
+            function $poly{T}(coeffs::Tuple) where {T,N,S}
+                $poly{T, :x}(coeffs)
+            end
+            function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike) where {T}
                 $poly{T}(coeffs, var)
             end
-            function $poly(coeffs::NTuple{N,T}, var::Polynomials.SymbolLike=:x,) where {N,T}
+            function $poly(coeffs::Vector{T}) where {T}
+                $poly{T, :x}(coeffs)
+            end
+            function $poly(coeffs::NTuple{N,T}, var::Polynomials.SymbolLike) where {N,T}
                 $poly{T}(coeffs, var)
+            end
+            function $poly(coeffs::NTuple{N,T}) where {N,T}
+                $poly{T, :x}(coeffs)
             end
 
         end
@@ -78,19 +90,34 @@ macro registerN(name, parent, params...)
             function $poly{$(αs...),T,X}(coeffs::Tuple) where {$(αs...),T,X}
                 $poly{$(αs...),T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{$(αs...),T}(coeffs::Vector{S},var::Polynomials.SymbolLike=:x) where {$(αs...),T,S}
+            function $poly{$(αs...),T}(coeffs::Vector{S},var::Polynomials.SymbolLike) where {$(αs...),T,S}
                 $poly{$(αs...), T, Symbol(var)}(coeffs)
             end
-            function $poly{$(αs...),T}(coeffs::Tuple,var::Polynomials.SymbolLike=:x) where {$(αs...),T,N,S}
-                $poly{$(αs...),T,Symbol(var)}(coeffs)
+            function $poly{$(αs...),T}(coeffs::Vector{S}) where {$(αs...),T,S}
+                $poly{$(αs...), T, :x}(coeffs)
             end
 
-            function $poly{$(αs...)}(coeffs::Vector{T},var::Polynomials.SymbolLike=:x) where {$(αs...),T}
+            function $poly{$(αs...),T}(coeffs::Tuple,var::Polynomials.SymbolLike) where {$(αs...),T,N,S}
+                $poly{$(αs...),T,Symbol(var)}(coeffs)
+            end
+            function $poly{$(αs...),T}(coeffs::Tuple) where {$(αs...),T,N,S}
+                $poly{$(αs...),T, :x}(coeffs)
+            end
+
+            function $poly{$(αs...)}(coeffs::Vector{T},var::Polynomials.SymbolLike) where {$(αs...),T}
                 $poly{$(αs...),T}(coeffs, var)
             end
-            function $poly{$(αs...)}(coeffs::NTuple{N, T},var::Polynomials.SymbolLike=:x) where {$(αs...),N,T}
+            function $poly{$(αs...)}(coeffs::Vector{T}) where {$(αs...),T}
+                $poly{$(αs...),T, :x}(coeffs)
+            end
+
+            function $poly{$(αs...)}(coeffs::NTuple{N, T},var::Polynomials.SymbolLike) where {$(αs...),N,T}
                 $poly{$(αs...),T}(coeffs, var)
             end
+            function $poly{$(αs...)}(coeffs::NTuple{N, T}) where {$(αs...),N,T}
+                $poly{$(αs...),T}(coeffs)
+            end
+
         end
 
         Base.length(ch::$poly{$(αs...),T,X}) where {$(αs...),T,X} = length(ch.coeffs)
