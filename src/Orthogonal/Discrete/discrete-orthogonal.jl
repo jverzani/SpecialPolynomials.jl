@@ -17,9 +17,9 @@ end
 ## --------------------------------------------------
 ##
 
-abstract type AbstractDiscreteWeightFunction{T,X,N} <:
+abstract type AbstractDiscreteWeightFunction{T,X} <:
               AbstractDiscreteOrthogonalPolynomial{T,X} end
-abstract type DiscreteWeightFunction{T,X,N} <: AbstractDiscreteWeightFunction{T,X,N} end
+abstract type DiscreteWeightFunction{T,X} <: AbstractDiscreteWeightFunction{T,X} end
 export DiscreteWeightFunction
 
 """

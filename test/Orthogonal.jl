@@ -86,6 +86,13 @@ DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 
         @test (variable(P, :x) ≈ variable(P, :x))
         @test_throws ArgumentError variable(P, :x) ≈ variable(P, :y)
     end
+
+    for P ∈ Ps
+        @inferred P([1,2,3]) # not @inferred P([1,2,3], :x)
+        @inferred P{Int}([1,2,3]) # not @inferred P{Int}([1,2,3], :x)
+        @inferred P{Int,:x}([1,2,3])
+    end
+
 end
 
 @testset "Structural equations" begin

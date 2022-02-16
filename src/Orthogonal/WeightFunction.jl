@@ -2,10 +2,10 @@
 ## Wheeler algorithm, https://authors.library.caltech.edu/86868/1/1.4822929.pdf
 ## algorithm not considered, just text
 
-abstract type AbstractWeightFunction{T,X,N} <: AbstractContinuousOrthogonalPolynomial{T,X} end
+abstract type AbstractWeightFunction{T,X} <: AbstractContinuousOrthogonalPolynomial{T,X} end
 # parent types for `@registerX` constructor
-abstract type WeightFunction{T,X,N} <: AbstractWeightFunction{T,X,N} end
-abstract type WeightFunction1{α,T,X,N} <: AbstractWeightFunction{T,X,N} end
+abstract type WeightFunction{T,X} <: AbstractWeightFunction{T,X} end
+abstract type WeightFunction1{α,T,X} <: AbstractWeightFunction{T,X} end
 export WeightFunction, WeightFunction1
 
 """
