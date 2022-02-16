@@ -12,6 +12,7 @@ macro register0(name, parent)
         struct $poly{T,X} <: $parent_type{T,X}
             coeffs::Vector{T}
             function $poly{T,X}(::Val{false}, coeffs::Vector{T}) where {T,X}
+                isempty(coeffs) && return new{T,X}(T[])
                 if iszero(coeffs[end])
                     N = findlast(!iszero, coeffs)
                     N == nothing && return new{T,X}(T[])
@@ -25,13 +26,13 @@ macro register0(name, parent)
             function $poly{T,X}(coeffs::Vector{S}) where {T,X,S}
                 $poly{T,X}(Val(false), T.(coeffs))
             end
-            function $poly{T,X}(coeffs::NTuple{N,S}) where {T,X,N,S}
+            function $poly{T,X}(coeffs::Tuple) where {T,X}
                 $poly{T,X}(Val(false), collect(T, coeffs))
             end
             function $poly{T}(coeffs::Vector{S}, var::Polynomials.SymbolLike=:x) where {T,S}
                 $poly{T, Symbol(var)}(coeffs)
             end
-            function $poly{T}(coeffs::NTuple{N,S},var::Polynomials.SymbolLike=:x) where {T,N,S}
+            function $poly{T}(coeffs::Tuple,var::Polynomials.SymbolLike=:x) where {T,N,S}
                 $poly{T,Symbol(var)}(coeffs)
             end
             function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike=:x,) where {T}
@@ -75,13 +76,13 @@ macro registerN(name, parent, params...)
             function $poly{$(αs...),T,X}(coeffs::Vector{S}) where {$(αs...),T,X,S}
                 $poly{$(αs...),T,X}(Val(false), T.(coeffs))
             end
-            function $poly{$(αs...),T,X}(coeffs::NTuple{N,S}) where {$(αs...),T,X,N,S}
+            function $poly{$(αs...),T,X}(coeffs::Tuple) where {$(αs...),T,X}
                 $poly{$(αs...),T,X}(Val(false), collect(T, coeffs))
             end
             function $poly{$(αs...),T}(coeffs::Vector{S},var::Polynomials.SymbolLike=:x) where {$(αs...),T,S}
                 $poly{$(αs...), T, Symbol(var)}(coeffs)
             end
-            function $poly{$(αs...),T}(coeffs::NTuple{N,S},var::Polynomials.SymbolLike=:x) where {$(αs...),T,N,S}
+            function $poly{$(αs...),T}(coeffs::Tuple,var::Polynomials.SymbolLike=:x) where {$(αs...),T,N,S}
                 $poly{$(αs...),T,Symbol(var)}(coeffs)
             end
 

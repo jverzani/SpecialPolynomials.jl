@@ -498,14 +498,16 @@ function Base.chop(
     N = length(p)
     N == 0 && return p
     i = N - 1
+    ps = coeffs(p)
+    Δ = max(atol, norm(ps, 2) * rtol)
     while i >= 0
         val = p[i]
-        if !isapprox(val, zero(T); rtol=rtol, atol=atol)
-            break
-        end
+        abs(val) > Δ && break
         i -= 1
     end
-    ⟒(P)(coeffs(p)[1:(i + 1)], X)
+    𝑷 = ⟒(P)
+    i < 0 && return(zero(𝑷))
+    𝑷(ps[1:(i + 1)], X)
 end
 
 Polynomials.chop!(
