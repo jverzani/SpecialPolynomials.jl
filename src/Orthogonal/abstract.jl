@@ -46,7 +46,6 @@ macro register0(name, parent)
 
         Base.length(p::$poly{T,X}) where {T,X} = length(p.coeffs)
         Polynomials.evalpoly(x, p::$poly) = eval_cop(typeof(p), p.coeffs, x)
-
         Polynomials.@register $poly
 
         # work around N parameter in pomote(p,q) usage in defaults

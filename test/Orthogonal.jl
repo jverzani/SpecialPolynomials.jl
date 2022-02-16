@@ -422,3 +422,19 @@ end
     @test sprint(show, p) ==
           "Hermite((1.0 + 2.0im)⋅H₀(x) - 0.5⋅H₁(x) + 3.7im⋅H₂(x) + (0.1 + 0.01im)⋅H₃(x))"
 end
+
+# issue 44 allows fully typed array construction, as `N` parameter is removed
+@testset "array elements" begin
+
+    for P ∈ Ps
+        p,q = basis.(P, (2,3))
+        @test typeof([p]) == typeof([p,q])
+    end
+
+    q = basis(Polynomial, 3)
+    for P ∈ Ps
+        p = basis(P,2)
+        @test typeof([q]) == typeof([p,q])
+    end
+
+end
