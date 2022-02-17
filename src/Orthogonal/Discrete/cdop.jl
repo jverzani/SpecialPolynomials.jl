@@ -1,10 +1,10 @@
 # generic classical discrete orthogonal polynomial, CDOP
 
-abstract type AbstractCDOP{T,X,N} <: AbstractCOP{T,X,N} end
+abstract type AbstractCDOP{T,X} <: AbstractCOP{T,X} end
 """
-     AbstractCDOP{T,X,N} <: AbstractCOP{T,X,N}
+     AbstractCDOP{T,X} <: AbstractCOP{T,X}
 
-Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`  
+Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
 solution of a differential equation
 
@@ -23,7 +23,7 @@ differentiation, conversion, etc. to be defined generically.
 
 [Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
 present an encyclopedia of formula characterizing families of
-orthogonal polynomials. 
+orthogonal polynomials.
 
 For example, on p29 they give  formulas for Hahn polynomials through:
 
@@ -31,7 +31,7 @@ For example, on p29 they give  formulas for Hahn polynomials through:
 `BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
 `σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
 
-The above, is termed the eigevalue equation (e.g. [Goertz and Offner](https://arxiv.org/pdf/1609.07291.pdf)), as it can be reexpressed as 
+The above, is termed the eigevalue equation (e.g. [Goertz and Offner](https://arxiv.org/pdf/1609.07291.pdf)), as it can be reexpressed as
 
 `Δ(D(x)⋅ω(x)⋅∇yᵢ(x) = λᵢ⋅ω(x)⋅yᵢ(x)`
 
@@ -51,10 +51,10 @@ AbstractCDOP
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
-abstract type AbstractCDOP0{T,X,N} <: AbstractCDOP{T,X,N} end
-abstract type AbstractCDOP1{α,T,X,N} <: AbstractCDOP{T,X,N} end
-abstract type AbstractCDOP2{α,β,T,X,N} <: AbstractCDOP{T,X,N} end
-abstract type AbstractCDOP3{α,β,γ,T,X,N} <: AbstractCDOP{T,X,N} end
+abstract type AbstractCDOP0{T,X} <: AbstractCDOP{T,X} end
+abstract type AbstractCDOP1{α,T,X} <: AbstractCDOP{T,X} end
+abstract type AbstractCDOP2{α,β,T,X} <: AbstractCDOP{T,X} end
+abstract type AbstractCDOP3{α,β,γ,T,X} <: AbstractCDOP{T,X} end
 
 ⟒(P::Type{<:AbstractCDOP1{α}}) where {α} = constructorof(P){α}
 ⟒(P::Type{<:AbstractCDOP2{α,β}}) where {α,β} = constructorof(P){α,β}
@@ -122,7 +122,7 @@ end
 
 # αn, βn,γn
 # σ⋅pn' = [αn, βn,γn] ⋅ [p_{n+1},p_n,p_{n-1}]
-#αn(P::Type{<:AbstractCDOP}, n::Int) = α̃(P,n) / k1k0(P,n) 
+#αn(P::Type{<:AbstractCDOP}, n::Int) = α̃(P,n) / k1k0(P,n)
 function α̃n(P::Type{<:AbstractCDOP}, n::Int)
     a, b, c, d, e = abcde(P)
     S = eltype(P)

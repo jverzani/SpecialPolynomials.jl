@@ -86,6 +86,13 @@ DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 
         @test (variable(P, :x) ≈ variable(P, :x))
         @test_throws ArgumentError variable(P, :x) ≈ variable(P, :y)
     end
+
+    for P ∈ Ps
+        @inferred P([1,2,3]) # not @inferred P([1,2,3], :x)
+        @inferred P{Int}([1,2,3]) # not @inferred P{Int}([1,2,3], :x)
+        @inferred P{Int,:x}([1,2,3])
+    end
+
 end
 
 @testset "Structural equations" begin
@@ -421,4 +428,20 @@ end
     p = Hermite(ps)
     @test sprint(show, p) ==
           "Hermite((1.0 + 2.0im)⋅H₀(x) - 0.5⋅H₁(x) + 3.7im⋅H₂(x) + (0.1 + 0.01im)⋅H₃(x))"
+end
+
+# issue 44 allows fully typed array construction, as `N` parameter is removed
+@testset "array elements" begin
+
+    for P ∈ Ps
+        p,q = basis.(P, (2,3))
+        @test typeof([p]) == typeof([p,q])
+    end
+
+    q = basis(Polynomial, 3)
+    for P ∈ Ps
+        p = basis(P,2)
+        @test typeof([q]) == typeof([p,q])
+    end
+
 end

@@ -70,7 +70,7 @@ An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P
 Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
 Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
 
-# 
+#
 C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P)) / 2
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P)) / 4
 ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
@@ -90,7 +90,7 @@ function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where 
 end
 
 ## Defining p' and ∫dp directly speeds things up, and works around an issue with ĉ
-function Polynomials.derivative(p::Chebyshev{T,X,N}, order::Int=1) where {T,X,N}
+function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     R = eltype(one(T) / 1)
     P = Chebyshev{R,X}
@@ -298,7 +298,7 @@ function cks(::Val{:series}, P::Type{Chebyshev{T}}, f) where {T}
 end
 
 # ## Chebyshev interpolation of the second kind
-# ## uses -1, 1 and roots of U_{n-1}, 
+# ## uses -1, 1 and roots of U_{n-1},
 # ## (slower than recursion)
 # ## used discrete cosine  transformation to compute the ck:
 # ## https://archive.siam.org/books/ot99/OT99SampleChapter.pdf
@@ -414,7 +414,7 @@ export ChebyshevU
 
 Implements the
 [Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_polynomials)
-polynomials of the second kind. These have weight function 
+polynomials of the second kind. These have weight function
 `w(x) = sqrt(1-x^2)` over the domain `[-1,1]`.
 
 ```jldoctest

@@ -4,7 +4,7 @@
 """
     Bessel{α}
 
-Implements the [Bessel](https://dlmf.nist.gov/18.34) polynomials, introduced by [Krall and Frink](https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf) (with `b=2`). The  case `a=2` corresponds to the 
+Implements the [Bessel](https://dlmf.nist.gov/18.34) polynomials, introduced by [Krall and Frink](https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf) (with `b=2`). The  case `a=2` corresponds to the
 [Bessel](https://en.wikipedia.org/wiki/Bessel_polynomials) polynomials of Wikipedia. The Bessel  polynomials are not orthogonal over  a domain of the real  line, rather over an arbitray curve in the complex plane enclosing the  origin.  The weight  function is `ρ(x)=(2πi)^(-1)∑Γ(α)/Γ(α+n-1)(-β/x)^n`,   where `β=2`.
 
 ```jldoctest
@@ -35,10 +35,10 @@ Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
 abcde(::Type{<:Bessel{α}}) where {α} = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, α, 2))
 
 function k1k0(::Type{P}, k::Int) where {α,P<:Bessel{α}}
-    k < 0 && return zero(eltype(P)) / 1
+    k < 0 && return zero(eltype(P)) * one(α) / 1
     iszero(k) && return (one(eltype(P)) * α) / 2
 
-    val = one(eltype(P))
+    val = one(eltype(P)) * one(α)
     val *= (2k + α) * (2k + α - 1)
     val /= (k + α - 1) * 2
     val
@@ -73,7 +73,7 @@ function B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
 end
 
 function C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
-    val = one(eltype(P))
+    val = one(eltype(P))*one(α)
     n == 1 && return -(val * 4) / (α^2 * (α + 1))
 
     val *= -4 * n * (n + α - 2)
