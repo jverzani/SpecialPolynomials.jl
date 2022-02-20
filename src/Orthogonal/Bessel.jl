@@ -73,7 +73,7 @@ function B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
 end
 
 function C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
-    val = one(eltype(P))*one(α)
+    val = one(eltype(P)) * one(α)
     n == 1 && return -(val * 4) / (α^2 * (α + 1))
 
     val *= -4 * n * (n + α - 2)

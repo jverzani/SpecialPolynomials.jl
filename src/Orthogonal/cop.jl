@@ -16,14 +16,10 @@ Base.promote_rule(
 ) where {T,S,X} = ϛ(P){promote_type(T, S),X}
 
 # generic addition for polynomials
-function ⊕(
-    P::Type{<:AbstractCOP},
-    p::AbstractCOP{T,X},
-    q::AbstractCOP{S,X},
-) where {T,S,X}
+function ⊕(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X}, q::AbstractCOP{S,X}) where {T,S,X}
     R = promote_type(T, S)
     P′ = ⟒(P){R,X}
-    N,M = length(p), length(q)
+    N, M = length(p), length(q)
     if N > M
         cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
         return P′(Val(false), cs)
@@ -37,11 +33,7 @@ function ⊕(
 end
 
 # multiplication of polynomials of type P
-function ⊗(
-    P::Type{<:AbstractCOP},
-    p::AbstractCOP{T,X},
-    q::AbstractCOP{S,X},
-) where {T,S,X}
+function ⊗(P::Type{<:AbstractCOP}, p::AbstractCOP{T,X}, q::AbstractCOP{S,X}) where {T,S,X}
     isconstant(p) && return q * constantterm(p) # scalar mult is faster, well defined
     isconstant(q) && return p * constantterm(q)
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop

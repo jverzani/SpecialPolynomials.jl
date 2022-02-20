@@ -506,7 +506,7 @@ function Base.chop(
         i -= 1
     end
     𝑷 = ⟒(P)
-    i < 0 && return(zero(𝑷))
+    i < 0 && return (zero(𝑷))
     𝑷(ps[1:(i + 1)], X)
 end
 

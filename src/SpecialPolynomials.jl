@@ -6,7 +6,13 @@ import SpecialFunctions: gamma
 
 using Polynomials
 import Polynomials:
-    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof
+    basis,
+    isconstant,
+    constantterm,
+    assert_same_variable,
+    StandardBasisPolynomial,
+    ⟒,
+    constructorof
 export basis
 
 #import Intervals
