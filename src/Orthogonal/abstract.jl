@@ -20,40 +20,27 @@ macro register0(name, parent)
                 end
                 new{T,X}(coeffs)
             end
-            function $poly{T,X}(coeffs::Vector{T}) where {T,X}
-                $poly{T,X}(Val(false), copy(coeffs))
-            end
-            function $poly{T,X}(coeffs::Vector{S}) where {T,X,S}
-                $poly{T,X}(Val(false), T.(coeffs))
+            function $poly{T,X}(coeffs::AbstractVector) where {T,X}
+                if Base.has_offset_axes(coeffs)
+                    @warn "Ignoring offset indices of the coefficient vector"
+                end
+                $poly{T,X}(Val(false), collect(T, coeffs))
             end
             function $poly{T,X}(coeffs::Tuple) where {T,X}
                 $poly{T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{T}(coeffs::Vector{S}, var::Polynomials.SymbolLike) where {T,S}
+            function $poly{T}(coeffs::Vector, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
                 $poly{T, Symbol(var)}(coeffs)
             end
-            function $poly{T}(coeffs::Vector{S}) where {T,S}
-                $poly{T, :x}(coeffs)
+            function $poly{T}(coeffs::Tuple, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
+                $poly{T,Symbol(var)}(collect(T, coeffs))
             end
-            function $poly{T}(coeffs::Tuple,var::Polynomials.SymbolLike) where {T,N,S}
-                $poly{T,Symbol(var)}(coeffs)
-            end
-            function $poly{T}(coeffs::Tuple) where {T,N,S}
-                $poly{T, :x}(coeffs)
-            end
-            function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike) where {T}
+            function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
                 $poly{T}(coeffs, var)
             end
-            function $poly(coeffs::Vector{T}) where {T}
-                $poly{T, :x}(coeffs)
-            end
-            function $poly(coeffs::NTuple{N,T}, var::Polynomials.SymbolLike) where {N,T}
+            function $poly(coeffs::Tuple{Vararg{T}}, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
                 $poly{T}(coeffs, var)
             end
-            function $poly(coeffs::NTuple{N,T}) where {N,T}
-                $poly{T, :x}(coeffs)
-            end
-
         end
 
         Base.length(p::$poly{T,X}) where {T,X} = length(p.coeffs)
@@ -81,43 +68,34 @@ macro registerN(name, parent, params...)
                 N == nothing && return new{$(αs...),T,X}(T[])
                 new{$(αs...),T,X}(T[coeffs[i] for i in firstindex(coeffs):N])
             end
-            function $poly{$(αs...),T,X}(coeffs::Vector{T}) where {$(αs...),T,X}
-                $poly{$(αs...),T,X}(Val(false), copy(coeffs))
-            end
-            function $poly{$(αs...),T,X}(coeffs::Vector{S}) where {$(αs...),T,X,S}
-                $poly{$(αs...),T,X}(Val(false), T.(coeffs))
+            function $poly{$(αs...),T,X}(coeffs::AbstractVector) where {$(αs...),T,X}
+                if Base.has_offset_axes(coeffs)
+                    @warn "Ignoring offset indices of the coefficient vector"
+                end
+                $poly{$(αs...),T,X}(Val(false), collect(T, coeffs))
             end
             function $poly{$(αs...),T,X}(coeffs::Tuple) where {$(αs...),T,X}
                 $poly{$(αs...),T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{$(αs...),T}(coeffs::Vector{S},var::Polynomials.SymbolLike) where {$(αs...),T,S}
+            function $poly{$(αs...),T}(coeffs::Vector,
+                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
                 $poly{$(αs...), T, Symbol(var)}(coeffs)
             end
-            function $poly{$(αs...),T}(coeffs::Vector{S}) where {$(αs...),T,S}
-                $poly{$(αs...), T, :x}(coeffs)
-            end
 
-            function $poly{$(αs...),T}(coeffs::Tuple,var::Polynomials.SymbolLike) where {$(αs...),T,N,S}
+            function $poly{$(αs...),T}(coeffs::Tuple,
+                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
                 $poly{$(αs...),T,Symbol(var)}(coeffs)
             end
-            function $poly{$(αs...),T}(coeffs::Tuple) where {$(αs...),T,N,S}
-                $poly{$(αs...),T, :x}(coeffs)
-            end
 
-            function $poly{$(αs...)}(coeffs::Vector{T},var::Polynomials.SymbolLike) where {$(αs...),T}
+            function $poly{$(αs...)}(coeffs::Vector{T},
+                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
                 $poly{$(αs...),T}(coeffs, var)
             end
-            function $poly{$(αs...)}(coeffs::Vector{T}) where {$(αs...),T}
-                $poly{$(αs...),T, :x}(coeffs)
-            end
 
-            function $poly{$(αs...)}(coeffs::NTuple{N, T},var::Polynomials.SymbolLike) where {$(αs...),N,T}
+            function $poly{$(αs...)}(coeffs::Tuple{Vararg{T}},
+                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
                 $poly{$(αs...),T}(coeffs, var)
             end
-            function $poly{$(αs...)}(coeffs::NTuple{N, T}) where {$(αs...),N,T}
-                $poly{$(αs...),T}(coeffs)
-            end
-
         end
 
         Base.length(ch::$poly{$(αs...),T,X}) where {$(αs...),T,X} = length(ch.coeffs)

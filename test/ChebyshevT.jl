@@ -1,22 +1,27 @@
 ## Note:
 ## This is the `ChebyshevT.jl` test suite from the `Polynomials.jl` package by Miles Lucas
 
-@testset "Construction" for coeff in [
-    Int64[1, 1, 1, 1],
-    Float32[1, -4, 2],
-    ComplexF64[1 - 1im, 2 + 3im],
-    [3 // 4, -2 // 1, 1 // 1],
-]
-    p = Chebyshev(coeff)
-    @test p.coeffs == coeff
-    @test coeffs(p) == coeff
-    @test degree(p) == length(coeff) - 1
-    @test Polynomials.indeterminate(p) == :x
-    @test length(p) == length(coeff)
-    @test size(p) == size(coeff)
-    @test size(p, 1) == size(coeff, 1)
-    @test typeof(p).parameters[1] == eltype(coeff)
-    @test eltype(p) == eltype(coeff)
+@testset "Construction" begin
+    @testset for coeff in [
+        Int64[1, 1, 1, 1],
+        Float32[1, -4, 2],
+        ComplexF64[1 - 1im, 2 + 3im],
+        [3 // 4, -2 // 1, 1 // 1],
+        # AbstractVector
+        view([1.0, 2.0], :),
+        3:6
+    ]
+        p = @inferred Chebyshev(coeff)
+        @test p.coeffs == coeff
+        @test coeffs(p) == coeff
+        @test degree(p) == length(coeff) - 1
+        @test Polynomials.indeterminate(p) == :x
+        @test length(p) == length(coeff)
+        @test size(p) == size(coeff)
+        @test size(p, 1) == size(coeff, 1)
+        @test typeof(p).parameters[1] == eltype(coeff)
+        @test eltype(p) == eltype(coeff)
+    end
 end
 
 @testset "Other Construction" begin
