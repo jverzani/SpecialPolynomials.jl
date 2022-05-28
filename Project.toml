@@ -4,6 +4,7 @@ authors = ["jverzani <jverzani@gmail.com>"]
 version = "0.4.0"
 
 [deps]
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
@@ -13,6 +14,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
+FastGaussQuadrature = "0.4"
 HypergeometricFunctions = "0.2, 0.3"
 Memoize = "0.4"
 Polynomials = "2.0.21, 3"
