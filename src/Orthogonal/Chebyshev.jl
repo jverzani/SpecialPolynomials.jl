@@ -102,7 +102,7 @@ function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
     n = length(p)
     der = Vector{R}(undef, n)
 
-    for j in n:-1:2
+    for j in n:-1:3
         der[j] = 2j * q[j]
         q[j - 2] += j * q[j] / (j - 2)
     end

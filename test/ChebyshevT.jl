@@ -178,6 +178,13 @@ end
         @test res ≈ target
         @test derivative(cint) == cheb
     end
+
+    ## issue #56
+    coeffs  = [3 // 4, -2 // 1, 1 // 1]
+    p = Chebyshev(coeffs)
+    @test derivative(p) ≈ convert(Chebyshev, derivative(convert(Polynomial, p)))
+    @test derivative(p, 2) ≈ convert(Chebyshev, derivative(convert(Polynomial, p), 2))
+
 end
 
 @testset "z-series" for i in 0:5
