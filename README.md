@@ -8,6 +8,6 @@
 
 A package providing various polynomial types (assuming different
 polynomial bases) beyond the standard basis polynomials in the
-`Polynomials` package. This package includes many classic orthogonal
+[`Polynomials.jl`](https://github.com/JuliaMath/Polynomials.jl) package. This package includes many classic orthogonal
 polynomials, the Lagrange and Newton interpolating polynomials, and the
 Bernstein polynomials.
