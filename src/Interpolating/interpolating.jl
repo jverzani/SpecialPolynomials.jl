@@ -28,7 +28,7 @@ function Polynomials.showterm(
     j,
     first::Bool,
     mimetype,
-) where {N,T,P<:AbstractInterpolatingPolynomial}
+) where {T,P<:AbstractInterpolatingPolynomial}
     iszero(pj) && return false
     !first && print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " : (!first ? "+ " : ""))

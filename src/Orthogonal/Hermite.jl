@@ -169,7 +169,7 @@ function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
     2^(-n / 2) * classical_hypergeometric(Hermite, n, x / sqrt(2))
 end
 
-function gauss_nodes_weights(P::Type{<:ChebyshevHermite}, n) where {α,β}
+function gauss_nodes_weights(P::Type{<:ChebyshevHermite}, n)
     xs, ws = glaser_liu_rokhlin_gauss_nodes(basis(ChebyshevHermite, n))
     xs, ws
 end
@@ -245,7 +245,7 @@ hermite_α(P::Type{<:Hermite}) = 2
 #         j = 0
 #         p = min(l, n)
 #         q = l - p
-#         val = linearization_α(P, R, j, l, p, q) 
+#         val = linearization_α(P, R, j, l, p, q)
 
 #     else
 #         # we work with l + 2j as there is a parity consideration
@@ -262,7 +262,7 @@ hermite_α(P::Type{<:Hermite}) = 2
 #             p -= 1
 #             q += 1
 
-#             λ = q/(p+1)*(s-(q-1))/(s-p)            
+#             λ = q/(p+1)*(s-(q-1))/(s-p)
 #             val *= λ
 #         end
 
@@ -279,4 +279,4 @@ hermite_α(P::Type{<:Hermite}) = 2
 #     val *= linearization_λ(P, l, m,n)
 # end
 # linearization_λ(::Type{<:Hermite}, l, m, n) = 2.0^((m+n-l)/2)
-# linearization_λ(::Type{<:ChebyshevHermite}, l, m, n) = 1    
+# linearization_λ(::Type{<:ChebyshevHermite}, l, m, n) = 1

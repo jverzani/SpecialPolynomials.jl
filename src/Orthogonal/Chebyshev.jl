@@ -38,7 +38,7 @@ basis_symbol(::Type{<:Chebyshev}) = "T"
 Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval{Open,Open}(-1, 1)
 weight_function(::Type{<:Chebyshev}) = x -> one(x) / sqrt(one(x) - x^2)
 generating_function(::Type{<:Chebyshev}) = (t, x) -> (1 - t * x) / (1 - 2 * t * x - t^2)
-function classical_hypergeometric(P::Type{<:Chebyshev}, n, x) where {α}
+function classical_hypergeometric(P::Type{<:Chebyshev}, n, x)
     as = (-n, n)
     bs = (one(eltype(P)) / 2,)
     pFq(as, bs, (1 - x) / 2)
@@ -440,7 +440,7 @@ ChebyshevU
 basis_symbol(::Type{<:ChebyshevU}) = "U"
 weight_function(::Type{<:ChebyshevU}) = x -> sqrt(one(x) - x^2)
 generating_function(::Type{<:ChebyshevU}) = (t, x) -> 1 / (1 - 2t * x + t^2)
-function classical_hypergeometric(P::Type{<:ChebyshevU}, n, x) where {α}
+function classical_hypergeometric(P::Type{<:ChebyshevU}, n, x)
     as = (-n, n + 2)
     bs = ((3one(eltype(P))) / 2,)
     (n + 1) * pFq(as, bs, (1 - x) / 2)
