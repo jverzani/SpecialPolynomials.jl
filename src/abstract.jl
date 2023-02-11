@@ -42,7 +42,7 @@ function Polynomials.showterm(
     j,
     first::Bool,
     mimetype,
-) where {N,T,P<:AbstractSpecialPolynomial}
+) where {T,P<:AbstractSpecialPolynomial}
     iszero(pj) && return false
     !first && print(io, " ")
 
