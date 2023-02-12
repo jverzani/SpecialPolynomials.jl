@@ -143,6 +143,7 @@ inner product of different basis vectors will be 0. For example:
 ```jldoctest example
 julia> using QuadGK
 
+
 julia> P = Legendre
 Legendre
 
@@ -154,7 +155,7 @@ julia> p4,p5 = basis.(P, [4,5])
 julia> wf, dom = SpecialPolynomials.weight_function(P), Polynomials.domain(P);
 
 julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
-(6.071532165918825e-18, 0.0)
+(0.0, 0.0)
 ```
 
 The unexported `innerproduct` will compute this as well, without the need to specifiy the domain or weight function, which can be gleaned from the type.
