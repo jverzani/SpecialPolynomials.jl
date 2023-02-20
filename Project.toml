@@ -5,6 +5,7 @@ version = "0.4.4"
 
 [deps]
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
@@ -12,6 +13,14 @@ Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[weakdeps]
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
+
+[extensions]
+FastGaussQuadratureExt = "FastGaussQuadrature"
+FastTransformsExt = "FastTransforms"
 
 [compat]
 FastGaussQuadrature = "0.4, 0.5, 0.6"
@@ -24,6 +33,8 @@ SpecialFunctions = "0.09, 0.10, 1, 2"
 julia = "1.4"
 
 [extras]
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]

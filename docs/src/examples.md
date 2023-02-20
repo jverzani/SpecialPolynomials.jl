@@ -195,9 +195,9 @@ julia> SpecialPolynomials.eval_hyper(P, coeffs(p),  0.4)
 
 
 
-### Arithemtic
+### Arithmetic
 
-For example, basic arithmetic operations  are defined:
+For example, basic arithmetical operations  are defined:
 
 ```
 julia> P = ChebyshevU
