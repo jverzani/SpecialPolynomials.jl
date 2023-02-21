@@ -55,12 +55,14 @@ include("Bernstein.jl")
 
 using Requires
 function __init__()
-    @require FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c" include(
-        "fasttransforms.jl",
-    )
-    @require FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838" include(
-        "fastgaussquadrature.jl",
-    )
+    @static if !isdefined(Base, :get_extension)
+        @require FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c" include(
+            "fasttransforms.jl",
+        )
+        @require FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838" include(
+            "fastgaussquadrature.jl",
+        )
+    end
 end
 
 end # module

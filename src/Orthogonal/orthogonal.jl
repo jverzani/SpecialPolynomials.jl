@@ -272,7 +272,7 @@ jacobi_matrix(p::P, n) where {P<:AbstractOrthogonalPolynomial} = jacobi_matrix(P
 
 Returns a tuple of nodes and weights for Gauss quadrature for the given orthogonal type.
 
-When available, the values are computed through  the `FastGaussQuadratures` package.
+When loaded, the values are computed through  the `FastGaussQuadratures` package.
 
 For some types, a method from  A. Glaser, X. Liu, and V. Rokhlin. "A fast algorithm for the calculation of the roots of special functions." SIAM J. Sci. Comput., 29 (2007), 1420-1438. is used.
 
