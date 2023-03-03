@@ -1,4 +1,4 @@
-module FastTransformsExt
+module SpecialPolynomialsFastTransformsExt
 
 using SpecialPolynomials, FastTransforms
 
