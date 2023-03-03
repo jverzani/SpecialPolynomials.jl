@@ -1,4 +1,4 @@
-module FastGaussQuadratureExt
+module SpecialPolynomialsFastGaussQuadratureExt
 
 using SpecialPolynomials
 using FastGaussQuadrature

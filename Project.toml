@@ -1,7 +1,7 @@
 name = "SpecialPolynomials"
 uuid = "a25cea48-d430-424a-8ee7-0d3ad3742e9e"
 authors = ["jverzani <jverzani@gmail.com>"]
-version = "0.4.5"
+version = "0.4.6"
 
 [deps]
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
@@ -19,8 +19,8 @@ FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 
 [extensions]
-FastGaussQuadratureExt = "FastGaussQuadrature"
-FastTransformsExt = "FastTransforms"
+SpecialPolynomialsFastGaussQuadratureExt = "FastGaussQuadrature"
+SpecialPolynomialsFastTransformsExt = "FastTransforms"
 
 [compat]
 FastGaussQuadrature = "0.4, 0.5, 0.6"
