@@ -431,7 +431,7 @@ convenient bases based on the nodes (`xs`):
 
 ```jldoctest example
 julia> p2 = fit(Lagrange, xs, ys)
-Lagrange(1⋅ℓ₃_0(x) + 2⋅ℓ₃_1(x) + 2⋅ℓ₃_2(x) + 3⋅ℓ₃_3(x))
+Lagrange(1⋅ℓ_0(x) + 2⋅ℓ_1(x) + 2⋅ℓ_2(x) + 3⋅ℓ_3(x))
 
 julia> p3 = fit(Newton, xs, ys)
 Newton(1.0⋅p_0(x) + 4.0⋅p_1(x) - 8.0⋅p_2(x) + 21.333333333333332⋅p_3(x))

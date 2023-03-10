@@ -64,7 +64,7 @@ function Polynomials.showterm(
     Polynomials.printcoefficient(io, pj, 1, mimetype) # j != 0; want to have ()
     print(io, "⋅")
     print(io, basis_symbol(P))
-@show :hi
+
     unicode_subscript(io, j)
     print(io, "($(var))")
     return true

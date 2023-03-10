@@ -4,19 +4,20 @@
 Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0..n`.
 
 * `xs`, `coeffs`: the interpolating coordinates.
-* `ws` weights used in the barycentric representation. (From `SpecialPolynomials.lagrange_barycentric_weights` or `SpecialPolynomials.lagrange_barycentric_nodes_weights`.)
+* `ws`: weights used in the barycentric representation. (From `SpecialPolynomials.lagrange_barycentric_weights` or `SpecialPolynomials.lagrange_barycentric_nodes_weights`.)
 * var: the polynomial indeterminate
 
 # Extended help
 
 The Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n` is the polynomial `p(x) = ∑ᵢ lⱼ(x) fⱼ`.
 
-The basis vectors `lⱼ(x)` are `1` on `xⱼ` and `0` on `xᵢ` when `i ≠ j`. That is, `lⱼ(x) = Π_{i ≠ j}(x-xᵢ)/Π_{i ≠j}(xⱼ-xᵢ)`. These can be rewritten in terms of weights, `wⱼ` yielding `lⱼ = l(x) wⱼ/(x - xⱼ)` with `l(x) = Π(x-xᵢ)`. Going further, yields the barycentric formula:
+The basis vectors `lⱼ(x)` are `1` on `xⱼ` and `0` on `xᵢ` when `i ≠ j`. That is, `lⱼ(x) = Π_{i ≠ j}(x-xᵢ)/Π_{i ≠j}(xⱼ-xᵢ)`. These can be rewritten in terms of weights, `wⱼ`, depending on the `xᵢ` only, yielding `lⱼ = l(x) wⱼ/(x - xⱼ)` with `l(x) = Π(x-xᵢ)`. Going further, yields the barycentric formula:
 
-`p(x) = (∑ wⱼ / (x - xⱼ) ⋅ fⱼ) /  (∑ wⱼ / (x - xⱼ) )`
+`p(x) = (∑ wⱼ / (x - xⱼ) ⋅ fⱼ) /  (∑ wⱼ / (x - xⱼ) )`.
 
 This representation has several properties, as detailed in Berrut and Trefethen [Barycentric Lagrange Interpolation](https://doi.org/10.1137/S0036144502417715).
 
+## Examples
 
 ```jldoctest Lagrange
 julia> using Polynomials, SpecialPolynomials
@@ -56,10 +57,14 @@ julia> convert(Polynomial, qq)
 Polynomials.Polynomial(1.0*x^2)
 ```
 
-Interpolating polynomials suffer from the Runge phenomenon unless the
-nodes are well chosen. For `P=Chebyshvev` and `P=ChebyshevU`, the
-function `SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)`
-will return a good choice of `n+1` points over `[-1,1]` along with
+For a given set of nodes,
+`SpecialPolynomials.lagrange_barycentric_weights` can compute the
+weights.  For all but modest values of `n`, interpolating polynomials
+suffer from the Runge phenomenon unless the nodes are well
+chosen. (They should have asymptotic density of `1/√(1-x^2)` over
+`[-1,1]`.) For `P=Chebyshvev` and `P=ChebyshevU`, the function
+`SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)` will
+return a good choice of `n+1` points over `[-1,1]` along with
 precomputed weights.
 
 ```jldoctest Lagrange
@@ -102,6 +107,7 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
             throw(ArgumentError("the unique xs and the coeffs must have the same length"))
         new{N,S,R,T,Symbol(var)}(xs, ws, coeffs)
     end
+
     # no weights
     function Lagrange(xs::Vector{S},
                       coeffs::Vector{T},
@@ -118,7 +124,6 @@ end
 
 export Lagrange
 
-Polynomials.indeterminate(::Type{Lagrange{N,S,R,T,X}}) where {N,S,R,T,X} = X
 basis_symbol(::Type{<:Lagrange}) = "ℓ"
 
 ## Boilerplate code reproduced here, as there are three type parameters
@@ -187,6 +192,8 @@ function Base.convert(Q::Type{<:Polynomial}, p::Lagrange{N,S,R,T}) where {N,S,R,
     end
     q
 end
+
+## ----- nodes and weights -----
 
 ## return w⁻¹s = {1/w_j, 0 <= j <= n} as 1 based ws[j+1] = w_j
 """
@@ -274,12 +281,12 @@ lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) 
     throw(MethodError())
 
 
-## -----
-
 # do we have the same nodes (which makes easier to combine)
 same_nodes(p1::Lagrange, p2::Lagrange) = false
 same_nodes(p1::Lagrange{N,S}, p2::Lagrange{N,S}) where {N,S} =
     p1.xs == p2.xs
+
+## ----- arithmetic operations
 
 # call op on coeffs when ps all match (assumed)
 function _lagrange_op(f, ps...)
@@ -287,8 +294,6 @@ function _lagrange_op(f, ps...)
     xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
     Lagrange(xs, ws, f([p.coeffs for p ∈ ps]...), X)
 end
-
-## -----
 
 function Base.:+(
     p1::Lagrange{N,S,R,T,X},
@@ -341,6 +346,7 @@ end
 
 
 ## derivative
+
 ## The derivative can be computed exactly by
 ## s(x) = ∑ wⱼ(x-xᵢ)/(x-xⱼ)
 ## l′ⱼ s(x) + lⱼ s'(x) = wⱼ((x-xᵢ)/(x-xⱼ))' for some chosen xᵢ
@@ -380,7 +386,7 @@ function Polynomials.derivative(p::Lagrange)
     Lagrange(xs, ws, p′s, X)
 end
 
-
+## ----- fitting -----
 
 ## short cut if weights are known.
 _fit(P::Type{Lagrange}, xs, ws, ys, var=:x) = Lagrange(xs, ws, ys, var)
@@ -395,12 +401,16 @@ function Polynomials.fit(
     _fit(P, xs, ws, ys, var)
 end
 
-function Polynomials.fit(P::Type{<:Lagrange}, xs::AbstractVector{S}, f; var=:x) where {S}
+function Polynomials.fit(P::Type{<:Lagrange},
+                         xs::AbstractVector{S},
+                         f; var=:x) where {S}
     ws = lagrange_barycentric_weights(xs)
     _fit(P, xs, ws, f.(xs), var)
 end
 
 # fit with weights specified
-function Polynomials.fit(P::Type{<:Lagrange}, xs::AbstractVector{S}, ws::AbstractVector, f; var=:x) where {S}
+function Polynomials.fit(P::Type{<:Lagrange},
+                         xs::AbstractVector{S}, ws::AbstractVector,
+                         f; var=:x) where {S}
     _fit(P, xs, ws, f.(xs), var)
 end
