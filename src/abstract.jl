@@ -77,6 +77,8 @@ Base.extrema(p::P) where {P<:AbstractSpecialPolynomial} = extrema(P)
 
 ## Polynomial operations
 
+
+
 ##
 ## --------------------------------------------------
 ##

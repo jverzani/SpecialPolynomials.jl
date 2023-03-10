@@ -79,7 +79,7 @@ C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P)) / 2
 function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
     isconstant(p1) && return p2 * p1[0]
     isconstant(p2) && return p1 * p2[0]
-    assert_same_variable(X, Y)
+    assert_same_variable(X, Y) || throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     R = promote_type(T, S)
     z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
@@ -153,7 +153,7 @@ function Polynomials.companion(p::Chebyshev{T}) where {T}
 end
 
 function Base.divrem(num::Chebyshev{T,X}, den::Chebyshev{S,Y}) where {T,X,S,Y}
-    X != Y && throw(ArgumentError("Polynomials must have same variable"))
+    assert_same_variable(num, den) || throw(ArgumentError("`p` and `q` have different indeterminate"))
     n = length(num) - 1
     m = length(den) - 1
 
@@ -467,7 +467,7 @@ Cn(::Type{<:ChebyshevU}, n::Int) = 1
 function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
     isconstant(p) && return q * p[0]
     isconstant(q) && return p * q[0]
-    assert_same_variable(X, Y)
+    assert_same_variable(X, Y) || throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     M, N = degree(p), degree(q)
     R = promote_type(T, S)

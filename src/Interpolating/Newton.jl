@@ -66,7 +66,7 @@ end
 
 Construct the
 [matrix](https://en.wikipedia.org/wiki/Divided_differences#Matrix_form)
-form of Newton's divided differences. This assumes the xs are unique. 
+form of Newton's divided differences. This assumes the xs are unique.
 
 """
 newton_tableau(f, xs::AbstractVector{S}) where {S} = newton_tableau(xs, f.(xs) / one(S))
@@ -141,7 +141,7 @@ function _dual(p::Newton{N,S,T}, x) where {N,S,T}
 end
 
 function Base.:+(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1,T1,Y}
-    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
+    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
     if N == M && p1.xs == p2.xs
         tableau = p1.tableau + p2.tableau
         return Newton(p1.xs, tableau, X)
@@ -159,7 +159,7 @@ function Base.:*(p1::Newton{N,S,T,X}, p2::Newton{M,S1,T1,Y}) where {N,S,T,X,M,S1
     ## find larger of xs, expand to xxs
     ## refit p1 and p2 on this
     ## use  product of tableaus
-    Polynomials.assert_same_variable(p1, p2)
+    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
     p, q = N >= M ? (p1, p2) : (p2, p1)
     xs = p.xs
     new_xs = _new_nodes(xs, q.xs)

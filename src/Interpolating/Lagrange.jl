@@ -1,10 +1,22 @@
 """
-    Lagrange{N, S, R, T, X}
+    Lagrange(xs, [ws], coeffs, [var])
 
-Represent a polynomial in Lagrange form using nodes `xs`, weights `ws`, and coefficients `coeffs`.
-The Lagrange form does polynomial interpolation between `xs` and `ys` through `p(x) = Σ_{0..n} ℓ_i(x) y_i`,
-where if `ℓ(x) = prod(x-x_i)`, `w_i = 1/prod_{j≠i}(x_i - x_j)`, then `ℓ_i(x) = ℓ(x) w_i/(x-x_i)`. The `ℓ_i`
-satisfy `ℓ_i(x_j) = δ_{ij}`, so the coefficients are just the `ys`.
+Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n`.
+
+* `xs`, `coeffs`: the interpolating coordinates.
+* `ws` weights used in the barycentric representation. (From `SpecialPolynomials.lagrange_barycentric_weights` or `SpecialPolynomials.lagrange_barycentric_nodes_weights`.)
+* var: the polynomial indeterminate
+
+# Extended help
+
+The Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n` is the polynomial `p(x) = ∑ᵢ lⱼ(x) fⱼ`.
+
+The basis vectors `lⱼ(x)` are `1` on `xⱼ` and `0` on `xᵢ` when `i ≠ j`. That is `lⱼ(x) = Π_{i ≠ j}(x-xᵢ)/Π_{i ≠j}(xⱼ-xᵢ)`. These can be rewritten in terms of weights, `wⱼ` yielding `lⱼ = l(x) wⱼ/(x - xⱼ)` with `l(x) = Π(x-xᵢ). Going further, yields the barycentric formula
+
+p(x) = (∑ wⱼ / (x - xⱼ) ⋅ fⱼ) /  ∑ wⱼ / (x - xⱼ)
+
+This representation has several properties, as detailed in Berrut and Trefethen [Barycentric Lagrange Interpolation](https://doi.org/10.1137/S0036144502417715).
+
 
 ```jldoctest Lagrange
 julia> using Polynomials, SpecialPolynomials
@@ -24,7 +36,8 @@ Polynomials.Polynomial(1.0*x)
 
 The instances hold the nodes and weights, which are necessary for
 representation, so the type alone can not be used for functions such
-as `variable` or `convert(Lagrange, ...)`. For the former we can  use an instance, for the latter we can use `fit`:
+as `variable` or `convert(Lagrange, ...)`. For the former we can use
+an instance, for the latter we can use `fit`:
 
 ```jldoctest Lagrange
 julia> p =  Lagrange([1,2,3], [1,2,3])
@@ -67,8 +80,9 @@ true
 ```
 
 !!! note
-    The above example  is  more directly  done through `fit(Chebyshev, f, 64)`, though  the resulting
-    polynomial will reference a different  basis.
+    The above example is more directly done through
+    `fit(Chebyshev, f, 64)`, though the resulting polynomial will
+    reference a different basis.
 
 """
 struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolynomial{T,X}
@@ -80,7 +94,7 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
         xs::Vector{S},
         ws::Vector{R},
         coeffs::Vector{T},
-        var::Symbol=:x,
+        var::Polynomials.SymbolLike=:x,
     ) where {S,R,T}
         xs = unique(xs)
         N = length(xs)
@@ -88,7 +102,10 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
             throw(ArgumentError("the unique xs and the coeffs must have the same length"))
         new{N,S,R,T,Symbol(var)}(xs, ws, coeffs)
     end
-    function Lagrange(xs::Vector{S}, coeffs::Vector{T}, var::Symbol=:x) where {S,T}
+    # no weights
+    function Lagrange(xs::Vector{S},
+                      coeffs::Vector{T},
+                      var::Polynomials.SymbolLike=:x) where {S,T}
         xs = unique(xs)
         N = length(xs)
         ws = lagrange_barycentric_weights(xs)
@@ -102,7 +119,8 @@ end
 export Lagrange
 
 Polynomials.indeterminate(::Type{Lagrange{N,S,R,T,X}}) where {N,S,R,T,X} = X
-basis_symbol(::Type{Lagrange{N,S,R,T}}) where {N,S,R,T} = "ℓ^$(N-1)"
+basis_symbol(::Type{<:Lagrange{N}}) where {N} =
+    "ℓ" * sprint(io->unicode_subscript(io, N-1))
 
 ## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P<:Lagrange} = p
@@ -116,12 +134,14 @@ Base.promote_rule(::Type{Lagrange{N,S,R,T}}, ::Type{Q}) where {N,S,R,T,Q<:Number
     Lagrange{N,S,R,promote_type(T, Q)}
 
 Polynomials.domain(::Type{<:Lagrange}) = Polynomials.Interval(-Inf, Inf)
+
 function Polynomials.variable(
     p::Lagrange{S,R,T},
     var::Polynomials.SymbolLike=:x,
 ) where {S,R,T}
     _fit(Lagrange, p.xs, p.ws, p.xs, var)
 end
+
 function Polynomials.one(p::Lagrange)
     _fit(
         Lagrange,
@@ -131,6 +151,7 @@ function Polynomials.one(p::Lagrange)
         Polynomials.indeterminate(p),
     )
 end
+
 Polynomials.zero(p::Lagrange{N,S,R,T}) where {N,S,R,T} = 0 * p
 
 ##  Evaluation
@@ -138,11 +159,11 @@ Polynomials.zero(p::Lagrange{N,S,R,T}) where {N,S,R,T} = 0 * p
 function Polynomials.evalpoly(x, p::Lagrange)
     ws, xs, cs = p.ws, p.xs, coeffs(p)
     a = b = zero(x / 1)
-    for j in eachindex(xs)
-        Δ = (x - xs[j])
-        iszero(Δ) && return cs[j] # xj ∈ xs, so sum c_j l_i(xj) = sum c_j δ_{ij} = c_j
-        l = ws[j] / Δ
-        a += l * cs[j]
+    for (xⱼ, wⱼ, cⱼ) in zip(xs, ws, cs)
+        Δ = (x - xⱼ)
+        iszero(Δ) && return cⱼ # xj ∈ xs, so sum c_j l_i(xj) = sum c_j δ_{ij} = c_j
+        l = wⱼ / Δ
+        a += l * cⱼ
         b += l
     end
     a / b
@@ -155,17 +176,14 @@ end
 function Base.convert(Q::Type{<:Polynomial}, p::Lagrange{N,S,R,T}) where {N,S,R,T}
     q = zero(Q) / 1
     x = variable(q)
-    xs = p.xs
-    cs = coeffs(p)
-    ws = p.ws
+    xs, ws, cs = p.xs, p.ws, coeffs(p)
 
     if length(xs) == 1
         return cs[1] + 0 * x #Polynomial(cs[1]*ones(T,1))
     else
-        l = fromroots(Polynomial, xs)
-        for i in eachindex(xs)
-            li = prod(x - xs[j] for j in eachindex(xs) if j != i)
-            q += li * ws[i] * cs[i]
+        for (i, (wᵢ, cᵢ)) in enumerate(zip(ws, cs))
+            lᵢ = prod(x - xⱼ for (j,xⱼ) in enumerate(xs) if j != i)
+            q += lᵢ * wᵢ * cᵢ
         end
     end
     q
@@ -175,7 +193,7 @@ end
 """
     lagrange_barycentric_weights(xs)
 
-Return `[1/w_i for 0 <i <= n]` where `wi = ∏_{j≠i} (xi - xj)`.
+Return `[1/w_i for 0 <i <= n]` where `wi = ∏_{j≠i} (xi - xj)`. If `xs` is a range, the weights have a closed form formula, though for large `n` interpolation will be unstable.
 """
 function lagrange_barycentric_weights(xs)
     n = length(xs)
@@ -220,6 +238,29 @@ function update_lagrange_barycentric_weights(ws, xs, xn1)
     ys
 end
 
+# combine two non-equal pairs of (xs, ws), (us, vs)
+function merge_nodes_weights(
+    p1::Lagrange{N,S,R,T,X},
+    p2::Lagrange{M,S1,R1,T1,Y},
+) where {N,S,R,T,X,M,S1,R1,T1,Y}
+
+    same_nodes(p1, p2) && return (p1.xs, p1.ws)
+
+    p, q = N >= M ? (p1, p2) : (p2, p1)
+    S2 = typeof(one(S) * one(S1) / 1)
+    xs = convert(Vector{S2}, copy(p.xs))
+    ws = copy(p.ws)
+
+    # new_xs ## XXX this is where the work is
+    new_xs = _new_nodes(xs, q.xs)
+    for y in new_xs
+        ws = update_lagrange_barycentric_weights(ws, xs, y)
+        push!(xs, y)
+    end
+
+    xs, ws
+end
+
 """
     lagrange_barycentric_nodes_weights(::Type{<:SpecialPolynomial}, n::Int)
 
@@ -233,64 +274,114 @@ is needed.
 lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) =
     throw(MethodError())
 
-## can add easily if the nodes are shared
-## otherwise, this needs to interpolate
+
+## -----
+
+# do we have the same nodes (which makes easier to combine)
+same_nodes(p1::Lagrange, p2::Lagrange) = false
+same_nodes(p1::Lagrange{N,S}, p2::Lagrange{N,S}) where {N,S} =
+    p1.xs == p2.xs
+
+# call op on coeffs when ps all match (assumed)
+function _lagrange_op(f, ps...)
+    p = first(ps)
+    xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
+    Lagrange(xs, ws, f([p.coeffs for p ∈ ps]...), X)
+end
+
+## -----
+
 function Base.:+(
     p1::Lagrange{N,S,R,T,X},
     p2::Lagrange{M,S1,R1,T1,Y},
 ) where {N,S,R,T,X,M,S1,R1,T1,Y}
-    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
 
-    # can just add if using the same set of nodes
-    if N == M && p1.xs == p2.xs
-        cs = coeffs(p1) + coeffs(p2)
-        return Lagrange(p1.xs, p1.ws, cs, X)
-    else
-        p, q = N >= M ? (p1, p2) : (p2, p1)
-        xs, ws, cs = p.xs, p.ws, copy(coeffs(p))
-        for i in eachindex(xs)
-            cs[i] += q(xs[i])
-        end
-        return _fit(Lagrange, xs, ws, cs, X)
-    end
+    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+
+    ## same nodes/weights
+    same_nodes(p1, p2) && return _lagrange_op(+, p1, p2)
+
+    ## o/w we have to merge, evaluate, fit
+    xs, ws = merge_nodes_weights(p1, p2)
+    ys = p1.(xs) + p2.(xs)
+    return Lagrange(xs, ws, ys, X)
 end
 
-## XXX is there a better way?
-## This refits using  updated weights,
-## but this can be wildly inaccurate
 function Base.:*(
     p1::Lagrange{N,S,R,T,X},
     p2::Lagrange{M,S1,R1,T1,Y},
 ) where {N,S,R,T,X,M,S1,R1,T1,Y}
-    X == Y || throw(ArgumentError("p1 and p2 must share the same variable"))
 
-    p, q = N >= M ? (p1, p2) : (p2, p1)
-    S2 = typeof(one(S) * one(S1) / 1)
-    xs = convert(Vector{S2}, copy(p.xs))
-    ws = copy(p.ws)
+    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
 
-    # new_xs ## XXX this is where the work is
-    new_xs = _new_nodes(xs, q.xs)
-    for y in new_xs
-        ws = update_lagrange_barycentric_weights(ws, xs, y)
-        push!(xs, y)
-    end
-    ys = p.(xs) .* q.(xs)
-    _fit(Lagrange, xs, ws, ys, X)
+    # same nodes/weigths
+    same_nodes(p1, p2) && return _lagrange_op(*, p1, p2)
+
+    xs, ws = merge_nodes_weights(p1, p2)
+    ys = p1.(xs) .* p2.(xs)
+    return Lagrange(xs, ws, ys, X)
+
 end
 
-# handle scalar case
+Base.:-(p::P) where {P<:Lagrange} = _lagrange_op(-, p)
+
+# Scalar ops
 function Base.:+(p::Lagrange, c::Number)
-    q = Lagrange(p.xs[1:1], [c], Polynomials.indeterminate(p))
+    xs, ws, X = p.xs, p.ws,  Polynomials.indeterminate(p)
+    ys = c * one.(ws)
+    q = Lagrange(xs, ws, ys, X)
     p + q
 end
 
 Base.:*(c::Number, p::Lagrange) = p * c
 function Base.:*(p::P, c::Number) where {P<:Lagrange}
-    Lagrange(p.xs, c * coeffs(p), Polynomials.indeterminate(p))
+    xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
+    ys = c * coeffs(p)
+    Lagrange(xs, ws, ys, X)
 end
 
-Base.:-(p::P) where {P<:Lagrange} = (-1) * p
+
+## derivative
+## The derivative can be computed exactly by
+## s(x) = ∑ wⱼ(x-xᵢ)/(x-xⱼ)
+## l′ⱼ s(x) + lⱼ s'(x) = wⱼ((x-xᵢ)/(x-xⱼ))' for some chosen xᵢ
+## However, he we *fit* the derivative using a polynomial to *evaluate* it, as
+## l′ⱼ(xᵢ) = wⱼ/wᵢ / (xᵢ - xⱼ) are known.
+## Using p(x) = ∑ lⱼ fⱼ we get p'(xᵢ) = ∑ l′ⱼ(xᵢ)fⱼ so we have (xᵢ, p′(xᵢ)) values easily computed.
+
+
+# 0-based enumeration p
+l′(p::Lagrange, j, i) = (p.ws[1+j] / p.ws[1+i]) / (p.xs[1+i] - p.xs[1+j])
+l′(p::Lagrange, j) = - sum(l′(p, j′, j) for j′ ∈ eachindex(p) if j′ ≠ j)
+
+"""
+    derivative(p::Lagrange)
+
+In [C. Schneider and W. Werner](https://doi.org/10.2307/2008095) is a formula for the ``k``th derivative of polynomial in barycentric form for x not in {xᵢ}:
+
+r^(k)(x)/k! = ∑(wᵢ/(x-xᵢ)⋅r[x,x,...x,xᵢ]) / ∑wᵢ/(x - xᵢ)
+
+We don't use that here, rather, we use the fact that the derivative evaluated at xᵢ can be evaluated at the basis polynomials using the formulas to evaluate `lⱼ′(xᵢ)`, where `p=∑lⱼ fⱼ`. , so we can evaluate the derivative at the same nodes as the polynomial and fit the polynomial that way. Up to numeric issues, this should be the same polynomial.
+
+
+"""
+function Polynomials.derivative(p::Lagrange)
+
+    p′s = zero.(coeffs(p))
+
+    for i ∈  eachindex(p)
+        # p′(xᵢ) = ∑ l′ⱼ(xᵢ) fⱼ
+        for (j, fⱼ) ∈ pairs(p)
+            l′ⱼᵢ = i == j ? l′(p, j) : l′(p, j, i)
+            p′s[1+i] += l′ⱼᵢ * fⱼ
+        end
+    end
+
+    xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
+    Lagrange(xs, ws, p′s, X)
+end
+
+
 
 ## short cut if weights are known.
 _fit(P::Type{Lagrange}, xs, ws, ys, var=:x) = Lagrange(xs, ws, ys, var)
