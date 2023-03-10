@@ -216,7 +216,7 @@ function ⊗(::Type{<:AbstractCDOP}, p::P, q::Q) where {P<:AbstractCDOP,Q<:Abstr
     #@assert eltype(p) == eltype(q)
     isconstant(p) && return q * constantterm(p)
     isconstant(q) && return p * constantterm(q)
-    assert_same_variable(p, q)
+    assert_same_variable(p, q) || throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     convert(⟒(P), convert(FallingFactorial, p) * convert(FallingFactorial, q))
 

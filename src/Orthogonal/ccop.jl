@@ -461,7 +461,7 @@ end
 function ⊗(p::P, q::Q) where {P<:AbstractCOP,Q<:AbstractCOP}
     isconstant(p) && return q * constantterm(p)
     isconstant(q) && return p * constantterm(q)
-    assert_same_variable(p, q)
+    assert_same_variable(p, q) || throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     # use connection for linearization;  note:  evalauation  is  faster than _convert_cop
     p′, q′ = _convert_cop.(Polynomial, (p, q))

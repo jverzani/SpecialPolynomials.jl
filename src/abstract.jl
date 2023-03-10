@@ -34,6 +34,14 @@ function unicode_subscript(io, j)
     end
 end
 
+function unicode_superscript(io, j)
+    a = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+    for i in string(j)
+        print(io, a[Int(i) - 44])
+    end
+end
+
+
 function Polynomials.showterm(
     io::IO,
     ::Type{P},
@@ -76,6 +84,8 @@ end
 Base.extrema(p::P) where {P<:AbstractSpecialPolynomial} = extrema(P)
 
 ## Polynomial operations
+
+
 
 ##
 ## --------------------------------------------------

@@ -278,8 +278,8 @@ function Base.:*(p::P, q::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},𝐌,S,Y,Q<:
 
     isconstant(p) && return q * constantterm(p)
     isconstant(q) && return p * constantterm(q)
-    Polynomials.assert_same_variable(p, q) ||
-        throw(ArgumentError("p1 and p2 must have the same symbol"))
+    assert_same_variable(p, q) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+
 
     R = typeof(one(promote_type(T, S)) / 1)
     x = variable(Polynomial{R})
