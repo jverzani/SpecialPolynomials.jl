@@ -1,7 +1,7 @@
 """
     Lagrange(xs, [ws], coeffs, [var])
 
-Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n`.
+Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0..n`.
 
 * `xs`, `coeffs`: the interpolating coordinates.
 * `ws` weights used in the barycentric representation. (From `SpecialPolynomials.lagrange_barycentric_weights` or `SpecialPolynomials.lagrange_barycentric_nodes_weights`.)
@@ -11,9 +11,9 @@ Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n`.
 
 The Lagrange interpolation of points `(xᵢ, fᵢ)` for `i ∈ 0:n` is the polynomial `p(x) = ∑ᵢ lⱼ(x) fⱼ`.
 
-The basis vectors `lⱼ(x)` are `1` on `xⱼ` and `0` on `xᵢ` when `i ≠ j`. That is `lⱼ(x) = Π_{i ≠ j}(x-xᵢ)/Π_{i ≠j}(xⱼ-xᵢ)`. These can be rewritten in terms of weights, `wⱼ` yielding `lⱼ = l(x) wⱼ/(x - xⱼ)` with `l(x) = Π(x-xᵢ). Going further, yields the barycentric formula
+The basis vectors `lⱼ(x)` are `1` on `xⱼ` and `0` on `xᵢ` when `i ≠ j`. That is, `lⱼ(x) = Π_{i ≠ j}(x-xᵢ)/Π_{i ≠j}(xⱼ-xᵢ)`. These can be rewritten in terms of weights, `wⱼ` yielding `lⱼ = l(x) wⱼ/(x - xⱼ)` with `l(x) = Π(x-xᵢ)`. Going further, yields the barycentric formula:
 
-p(x) = (∑ wⱼ / (x - xⱼ) ⋅ fⱼ) /  ∑ wⱼ / (x - xⱼ)
+`p(x) = (∑ wⱼ / (x - xⱼ) ⋅ fⱼ) /  (∑ wⱼ / (x - xⱼ) )`
 
 This representation has several properties, as detailed in Berrut and Trefethen [Barycentric Lagrange Interpolation](https://doi.org/10.1137/S0036144502417715).
 
@@ -22,7 +22,7 @@ This representation has several properties, as detailed in Berrut and Trefethen 
 julia> using Polynomials, SpecialPolynomials
 
 julia> p =  Lagrange([1,2,3], [1,2,3])
-Lagrange(1⋅ℓ₂_0(x) + 2⋅ℓ₂_1(x) + 3⋅ℓ₂_2(x))
+Lagrange(1⋅ℓ_0(x) + 2⋅ℓ_1(x) + 3⋅ℓ_2(x))
 
 julia> p.([1,2,3]) # the coefficients
 3-element Vector{Int64}:
@@ -41,16 +41,16 @@ an instance, for the latter we can use `fit`:
 
 ```jldoctest Lagrange
 julia> p =  Lagrange([1,2,3], [1,2,3])
-Lagrange(1⋅ℓ₂_0(x) + 2⋅ℓ₂_1(x) + 3⋅ℓ₂_2(x))
+Lagrange(1⋅ℓ_0(x) + 2⋅ℓ_1(x) + 3⋅ℓ_2(x))
 
 julia> variable(p)
-Lagrange(1⋅ℓ₂_0(x) + 2⋅ℓ₂_1(x) + 3⋅ℓ₂_2(x))
+Lagrange(1⋅ℓ_0(x) + 2⋅ℓ_1(x) + 3⋅ℓ_2(x))
 
 julia> q = Polynomial([0,0,1])
 Polynomials.Polynomial(x^2)
 
-julia> qq = fit(Lagrange, p.xs, q)
-Lagrange(1⋅ℓ₂_0(x) + 4⋅ℓ₂_1(x) + 9⋅ℓ₂_2(x))
+julia> qq = fit(Lagrange, p.xs, p.ws, q)
+Lagrange(1⋅ℓ_0(x) + 4⋅ℓ_1(x) + 9⋅ℓ_2(x))
 
 julia> convert(Polynomial, qq)
 Polynomials.Polynomial(1.0*x^2)
@@ -119,8 +119,7 @@ end
 export Lagrange
 
 Polynomials.indeterminate(::Type{Lagrange{N,S,R,T,X}}) where {N,S,R,T,X} = X
-basis_symbol(::Type{<:Lagrange{N}}) where {N} =
-    "ℓ" * sprint(io->unicode_subscript(io, N-1))
+basis_symbol(::Type{<:Lagrange}) = "ℓ"
 
 ## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P<:Lagrange} = p
@@ -398,5 +397,10 @@ end
 
 function Polynomials.fit(P::Type{<:Lagrange}, xs::AbstractVector{S}, f; var=:x) where {S}
     ws = lagrange_barycentric_weights(xs)
+    _fit(P, xs, ws, f.(xs), var)
+end
+
+# fit with weights specified
+function Polynomials.fit(P::Type{<:Lagrange}, xs::AbstractVector{S}, ws::AbstractVector, f; var=:x) where {S}
     _fit(P, xs, ws, f.(xs), var)
 end
