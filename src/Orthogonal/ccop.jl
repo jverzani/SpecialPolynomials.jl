@@ -581,3 +581,31 @@ function Polynomials.integrate(p::P) where {P<:AbstractCOP}
     ∫p = Q(as)
     return ∫p
 end
+
+
+
+##
+## ------------------------------------------------
+##
+
+## Use EXPLICIT BARYCENTRIC WEIGHTS FOR POLYNOMIAL INTERPOLATION
+## IN THE ROOTS OR EXTREMA OF CLASSICAL ORTHOGONAL POLYNOMIALS,
+## By: HAIYONG WANG, DAAN HUYBRECHS, AND STEFAN VANDEWALLE
+## MATHEMATICS OF COMPUTATION
+## Volume 83, Number 290, November 2014, Pages 2893–2914 S 0025-5718(2014)02821-4
+## https://www.jstor.org/stable/24488682
+
+function lagrange_barycentric_nodes_weights(P::Type{<:PP}, n::Int) where {PP <: AbstractCCOP}
+    ## formula (2.15) simplified as we use ratios in Lagrange
+    xs, λs = gauss_nodes_weights(P, n+1)
+    a, b, c, d, e = abcde(P)
+    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) ∈ zip(xs, λs)]
+    N = length(ws)
+
+    itr = isodd(n) ? (2:2:N) : (1:2:N)
+    for i ∈ itr
+        ws[i] = -ws[i]
+    end
+
+    xs, ws
+end

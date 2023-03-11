@@ -72,3 +72,30 @@ end
     q = fit(Lagrange, [2, 3, 4, 5], x -> (x - 1) * (x - 1 / 2) * (x + 1 / 2))
     @test all(roots(q) .≈ [-1 / 2, 1 / 2, 1])
 end
+
+@testset "nodes and weights" begin
+
+    # test of nodes and weights
+    P = Chebyshev  # have exact formula to compare
+    n = 5
+    xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
+    a, b, c, d, e = abcde(P)
+    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) ∈ zip(xs, λs)]
+    N = length(ws)
+
+    itr = isodd(n) ? (2:2:N) : (1:2:N)
+    for i ∈ itr
+        ws[i] = -ws[i]
+    end
+
+    xs′, ws′ = SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)
+    @test (ws / first(ws)) ≈ (ws′/first(ws′)) # up to a constant
+
+    P = Legendre
+    xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
+    ws = [sqrt((1-xⱼ^2) * wⱼ) for (xⱼ, wⱼ) ∈ zip(xs, λs)]
+    for j ∈ 0:n; ws[1+j] = (-1)^j * ws[1+j]; end
+    xs′, ws′ = SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)
+    @test (ws / first(ws)) ≈ (ws′/first(ws′)) # up to a constant
+
+end
