@@ -79,7 +79,7 @@ end
     P = Chebyshev  # have exact formula to compare
     n = 5
     xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
-    a, b, c, d, e = abcde(P)
+    a, b, c, d, e = SpecialPolynomials.abcde(P)
     ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) ∈ zip(xs, λs)]
     N = length(ws)
 
