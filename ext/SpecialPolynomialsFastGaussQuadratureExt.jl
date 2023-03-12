@@ -3,18 +3,28 @@ module SpecialPolynomialsFastGaussQuadratureExt
 using SpecialPolynomials
 using FastGaussQuadrature
 
+# special case these once FastGaussQuadrature is loaded
 SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {P<:Chebyshev} =
     gausschebyshev(n)
 
 SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {α,β,P<:Jacobi{α,β}} =
     gaussjacobi(n, α, β)
 
-SpecialPolynomials.eval_basis(::Type{P}, n, x::Float64) where {P<:Legendre} = fastlegendre(n, x)
-SpecialPolynomials.eval_basis(::Type{P}, n, x::Union{Int,Int32,Float16,Float32}) where {P<:Legendre} =
-    fastlegendre(n, float(x))
 SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {P<:Legendre} =
     gausslegendre(n)
 
+SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {P<:Hermite} =
+    gausshermite(n)
+
+SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {α, P<:Laguerre{α}} =
+    gausslaguerre(n, α)
+
+## basis for legendre polynomials
+SpecialPolynomials.eval_basis(::Type{P}, n, x::Float64) where {P<:Legendre} =
+    fastlegendre(n, x)
+
+SpecialPolynomials.eval_basis(::Type{P}, n, x::Union{Int,Int32,Float16,Float32}) where {P<:Legendre} =
+    fastlegendre(n, float(x))
 
 
 # From
@@ -37,8 +47,6 @@ SpecialPolynomials.gauss_nodes_weights(p::Type{P}, n) where {P<:Legendre} =
 # n= 10_000_000 10,000x faster
 # (measurement of basis(P,n)(x) compared to Basis(P,n)(x)
 
-import FastGaussQuadrature: gamma
-
 # 4 regions of evaluation
 # specialized for Float64 values
 function fastlegendre(n, x)
@@ -50,6 +58,7 @@ function fastlegendre(n, x)
     (n + 1) * sin(θ) > 25 && return asy_32(n, x)
     asy_33(n, x)
 end
+
 
 ## ---- n < 100 case
 
@@ -63,7 +72,7 @@ const Cn = zeros(Float64, 99)
 Cn[1] = 1.0
 for i in 1:49
     n = 2i
-    Cn[n] = sqrt(pi) / gamma(i + 1) / gamma((1 - n) / 2)
+    Cn[n] = sqrt(pi) / FastGaussQuadrature.gamma(i + 1) / FastGaussQuadrature.gamma((1 - n) / 2)
     Cn[n + 1] = (n + 1) * Cn[n]
 end
 
@@ -107,7 +116,7 @@ end
 direct_cosine(p::Val{false}, n, x) = x * direct_cosine(Val(true), n, x)
 
 ## ----
-const Cl0s = [gamma(n + 1) / gamma(n + 3 / 2) for n in 1:9]
+const Cl0s = [FastGaussQuadrature.gamma(n + 1) / FastGaussQuadrature.gamma(n + 3 / 2) for n in 1:9]
 τ(x) = evalpoly(
     1 / x,
     (

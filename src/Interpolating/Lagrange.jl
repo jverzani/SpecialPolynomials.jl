@@ -270,10 +270,8 @@ end
 """
     lagrange_barycentric_nodes_weights(::Type{<:SpecialPolynomial}, n::Int)
 
-Return a collection of `n+1` nodes and weights the given family of
-polynomials. Defined for `ChebyshevT` and `ChebyshevU` familes, as there
-are `O(n)` algorithms available. Otherwise, `lagrange_barycentric_weights`
-is needed.
+Return a collection of `n+1` nodes and *simplified* weights the given family of
+polynomials. There are explicit formula for `Chebyshev` and `Chebyshev`, for other classical continuous orthogonal polynomials there is a relationship between the Gauss nodes and weights and the barycentric ones that is used.
 
 
 """

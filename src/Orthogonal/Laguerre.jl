@@ -78,9 +78,6 @@ function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
     Pochhammer_factorial(α + 1, n) * pFq(as, bs, x)
 end
 
-gauss_nodes_weights(p::Type{P}, n) where {α,P<:Laguerre{α}} =
-    FastGaussQuadrature.gausslaguerre(n, α)
-
 ## Overrides
 
 # default  connection between Laguerre is popping out  0s

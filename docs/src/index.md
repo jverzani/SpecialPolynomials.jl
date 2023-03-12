@@ -78,6 +78,7 @@ SpecialPolynomials.Bn
 SpecialPolynomials.Cn
 SpecialPolynomials.jacobi_matrix
 SpecialPolynomials.gauss_nodes_weights
+SpecialPolynomials.lagrange_barycentri_nodes_weights
 ```
 
 ### Defining new types
@@ -112,7 +113,7 @@ Bernstein
 #### Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`):
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
+using Plots, Polynomials, SpecialPolynomials;  # hide
 bs = [[220, 260], [220, 40], [35, 100],  [120, 140]]
 
 p = Bernstein(bs)
@@ -122,8 +123,9 @@ xs, ys = [[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
 p = plot(xs, ys, legend=false)
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
 
-show(current())  # hide
+#show(current())  # hide
 
-# savefig("bezier.svg")  # hide
-#![](bezier.svg) # hide
+savefig("bezier.svg")  # hide
 ```
+
+![](bezier.svg)

@@ -1,6 +1,9 @@
 using Documenter
 using SpecialPolynomials
 
+ENV["PLOTS_TEST"] = "true"
+ENV["GKSwstype"] = "100"
+
 makedocs(
     sitename = "SpecialPolynomials",
     format = Documenter.HTML(ansicolor=true),
