@@ -91,9 +91,6 @@ function jacobi_eval(α, β, n, z)
     tot
 end
 
-# gauss_nodes_weights(p::Type{P}, n) where {α, β, P <: Jacobi{α, β}} =
-#     FastGaussQuadrature.gaussjacobi(n, α, β)
-
 function classical_hypergeometric(::Type{<:Jacobi{α,β}}, n, x) where {α,β}
     (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
 

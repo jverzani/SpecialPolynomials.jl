@@ -60,8 +60,6 @@ function classical_hypergeometric(::Type{<:Hermite}, n, x)
     (2x)^n * pFq(as, bs, -inv(x)^2)
 end
 
-gauss_nodes_weights(p::Type{P}, n) where {P<:Hermite} = FastGaussQuadrature.gausshermite(n)
-
 ## Overrides
 # Use override here, as we get  An,Bn,Cn =  1, 0,0, otherwise
 An(P::Type{<:Hermite}, n::Int) = 2 * one(eltype(P))

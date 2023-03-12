@@ -1,4 +1,3 @@
-
 # Chebyshev Polynomials of first and second kind
 @register0 Chebyshev AbstractCCOP0
 export Chebyshev
@@ -181,23 +180,23 @@ end
 
 # nodes/weights for fitting a polynomial using Lagrange polynomial
 # cf. https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
+function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
+    xs = cos.(pi/2n * (2*(n:-1:1).-1))
+    ws = pi/n * ones(n)
+    xs, ws
+end
+
 function lagrange_barycentric_nodes_weights(::Type{<:Chebyshev}, n::Int)
-    xs = [cospi((j + 1 / 2) / (n + 1)) for j in 0:n]
-    ws = [(-1)^j * sinpi((j + 1 / 2) / (n + 1)) for j in 0:n]  # XX one loop
+    xws = sincospi.((j + 1 / 2) / (n + 1) for j in 0:n)
+    xs = last.(xws)
+    ws = first.(xws)
+    for j ∈ 1:2:n
+        ws[1+j] = - ws[1+j]
+    end
 
     xs, ws
 end
 
-# # noded for integrating against the weight function
-# function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
-#     xs = cos.(pi/2n * (2*(n:-1:1).-1))
-#     ws = pi/n * ones(n)
-#     xs, ws
-# end
-
-## cf. fastgaussquadrature
-#gauss_nodes_weights(p::Type{P}, n) where {P <: Chebyshev} =
-#    FastGaussQuadrature.gausschebyshev(n)
 
 ##
 ## fitting coefficients
@@ -403,6 +402,7 @@ function _z_division(z1::AbstractVector{T}, z2::AbstractVector{S}) where {T,S}
     return quo, rem
 end
 
+
 ##
 ## --------------------------------------------------
 ##
@@ -492,28 +492,18 @@ end
 Base.convert(::Type{Q}, p::P) where {Q<:Chebyshev,P<:ChebyshevU} = _convert_cop(Q, p)
 Base.convert(::Type{Q}, p::P) where {Q<:ChebyshevU,P<:Chebyshev} = _convert_cop(Q, p)
 
-# function Polynomials.integrate(p::ChebyshevU{T}, C::Number=0) where {T}
-
-#     # int Un dx = T_n+1/(n+1)
-#     R = eltype(one(T)/1)
-#     n = length(p)
-#     ts = zeros(R, n+1)
-#     for i in 1:n
-#         ts[i+1] = p[i-1]/(i)
-#     end
-
-#     q = Chebyshev(ts, p.var)
-#     q = q - q(0) + R(C)
-
-#     return convert(ChebyshevU, q)
-# end
-
 ##
 ## --------------------------------------------------
 ##
-## fitting
+## nodes/weights
 
-## return xs ws
+function gauss_nodes_weights(::Type{<:ChebyshevU}, n::Int)
+    # from https://github.com/JuliaApproximation/FastGaussQuadrature.jl/blob/master/src/gausschebyshev.jl
+    xs = cospi.(k / (n + 1) for k = n:-1:1)
+    ws = [π/(n + 1) * sin(k / (n + 1) * π)^2 for k = n:-1:1]
+    xs, ws
+end
+
 function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevU}, n::Int)
     xs = cospi.((0:n) / n)
     ws = ones(eltype(P), n + 1)

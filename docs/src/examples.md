@@ -37,7 +37,7 @@ Legendre(1⋅P₃(x))
 A plot recipe is useful for a graphical view:
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
+using Plots, Polynomials, SpecialPolynomials  # hide
 n = 6
 ψ₁, ψ₂, ψ₃, ψ₄, ψ₅, ψ₆ = basis.(Legendre, 0:n - 1)
 kw = (xlabel="r", ylabel="ψₙ(r)")
@@ -197,7 +197,7 @@ julia> SpecialPolynomials.eval_hyper(P, coeffs(p),  0.4)
 
 ### Arithmetic
 
-For example, basic arithmetical operations  are defined:
+For example, basic arithmetic operations  are defined:
 
 ```
 julia> P = ChebyshevU
@@ -298,7 +298,7 @@ julia> SpecialPolynomials._convert_cop(Q,p)
 typename(Gegenbauer){2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2⋅Cᵅ₂(x))
 ```
 
-The first uses a method from the `FastTransforms` package. This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
+The first uses a method from the `FastTransforms` package (when loaded). This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
 
 ### Roots
 
@@ -389,7 +389,7 @@ true
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
 
 
-The unexported `gauss_nodes_weights` function returns the nodes and weights. For many types (e.g., `Jacobie`, `Legendre`, `Hermite`, `Laguerre`). As possible, it uses the methods from the `FastGaussQuadratures` package, which provides `O(n)` algorithms, where the Jacobi matrix is `O(n²)`.
+The unexported `gauss_nodes_weights` function returns the nodes and weights. For many types (e.g., `Jacobi`, `Legendre`, `Hermite`, `Laguerre`). As possible, it uses the methods from the `FastGaussQuadratures` package, which provides `O(n)` algorithms, where the Jacobi matrix is `O(n²)`.
 
 
 
@@ -460,15 +460,16 @@ Polynomials.Polynomial(1.0*x^2)
 ```
 
 Polynomial interpolation can demonstrate the Runge phenomenon if the
-nodes are evenly spaced. For higher degree fitting, the choice of
-nodes can greatly effect the approximation of the interpolating
-polynomial to the function generating the `y` values.
+nodes are evenly spaced and `n` is large enough. For higher degree
+fitting, the choice of nodes can greatly effect the approximation of
+the interpolating polynomial to the function generating the `y`
+values. The `SpecialPolynomials.lagrange_barycentric_nodes_weights` function returns nodes (and accompanying weights) for different polynomial types.
 
-For an orthogonal polynomial type, the zeros of the basis
-polynomial `p_{n+1}`, labeled `x_0, x_1, ..., x_n` are often used as
-nodes, especially for the Chebyshev nodes (of the first kind).
-[Gil, Segura, and Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) say
-"Interpolation with Chebyshev nodes is not as good as the best
+For an orthogonal polynomial type, the zeros of the basis polynomial
+`p_{n+1}`, labeled `x_0, x_1, ..., x_n` are often used as nodes,
+especially for the Chebyshev nodes (of the first kind).  [Gil, Segura,
+and Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf)
+say "Interpolation with Chebyshev nodes is not as good as the best
 approximation ..., but usually it is the best practical possibility
 for interpolation and certainly much better than equispaced
 interpolation"
@@ -479,7 +480,7 @@ For the orthogonal polynomial types, the default for `fit` for degree `n` will u
 We can see that some interpolation points lead to better fits than others, in the following graphic:
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
+using Plots, Polynomials, SpecialPolynomials;  # hide
 f(x) = exp(-x)*sinpi(x)
 plot(f, -1, 1, legend=false, color=:black, linewidth=3)
 p=fit(Val(:interpolating), Chebyshev, f, 3); plot!(p, color=:blue)
@@ -488,10 +489,10 @@ fit(Val(:interpolating), Legendre, f, 3); plot!(p, color=:green)
 xs = [-0.5, 0.0, 0.5]
 p=fit(Newton, xs, f);
 ts = range(-1, 1, length=100); plot!(ts, p.(ts), color=:brown)
-show(current())  # hide
-# savefig("fitting.svg")  # hide
-#  ![](fitting.svg) # hide
+savefig("fitting.svg")  # hide
 ```
+
+![](fitting.svg)
 
 
 
@@ -558,7 +559,7 @@ true
 ```
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
+using Plots, Polynomials, SpecialPolynomials;  # hide
 f(x) = sin(6x) + sin(60*exp(x))
 p50 = fit(Chebyshev{Float64}, f, 50);
 p196 = fit(Chebyshev{Float64}, f, 196);
@@ -567,9 +568,10 @@ xs = range(-1, stop=1, length=500) # more points than recipe
 plot!(xs, p50.(xs), color=:blue)
 plot!(xs, p196.(xs), color=:red)
 show(current())  # hide
-# savefig("wavy.svg")  # hide
-#![](wavy.svg) # hide
+savefig("wavy.svg")  # hide
 ```
+
+![](wavy.svg) # hide
 
 
 For the  `Chebyshev` type, the  `Val(:series)` argument will fit a heuristically identify truncated series  to the function.
@@ -594,15 +596,15 @@ matches that given by `Polynomials.domain`, unless this is infinite.
 A plot of the first few Chebyshev Polynomials of the second kind can be produced as follows:
 
 ```@example
-using Plots, Polynomials, SpecialPolynomials; unicodeplots()  # hide
+using Plots, Polynomials, SpecialPolynomials  # hide
 # U1, U2, U3, and U4:
-cheb, chebs... = basis.(ChebyshevU, 1:4)
-col, colors... = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
-p = plot(cheb, c=col,  lw=5, legend=false, label="")
+chebs  = basis.(ChebyshevU, 1:4)
+colors = ["#4063D8", "#389826", "#CB3C33", "#9558B2"]
+p = plot(legend=false)
 for (cheb, col) in zip(chebs, colors)
-  plot!(cheb, c=col, lw=5)
+  plot!(p, cheb, c=col, lw=5)
 end
-show(current())  # hide
-# savefig("chebs.svg")  # hide
-#![](chebs.svg) --> #hide
+savefig(p, "chebs.svg")  # hide
 ```
+
+![](chebs.svg)

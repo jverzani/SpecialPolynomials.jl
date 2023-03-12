@@ -1,11 +1,14 @@
 module FastLegendre
 
+## Loaded from fastgaussquadrature through Requires
+## Post 1.9, this is unnecessary as this code in the Ext.jl file
+
 # From
 # O(1) Computation of Legendre polynomials and Gauss-Legendre nodes and weights for parallel computing
 # Bogaert, Ignace and Michiels, Bart and Fostier, Jan
 # SIAM JOURNAL ON SCIENTIFIC COMPUTING
 # 34, 2012
-# http://dx.doi.org/10.1137/110855442    
+# http://dx.doi.org/10.1137/110855442
 #
 # as mentioned https://github.com/JuliaMath/SpecialFunctions.jl/issues/124
 #
