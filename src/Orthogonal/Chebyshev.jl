@@ -187,11 +187,10 @@ function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
 end
 
 function lagrange_barycentric_nodes_weights(::Type{<:Chebyshev}, n::Int)
-    xws = sincospi.((j + 1 / 2) / (n + 1) for j in 0:n)
-    xs = last.(xws)
-    ws = first.(xws)
+    xs = cospi.((j + 1 / 2) / (n + 1) for j in 0:n)
+    ws = sinpi.((j + 1 / 2) / (n + 1) for j in 0:n)
     for j ∈ 1:2:n
-        ws[1+j] = - ws[1+j]
+        ws[1+j] *= -1
     end
 
     xs, ws
