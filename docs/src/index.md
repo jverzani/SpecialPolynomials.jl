@@ -122,10 +122,7 @@ ps = p.(ts)
 xs, ys = [[pᵢ[1] for pᵢ ∈ ps], [pᵢ[2] for pᵢ ∈ ps]]
 p = plot(xs, ys, legend=false)
 scatter!(p, [b[1] for b in bs], [b[2] for b in bs])
-
-#show(current())  # hide
-
-savefig("bezier.svg")  # hide
+savefig("bezier.svg"); nothing  # hide
 ```
 
 ![](bezier.svg)
