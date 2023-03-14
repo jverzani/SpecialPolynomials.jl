@@ -489,7 +489,7 @@ fit(Val(:interpolating), Legendre, f, 3); plot!(p, color=:green)
 xs = [-0.5, 0.0, 0.5]
 p=fit(Newton, xs, f);
 ts = range(-1, 1, length=100); plot!(ts, p.(ts), color=:brown)
-savefig("fitting.svg")  # hide
+savefig("fitting.svg"); nothing  # hide
 ```
 
 ![](fitting.svg)
@@ -568,7 +568,7 @@ xs = range(-1, stop=1, length=500) # more points than recipe
 plot!(xs, p50.(xs), color=:blue)
 plot!(xs, p196.(xs), color=:red)
 show(current())  # hide
-savefig("wavy.svg")  # hide
+savefig("wavy.svg"); nothing  # hide
 ```
 
 ![](wavy.svg) # hide
@@ -604,7 +604,7 @@ p = plot(legend=false)
 for (cheb, col) in zip(chebs, colors)
   plot!(p, cheb, c=col, lw=5)
 end
-savefig(p, "chebs.svg")  # hide
+savefig(p, "chebs.svg"); nothing  # hide
 ```
 
 ![](chebs.svg)
