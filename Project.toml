@@ -1,9 +1,11 @@
 name = "SpecialPolynomials"
 uuid = "a25cea48-d430-424a-8ee7-0d3ad3742e9e"
 authors = ["jverzani <jverzani@gmail.com>"]
-version = "0.4.7"
+version = "0.4.8"
 
 [deps]
+FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
