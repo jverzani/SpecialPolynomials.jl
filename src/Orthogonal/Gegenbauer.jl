@@ -26,8 +26,7 @@ Gegenbauer
 basis_symbol(::Type{<:Gegenbauer{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:Gegenbauer{α}}) where {α} =
-    NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -(2α + 1), 0))
+abcde(::Type{<:Gegenbauer{α}}) where {α} =(a=-1, b=0, c=1, d=-(2α + 1), e=0)
 
 k0(P::Type{<:Gegenbauer}) = one(eltype(P))
 k1k0(P::Type{<:Gegenbauer{α}}, k::Int) where {α} = (one(eltype(P)) * 2 * (α + k)) / (k + 1)
@@ -60,8 +59,8 @@ B̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))
 C̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} =
     (one(eltype(P)) * n * (n + 2 * α - 1)) / (4 * (n^2 + 2 * n * α - n + α^2 - α))
 b̂̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2)
-b̂̃n(P::Type{<:Gegenbauer{α}}, ::Val{N}) where {α,N} = zero(eltype(P))# one(S) *  4/α/(α+2) 
-ĉ̃n(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2) 
+b̂̃n(P::Type{<:Gegenbauer{α}}, ::Val{N}) where {α,N} = zero(eltype(P))# one(S) *  4/α/(α+2)
+ĉ̃n(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2)
 
 @registerN OrthonormalGegenbauer AbstractCCOP1 α
 export OrthonormalGegenbauer

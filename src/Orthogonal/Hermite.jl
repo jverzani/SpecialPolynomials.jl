@@ -43,7 +43,7 @@ Hermite
 basis_symbol(::Type{<:Hermite}) = "H"
 Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
 
-abcde(::Type{<:Hermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, -2, 0))
+abcde(::Type{<:Hermite}) = (a=1, b=0, c=0, d=-2, e=0)
 
 k0(P::Type{<:Hermite}) = one(eltype(P))
 function k1k0(P::Type{<:Hermite}, k::Int)
@@ -107,7 +107,7 @@ function __hermite_lambda(n, k)
 end
 
 # 2x more performant
-function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
+function Polynomials.integrate(p::P) where {T,X,P<:Hermite{T,X}}
     # int H_n = 1/(n+1) H_{n+1}
     R = eltype(one(T) / 1)
     d = degree(p)
@@ -118,7 +118,6 @@ function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
     end
 
     q = ⟒(P){R,X}(qs)
-    q = q - q(0) + R(C)
 
     return q
 end
@@ -154,7 +153,7 @@ basis_symbol(::Type{<:ChebyshevHermite}) = "Hₑ"
 Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
 
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
-abcde(::Type{<:ChebyshevHermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((0, 0, 1, -1, 0))
+abcde(::Type{<:ChebyshevHermite}) = (a=0, b=0, c=1, d=-1, e=0)
 
 kn(P::Type{<:ChebyshevHermite}, n::Int)    = one(eltype(P))
 k1k0(P::Type{<:ChebyshevHermite}, k::Int)  = one(eltype(P))

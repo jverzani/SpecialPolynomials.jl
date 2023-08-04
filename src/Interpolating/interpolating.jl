@@ -42,8 +42,7 @@ function Polynomials.variable(
     ::Type{P},
     var::Polynomials.SymbolLike=:x,
 ) where {P<:AbstractInterpolatingPolynomial}
-    @warn "No `variable` function is defined for a type, just an instance"
-    throw(MethodError())
+    throw(ArgumentError("No `variable` function is defined for a type, just an instance"))
 end
 
 # pick new nodes for product

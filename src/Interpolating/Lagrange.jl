@@ -94,7 +94,6 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
     xs::Vector{S}
     ws::Vector{R}
     coeffs::Vector{T}
-    var::Symbol
     function Lagrange(
         xs::Vector{S},
         ws::Vector{R},
@@ -128,8 +127,10 @@ basis_symbol(::Type{<:Lagrange}) = "ℓ"
 
 ## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P<:Lagrange} = p
-Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange) where {N,S,R,T} =
-    Lagrange{N,S,R,T}(p.xs, p.ws, coeffs(p), p.var)
+function Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange{M,S′,R′,T′,X}) where {N,S,R,T, M,S′,R′,T′,X}
+    M == N || throw(ArgumentError("size mismatch"))
+    Lagrange(S.(p.xs), R.(p.ws), T.(p.coeffs),X)
+end
 Base.promote_rule(
     ::Type{Lagrange{N,S,R,T}},
     ::Type{Lagrange{N,S,R,Q}},
@@ -276,7 +277,7 @@ polynomials. There are explicit formula for `Chebyshev` and `Chebyshev`, for oth
 
 """
 lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) =
-    throw(MethodError())
+    throw(ArgumentError("Not implemented"))
 
 
 # do we have the same nodes (which makes easier to combine)

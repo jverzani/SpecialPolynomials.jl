@@ -48,8 +48,7 @@ basis_symbol(::Type{<:Laguerre{α}}) where {α} = "Lᵅ"
 basis_symbol(::Type{<:Laguerre{0}}) = "L"
 Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{<:Laguerre{α}}) where {α} =
-    NamedTuple{(:a, :b, :c, :d, :e)}((0, 1, 0, -1, α + 1))
+abcde(::Type{<:Laguerre{α}}) where {α} = (a=0, b=1, c=0, d=-1, e=α + 1)
 
 k0(P::Type{<:Laguerre}) = one(eltype(P))
 k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = -one(eltype(P)) / (k + 1) # k >=0

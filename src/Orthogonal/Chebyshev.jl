@@ -53,7 +53,7 @@ function eval_basis(::Type{Chebyshev}, n, x)
     end
 end
 
-abcde(::Type{<:Chebyshev}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -1, 0))
+abcde(::Type{<:Chebyshev}) = (a=-1, b=0, c=1, d=-1, e=0)
 
 k0(P::Type{<:Chebyshev}) = one(eltype(P))
 k1k0(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P))
@@ -94,7 +94,7 @@ function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
     R = eltype(one(T) / 1)
     P = Chebyshev{R,X}
     order == 0 && return P(coeffs(p))
-    hasnan(p) && return P([NaN])
+    hasnan(p)::Bool && return P([NaN])
     order > length(p) && return zero(P)
 
     q = P(copy(coeffs(p)))
@@ -114,14 +114,15 @@ function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
     return order > 1 ? derivative(dp, order - 1) : dp
 end
 
-function Polynomials.integrate(p::P, C::S) where {T,X,P<:Chebyshev{T,X},S<:Number}
-    R = promote_type(eltype(one(T) / 1), S)
-    if hasnan(p) || isnan(C)
-        return ⟒{P}{R,X}([NaN])
+function Polynomials.integrate(p::P) where {T,X,P<:Chebyshev{T,X}}
+    R = eltype(one(T)/1)
+
+    if hasnan(p)::Bool
+        return Chebyshev{R,X}([NaN])
     end
     n = length(p)
     if n == 1
-        return ⟒{P}{R,X}([C, p[0]])
+        return Chebyshev{R,X}([0, p[0]])
     end
     a2 = Vector{R}(undef, n + 1)
     a2[1] = zero(R)
@@ -131,7 +132,7 @@ function Polynomials.integrate(p::P, C::S) where {T,X,P<:Chebyshev{T,X},S<:Numbe
         a2[i + 2] = p[i] / (2 * (i + 1))
         a2[i] -= p[i] / (2 * (i - 1))
     end
-    a2[1] = C - sum(a2[1 + i] for i in 2:2:n)
+    a2[1] =  - sum(a2[1 + i] for i in 2:2:n)
 
     return ⟒(P){R,X}(a2)
 end
@@ -447,7 +448,7 @@ end
 
 Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -3, 0))
+abcde(::Type{<:ChebyshevU}) = (a=-1, b=0, c=1, d=-3, e=0)
 
 kn(P::Type{<:ChebyshevU}, n::Int) = (2 * one(eltype(P)))^n
 k1k0(P::Type{<:ChebyshevU}, n::Int) = 2 * one(eltype(P))

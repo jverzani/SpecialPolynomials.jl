@@ -46,7 +46,7 @@ basis_symbol(::Type{<:Newton}) = "p"
 ## Boilerplate code reproduced here, as there are two type parameters
 Base.convert(::Type{P}, p::P) where {P<:Newton} = p
 Base.convert(P::Type{Newton{N,S,T}}, p::Newton) where {N,S,T} =
-    Newton{N,S,T,Polynomial.indeterminate(P, p)}(p.xs, p.tableau)
+    Newton{N,S,T,Polynomials.indeterminate(P, p)}(p.xs, p.tableau)
 Base.promote_rule(::Type{Newton{N,S,T}}, ::Type{U}) where {N,S,T,U<:Number} =
     Newton{N,S,promote_type(T, U)}
 
@@ -222,7 +222,7 @@ function Polynomials.integrate(p::Newton{N,S,T}, C::Number=0) where {N,S,T}
     else
         xxs = vcat(p.xs, p.xs[1] + 1)
     end
-    fit(Newton, xxs, Q, var=Polynomial.indeterminate(p))
+    fit(Newton, xxs, Q, var=Polynomials.indeterminate(p))
 end
 
 function Polynomials.fit(

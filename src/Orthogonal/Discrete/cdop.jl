@@ -133,6 +133,7 @@ function α̃n(P::Type{<:AbstractCDOP}, n::Int)
     return val
 end
 
+
 function β̃n(P::Type{<:AbstractCDOP}, n::Int)
     a, b, c, d, e = abcde(P)
     S = eltype(P)
@@ -143,12 +144,13 @@ function β̃n(P::Type{<:AbstractCDOP}, n::Int)
         (2 * a * n * d - a * d - d * b + 2e * a - 2a^2 * n + 2a^2 * n^2)
     den = (2a * n - 2a + d) * (d + 2a * n)
 
-    iszero(den) && return βn(P, Val(n))
+    iszero(den) && return β̃n(P, Val(n))
 
     val = (one(S) * num) / den
 
     return val
 end
+β̃n(P::Type{<:AbstractCDOP}, n::Val) = throw(ArgumentError("Not defined"))
 
 #γn(P::Type{<:AbstractCDOP}, n::Int) =  γ̃n(P,n) * k1k0(P,n-1)
 function γ̃n(P::Type{<:AbstractCDOP}, n::Int)
@@ -160,12 +162,14 @@ function γ̃n(P::Type{<:AbstractCDOP}, n::Int)
     num += -d * b * e + d^2 * c + a * e^2
     num *= (d + a * n - a) * (a * n + d - 2a) * n
     den = (d - a + 2a * n) * (d + 2a * n - 3a) * (2a * n - 2a + d)^2
-    iszero(den) && return γn(P, Val(n))
+    iszero(den) && return γ̃n(P, Val(n))
 
     val = one(S) * num / den
 
     return val
 end
+γ̃n(P::Type{<:AbstractCDOP}, n::Val) = throw(ArgumentError("Not defined"))
+
 
 function abcdeᴵ(P::Type{<:AbstractCDOP})
     a, b, c, d, e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e

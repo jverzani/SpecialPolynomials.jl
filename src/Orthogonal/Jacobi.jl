@@ -30,8 +30,7 @@ Jacobi
 basis_symbol(::Type{<:Jacobi{α,β}}) where {α,β} = "Jᵅᵝ"
 Polynomials.domain(::Type{<:Jacobi{α,β}}) where {α,β} =
     Polynomials.Interval{β >= 0 ? Open : Closed,α >= 0 ? Open : Closed}(-1, 1)
-abcde(::Type{<:Jacobi{α,β}}) where {α,β} =
-    NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -(α + β + 2), β - α))
+abcde(::Type{<:Jacobi{α,β}}) where {α,β} = (a=-1, b=0, c=1, d=-(α + β + 2), e=β - α)
 
 k0(P::Type{<:Jacobi}) = one(eltype(P))
 function k1k0(P::Type{<:Jacobi{α,β}}, n::Int) where {α,β}

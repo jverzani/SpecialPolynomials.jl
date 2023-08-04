@@ -45,7 +45,7 @@ julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 """
 Legendre
 
-abcde(::Type{<:Legendre}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -2, 0))
+abcde(::Type{<:Legendre}) = (a=-1, b=0, c=1, d=-2, e=0)
 
 basis_symbol(::Type{<:Legendre}) = "P"
 Polynomials.domain(::Type{<:Legendre}) = Polynomials.Interval(-1, 1)
@@ -68,15 +68,15 @@ end
 B̃n(P::Type{<:Legendre}, n::Int) = zero(eltype(P))
 C̃n(P::Type{<:Legendre}, n::Int) = (one(eltype(P)) * n^2) / (4n^2 - 1)
 
-B̃n(P::Type{<:Legendre}, ::Val{0}) = B̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
+B̃n(P::Type{<:Legendre}, ::Val{0}) = B̃n(Gegenbauer{1 / 2,eltype(P)}, 0)
 C̃n(P::Type{<:Legendre}, ::Val{0}) = zero(eltype(P))
-b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
-ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1 / 2,eltype(P)}, Val(0))
+b̂̃n(P::Type{<:Legendre}, ::Val{0}) = b̂̃n(Gegenbauer{1 / 2,eltype(P)}, 0)
+ĉ̃n(P::Type{<:Legendre}, ::Val{0}) = ĉ̃n(Gegenbauer{1 / 2,eltype(P)}, 0)
 
 function Polynomials.derivative(p::Legendre{T,X}, order::Integer=1) where {T,X}
     order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
     order == 0 && return convert(Legendre{T}, p)
-    hasnan(p) && return Legendre{T,X}(T[NaN])
+    hasnan(p)::Bool && return Legendre{T,X}(T[NaN])
     order > length(p) && return zero(Legendre{T})
 
     d = degree(p)

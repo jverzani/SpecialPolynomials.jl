@@ -177,6 +177,7 @@ function C̃n(P::Type{<:AbstractCOP}, n::Int)
     a, b, c, d, e = abcde(P)
     C̃n(P, a, b, c, d, e, n)
 end
+C̃n(P::Type{<:AbstractCOP}, n::Val) = throw(ArgumentError("not defined"))
 
 function Ãn(P::Type{<:AbstractCCOP}, a, b, c, d, e, n::Int)
     one(eltype(P))
@@ -245,7 +246,7 @@ function β̃n(P::Type{<:AbstractCCOP}, n::Int)
     num = -n * (a * n + d - a) * (2e * a - d * b)
     den = (d + 2 * a * n) * (d - 2a + 2a * n)
 
-    iszero(den) && return β̃n(P, Val(n))
+    iszero(den) && return β̃n(P, n)
 
     val = (one(S) * num) / den
 
@@ -260,7 +261,7 @@ function γ̃n(P::Type{<:AbstractCCOP}, n::Int)
     num = ((n - 1) * (a * n + d - a) * (4c * a - b^2) + a * e^2 + d^2 * c - b * e * d)
     num *= (a * n + d - a) * (a * n + d - 2a) * n
     den = (d - 2a + 2a * n)^2 * (2a * n - 3a + d) * (2a * n - a + d)
-    iszero(den) && return γ̃n(P, Val(n))
+    iszero(den) && return γ̃n(P, n)
 
     val = (one(S) * num) / den
 
@@ -292,6 +293,7 @@ function b̂̃n(P::Type{<:AbstractCCOP}, n::Int)
     val = one(S) * num / den
     return val
 end
+b̂̃n(P::Type{<:AbstractCCOP}, n::Val) = throw(ArgumentError("Not defined"))
 
 ĉn(P::Type{<:AbstractCOP}, n::Int) = ĉ̃n(P, n) * k1k0(P, n - 1)
 function ĉ̃n(P::Type{<:AbstractCCOP}, n::Int)
@@ -306,6 +308,7 @@ function ĉ̃n(P::Type{<:AbstractCCOP}, n::Int)
     val = (one(S) * num) / den
     return val
 end
+ĉ̃n(P::Type{<:AbstractCCOP}, n::Val) = throw(ArgumentError("Not defined"))
 
 """
     abcdeᴵ
@@ -318,7 +321,7 @@ If P_n is a CCOP, then
 """
 function abcdeᴵ(P::Type{<:AbstractCCOP})
     a, b, c, d, e = abcde(P).a, abcde(P).b, abcde(P).c, abcde(P).d, abcde(P).e
-    NamedTuple{(:a, :b, :c, :d, :e)}((a, b, c, d + 2a, e + b))
+    (a=a, b=b, c=c, d=d + 2a, e=e + b)
 end
 
 # αᴵn, βᴵn, γᴵn  (α^*,...)
@@ -390,7 +393,9 @@ function _convert(::Type{Q}, p::P) where {Q<:AbstractCCOP,P<:AbstractCCOP}
     a, b, c, d, e = abcde(P)
     ā, b̄, c̄, d̄, ē = abcde(Q)
 
-    if (a, b, c) == (ā, b̄, c̄) && !(Q <: Hermite || P <: Hermite)  # σ ==  σ̄   and not Hermite
+    same_σ = a == ā && b == b̄ && c == c̄
+
+    if same_σ  && !(Q <: Hermite || P <: Hermite)  # σ ==  σ̄   and not Hermite
         _convert_cop(Q, p)
     else
         T = eltype(Q)
@@ -550,7 +555,7 @@ function Polynomials.integrate(p::P) where {P<:AbstractCOP}
     R = typeof(one(T) / 1)
     X = Polynomials.indeterminate(p)
     Q = ⟒(P){R,X}
-    if hasnan(p)
+    if hasnan(p)::Bool
         return Q(NaN)
     end
 
@@ -558,7 +563,7 @@ function Polynomials.integrate(p::P) where {P<:AbstractCOP}
     if n == -1
         return zero(Q)
     elseif n == 0
-        return C * one(Q) + p(0) * variable(Q)
+        return p(0) * variable(Q)
     end
 
     as = zeros(R, n + 2)

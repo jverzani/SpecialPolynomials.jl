@@ -32,7 +32,7 @@ export Bessel
 basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{<:Bessel{α}}) where {α} = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, α, 2))
+abcde(::Type{<:Bessel{α}}) where {α} = (a=1, b=0, c=0, d=α, e=2)
 
 function k1k0(::Type{P}, k::Int) where {α,P<:Bessel{α}}
     k < 0 && return zero(eltype(P)) * one(α) / 1
@@ -86,5 +86,5 @@ end
 #iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
 #C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
 
-b̂̃n(::Type{<:Bessel{2}}, n::Int) = (one(eltype(P)) * 2) / (n * (2n + 2))
-b̂̃n(::Type{<:Bessel{2}}, ::Val{0}) = one(eltype(P)) * Inf
+b̂̃n(P::Type{<:Bessel{2}}, n::Int) = (one(eltype(P)) * 2) / (n * (2n + 2))
+b̂̃n(P::Type{<:Bessel{2}}, ::Val{0}) = one(eltype(P)) * Inf

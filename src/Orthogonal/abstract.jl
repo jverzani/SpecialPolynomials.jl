@@ -222,7 +222,7 @@ macro register_shifted(name, alpha, beta)
             c̃ = (oP * (a * β^2 + b * β + c)) / α^2
             d̃ = oP * d
             ẽ = (oP * (d * β + e)) / α
-            NamedTuple{(:a, :b, :c, :d, :e)}((ã, b̃, c̃, d̃, ẽ))
+            (a=ã, b=b̃, c=c̃, d=d̃, e=ẽ)
         end
 
         SpecialPolynomials.basis_symbol(P::Type{<:$shifted}) = basis_symbol(ϟ(P)) * "ˢ"

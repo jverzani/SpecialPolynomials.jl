@@ -91,7 +91,7 @@ For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) d
 
 """
 weight_function(::Type{P}) where {P<:AbstractOrthogonalPolynomial} =
-    throw(MethodError("Not implemented"))
+    throw(ErrorException("Not implemented"))
 weight_function(::P) where {P<:AbstractOrthogonalPolynomial} = weight_function(P)
 
 """
@@ -203,6 +203,7 @@ struct Basis{Π}
     n::Int
 end
 Basis(P, n) = Basis{P}(n)
+basistype(B::Basis{P}) where {P} = P
 Base.show(io::IO, mimetype::MIME"text/plain", b::Basis{P}) where {P} =
     print(io, "$(P)($(b.n))")
 
@@ -288,7 +289,7 @@ function gauss_nodes_weights(p::Type{P}, n) where {P<:AbstractOrthogonalPolynomi
     eig.values, wts
 end
 
-gauss_nodes_weights(B::Basis{P}) where {P} = gauss_nodes_weights(B.P, B.n)
+gauss_nodes_weights(B::Basis{P}) where {P} = gauss_nodes_weights(basistype(B), B.n)
 
 
 
@@ -384,9 +385,8 @@ Polynomials.fit(
     val::Val{:series},
     P::Type{<:AbstractOrthogonalPolynomial},
     f;
-    var=:x,
-    kwargs...,
-) = P(cks(val, P, f; kwargs...), var)
+    var=:x
+) = P(cks(val, P, f), var)
 
 """
     cks(::Val{:interpolating}, ::Type{P}, f, n::Int)

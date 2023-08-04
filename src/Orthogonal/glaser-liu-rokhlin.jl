@@ -84,7 +84,7 @@ pqr_symmetry(::Type{P}) where {P<:AbstractCCOP} = false
 
 Compute weight from `x`, `dπx` -- `x` a node and `dπx` the derivative's value at the node
 """
-pqr_weight(p::P, n, x, dx) where {P} = throw(MethodError())
+pqr_weight(p::P, n, x, dx) where {P} = throw(ArgumentError("Not implemented"))
 
 # We just use clenshaw to  evaluate  `p(x), dp(x)` for Newton's method below,
 # but implementing the following can be more efficient
