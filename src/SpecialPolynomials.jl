@@ -6,7 +6,9 @@ import SpecialFunctions: gamma
 
 using Polynomials
 import Polynomials:
-    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof
+    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof,
+    AbstractBasis, AbstractDenseUnivariatePolynomial,
+    MutableDensePolynomial, ImmutableDensePolynomial, MutableDenseViewPolynomial
 export basis
 
 #import Intervals
@@ -24,8 +26,8 @@ include("Orthogonal/abstract.jl")
 include("Orthogonal/orthogonal.jl")
 include("Orthogonal/cop.jl")
 include("Orthogonal/ccop.jl")
-
 include("Orthogonal/Bessel.jl")
+#=
 include("Orthogonal/Chebyshev.jl")
 include("Orthogonal/Hermite.jl")
 include("Orthogonal/Laguerre.jl")
@@ -64,5 +66,5 @@ function __init__()
         )
     end
 end
-
+=#
 end # module

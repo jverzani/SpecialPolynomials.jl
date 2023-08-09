@@ -17,6 +17,9 @@ depend on conversion to the base `Polynomial` type (which uses the standard poly
 """
 abstract type AbstractSpecialPolynomial{T,X} <: Polynomials.AbstractPolynomial{T,X} end
 
+# for polys with a basis
+abstract type AbstractSpecialBasisPolynomial{B,T,X} <: AbstractSpecialPolynomial{T,X} end
+
 # polynomial like Vector{T} with variable
 Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T
 Base.eltype(::Type{<:AbstractSpecialPolynomial}) = Float64

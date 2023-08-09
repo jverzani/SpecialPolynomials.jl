@@ -1,5 +1,8 @@
 ## Bessel
-@registerN Bessel AbstractCCOP1 α
+#@registerN Bessel AbstractCCOP1 α
+
+struct BesselBasis{α} <: AbstractBasis end
+
 
 """
     Bessel{α}
@@ -27,9 +30,9 @@ julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
 ```
 
 """
-Bessel
+Bessel = MutableDensePolynomial{BesselBasis{α}} where {α}
 export Bessel
-basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
+Polynomials.basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
 Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
 
 abcde(::Type{<:Bessel{α}}) where {α} = (a=1, b=0, c=0, d=α, e=2)

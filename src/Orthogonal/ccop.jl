@@ -2,9 +2,9 @@
 ## --------------------------------------------------
 ##
 ## Classic Continuos Orthogonal Polynomials
-abstract type AbstractCCOP{T,X} <: AbstractCOP{T,X} end
+abstract type AbstractCCOP{B,T,X} <: AbstractCOP{B,T,X} end
 """
-    AbstractCCOP{T,X} <:  AbstractCOP{T,X}
+    AbstractCCOP{B,T,X} <:  AbstractCOP{B,T,X}
 
 Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
@@ -101,17 +101,17 @@ AbstractCCOP
 
 # subtypes  to keep track of number of parameters
 # passed to  @registerN macros
-abstract type AbstractCCOP0{T,X} <: AbstractCCOP{T,X} end
-abstract type AbstractCCOP1{α,T,X} <: AbstractCCOP{T,X} end
-abstract type AbstractCCOP2{α,β,T,X} <: AbstractCCOP{T,X} end
-abstract type AbstractCCOP3{α,β,γ,T,X} <: AbstractCCOP{T,X} end
+#abstract type AbstractCCOP0{B,T,X} <: AbstractCCOP{T,X} end
+#abstract type AbstractCCOP1{α,T,X} <: AbstractCCOP{T,X} end
+#abstract type AbstractCCOP2{α,β,T,X} <: AbstractCCOP{T,X} end
+#abstract type AbstractCCOP3{α,β,γ,T,X} <: AbstractCCOP{T,X} end
 
 # We want to  be able to strip  off T  or α,...,T
 # * constructorof(P{α,..,T}) =  P
 # * ⟒(P(α,...,T)) =  P(α...)  #  \upin[tab]
-⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
-⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α,β} = constructorof(P){α,β}
-⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α,β,γ} = constructorof(P){α,β,γ}
+#⟒(P::Type{<:AbstractCCOP1{α}}) where {α} = constructorof(P){α}
+#⟒(P::Type{<:AbstractCCOP2{α,β}}) where {α,β} = constructorof(P){α,β}
+#⟒(P::Type{<:AbstractCCOP3{α,β,γ}}) where {α,β,γ} = constructorof(P){α,β,γ}
 
 # for conversion to base case
 # \upstigma[tab]
@@ -119,20 +119,20 @@ abstract type AbstractCCOP3{α,β,γ,T,X} <: AbstractCCOP{T,X} end
 
 ## Display
 # show parameters in constructor's name
-function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,P<:AbstractCCOP1{α}}
-    print(io, "$(P.name){$(α)}(")
-    printpoly(io, p, mimetype)
-    print(io, ")")
-end
-function Base.show(
-    io::IO,
-    mimetype::MIME"text/plain",
-    p::P,
-) where {α,β,P<:AbstractCCOP2{α,β}}
-    print(io, "$(P.name){$(α),$(β)}(")
-    printpoly(io, p, mimetype)
-    print(io, ")")
-end
+# function Base.show(io::IO, mimetype::MIME"text/plain", p::P) where {α,P<:AbstractCCOP1{α}}
+#     print(io, "$(P.name){$(α)}(")
+#     printpoly(io, p, mimetype)
+#     print(io, ")")
+# end
+# function Base.show(
+#     io::IO,
+#     mimetype::MIME"text/plain",
+#     p::P,
+# ) where {α,β,P<:AbstractCCOP2{α,β}}
+#     print(io, "$(P.name){$(α),$(β)}(")
+#     printpoly(io, p, mimetype)
+#     print(io, ")")
+# end
 
 ##
 ## -----
@@ -476,12 +476,12 @@ function ⊗(p::P, q::Q) where {P<:AbstractCOP,Q<:AbstractCOP}
 end
 
 ## Modifications needed due to `N` in the type parameter
-
+#=
 function Polynomials.truncate(
     p::P;
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
-) where {T,X,P<:AbstractCOP{T,X}}
+) where {B,T,X,P<:AbstractCOP{B,T,X}}
     ps = coeffs(p)
     max_coeff = maximum(abs, ps)
     thresh = max_coeff * rtol + atol
@@ -493,13 +493,13 @@ Polynomials.truncate!(
     p::P;
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
-) where {T,P<:AbstractCOP{T}} = error("`truncate!` not defined")
+) where {B,T,P<:AbstractCOP{B,T}} = error("`truncate!` not defined")
 
 function Base.chop(
     p::P;
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
-) where {T,X,P<:AbstractCOP{T,X}}
+) where {B,T,X,P<:AbstractCOP{B,T,X}}
     N = length(p)
     N == 0 && return p
     i = N - 1
@@ -520,7 +520,7 @@ Polynomials.chop!(
     rtol::Real = Base.rtoldefault(real(T)),
     atol::Real = 0,
 ) where {T,P<:AbstractCOP{T}} = error("`chop!` not defined")
-
+=#
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
 # find expression for p' in terms of p
 function Polynomials.derivative(p::P, order::Integer=1) where {P<:AbstractCOP}

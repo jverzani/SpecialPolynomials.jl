@@ -3,10 +3,10 @@
 export Basis
 
 ## Has An(P), Bn(P), Cn(P)
-abstract type AbstractOrthogonalPolynomial{T,X} <: AbstractSpecialPolynomial{T,X} end
-abstract type AbstractContinuousOrthogonalPolynomial{T,X} <:
-              AbstractOrthogonalPolynomial{T,X} end
-abstract type AbstractDiscreteOrthogonalPolynomial{T,X} <: AbstractOrthogonalPolynomial{T,X} end
+abstract type AbstractOrthogonalPolynomial{B,T,X} <: AbstractSpecialBasisPolynomial{B,T,X} end
+abstract type AbstractContinuousOrthogonalPolynomial{B,T,X} <:
+              AbstractOrthogonalPolynomial{B,T,X} end
+abstract type AbstractDiscreteOrthogonalPolynomial{B,T,X} <: AbstractOrthogonalPolynomial{B,T,X} end
 
 """
     AbstractOrthogonalPolynomial{T,X}
@@ -50,7 +50,7 @@ Polynomials.variable(
 ## Evaluation
 
 # from type, cs, x
-function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{T}}, cs, x::S) where {T,S}
+function clenshaw_eval(P::Type{<:AbstractOrthogonalPolynomial{B,T}}, cs, x::S) where {B,T,S}
     N = length(cs)
     p₀ = k0(P)
     R = promote_type(promote_type(T, S), typeof(An(P, 0)))
