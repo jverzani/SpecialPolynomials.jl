@@ -157,7 +157,7 @@ For an orthogonal polynomial type, a function `w` with `∫ B_n(t) B_m(t) w(t) d
 
 """
 weight_function(::Type{B}) where {B<:AbstractOrthogonalBasis}# = throw(ErrorException("Not implemented"))
-weight_function(::P) where {B,P<:AbstractOrthogonalPolynomial{B}} = weight_function(B)
+weight_function(::Type{P}) where {B<:AbstractOrthogonalBasis,P<:AbstractUnivariatePolynomial{B}} = weight_function(B)
 
 """
     generating_function(p)
@@ -166,7 +166,7 @@ weight_function(::P) where {B,P<:AbstractOrthogonalPolynomial{B}} = weight_funct
 The generating function is a function defined by: `(t,x) -> sum(t^n Pn(x) for n in 0:oo)`.
 """
 generating_function(::Type{B}) where {B<:AbstractOrthogonalBasis} #  = throw(ArgumentError("Not implemented"))
-generating_function(::P) where {B,P<:AbstractOrthogonalPolynomial{B}} = generating_function(B)
+generating_function(::Type{P}) where {B<:AbstractOrthogonalBasis,P<:AbstractUnivariatePolynomial{B}} = generating_function(B)
 
 """
     leading_term(::Type{P},n)
@@ -247,7 +247,7 @@ end
 
 Return `p` as a monic polynomial *when* represented in the standard basis. Returns the zero polynomial if the degree of `p` is `-1`.
 """
-function monic(p::P) where {B<:AbstractOrthogonalBasis, P<:AbstractOrthogonalPolynomial{B}}
+function monic(p::P) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}}
     n = degree(p)
     n == -1 && return ⟒(P)(0 / one(eltype(p)))
     p / (p[end] * leading_term(B, n))
@@ -329,8 +329,8 @@ function jacobi_matrix(::Type{B}, n::Int) where {B<:AbstractOrthogonalBasis}
     a, b = [π̃αn(B, i) for i in 0:(n - 1)], [sqrt(π̃βn(B, i)) for i in 1:(n - 1)]
     LinearAlgebra.SymTridiagonal(promote(a,b)...)
 end
-jacobi_matrix(::Type{P}, n::Int) where {B, P<:AbstractUnivariatePolynomial{B}} = jacobi_matrix(B, n)
-jacobi_matrix(p::P, n::Int) where {B, P<:AbstractUnivariatePolynomial{B}} = jacobi_matrix(B, n)
+jacobi_matrix(::Type{P}, n::Int) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}} = jacobi_matrix(B, n)
+jacobi_matrix(p::P, n::Int) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}} = jacobi_matrix(B, n)
 
 ##  Compute weights and nodes for quadrature
 """
@@ -386,6 +386,9 @@ function innerproduct(
 
     return quadgk(fn, a, b; atol=atol)[1]
 end
+innerproduct(::Type{P}, f, g; kwargs...) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}} =
+    innerproduct(B,f,g; kwargs...)
+
 
 ## Compute <p_i, p_i> = \| p \|^2; allows export, but work is in norm2
 Base.abs2(::Type{P}, n) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}} = norm2(B, n)
@@ -410,7 +413,7 @@ Find an approximating polynomial of degree `n` or less for a function `f`, that 
 Defaults to an interpolating polynomial. To specify others, use one of `Val(:interpolating)`, `Val(:lsq)` (least squares), or `Val(:series)` (trunated series expansion) as the first argument. See [`SpecialPolynomials.cks`](@ref) for some more detail.
 
 """
-Polynomials.fit(P::Type{<:AbstractOrthogonalPolynomial}, f, n::Int; var=:x) =
+Polynomials.fit(P::Type{<:AbstractUnivariatePolynomial{<:AbstractOrthogonalBasis}}, f, n::Int; var=:x) =
     fit(Val(:interpolating), P, f, n, var=var)
 
 """
@@ -421,7 +424,7 @@ Fit `f` with an interpolating polynomial of degree `n` or less using nodes
 """
 Polynomials.fit(
     val::Val{:interpolating},
-    P::Type{<:AbstractOrthogonalPolynomial},
+    P::Type{<:AbstractUnivariatePolynomial{<:AbstractOrthogonalBasis}},
     f,
     n::Int;
     var=:x,
@@ -434,7 +437,7 @@ Fit `f` with `p(x)=∑ d_i P_i(x)` where `p` had degree `n` or less using least 
 """
 Polynomials.fit(
     val::Val{:lsq},
-    P::Type{<:AbstractOrthogonalPolynomial},
+    P::Type{<:AbstractUnivariatePolynomial{<:AbstractOrthogonalBasis}},
     f,
     n::Int;
     var=:x,
@@ -448,7 +451,7 @@ If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, this returns a truncate
 """
 Polynomials.fit(
     val::Val{:series},
-    P::Type{<:AbstractOrthogonalPolynomial},
+    P::Type{<:AbstractUnivariatePolynomial{<:AbstractOrthogonalBasis}},
     f;
     var=:x
 ) = P(cks(val, P, f), var)
@@ -496,7 +499,7 @@ For some types an approximation to the inner product, `<f,P_k>_w` may be used.
 
 ref: [http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION](http://www.math.niu.edu/~dattab/MATH435.2013/APPROXIMATION)
 """
-function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {P<:AbstractOrthogonalPolynomial}
+function cks(::Val{:lsq}, ::Type{P}, f, n::Int) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}}
     ## return ck =  <f,P_k>/<P_k,P_k>, k =  0...n
     [innerproduct(P, f, basis(P, k)) / norm2(P, k) for k in 0:n]
 end
@@ -508,4 +511,4 @@ If `f(x)` is written as an infinite sum `∑ c_kP_k(x)`, then this
 tries to identify an `n` for which the series expansion is a good approximation and returns the coefficients.
 
 """
-cks(::Val{:series}, ::Type{P}, f, n::Int) where {P<:AbstractOrthogonalPolynomial} #   throw(ArgumentError("No default method"))
+cks(::Val{:series}, ::Type{P}, f, n::Int) where {B<:AbstractOrthogonalBasis, P<:AbstractUnivariatePolynomial{B}} #   throw(ArgumentError("No default method"))

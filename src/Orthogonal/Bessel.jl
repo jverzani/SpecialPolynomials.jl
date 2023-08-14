@@ -17,16 +17,16 @@ julia> 𝐐 = Rational{Int}
 Rational{Int64}
 
 julia> x = variable(Polynomial{𝐐})
-Polynomials.Polynomial(x)
+Polynomial(x)
 
 julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
 6-element Vector{Polynomial{Rational{Int64}, :x}}:
- Polynomials.Polynomial(1//1)
- Polynomials.Polynomial(1//1 + 3//4*x)
- Polynomials.Polynomial(1//1 + 5//2*x + 35//16*x^2)
- Polynomials.Polynomial(1//1 + 21//4*x + 189//16*x^2 + 693//64*x^3)
- Polynomials.Polynomial(1//1 + 9//1*x + 297//8*x^2 + 1287//16*x^3 + 19305//256*x^4)
- Polynomials.Polynomial(1//1 + 55//4*x + 715//8*x^2 + 10725//32*x^3 + 182325//256*x^4 + 692835//1024*x^5)
+ Polynomial(1//1)
+ Polynomial(1//1 + 3//4*x)
+ Polynomial(1//1 + 5//2*x + 35//16*x^2)
+ Polynomial(1//1 + 21//4*x + 189//16*x^2 + 693//64*x^3)
+ Polynomial(1//1 + 9//1*x + 297//8*x^2 + 1287//16*x^3 + 19305//256*x^4)
+ Polynomial(1//1 + 55//4*x + 715//8*x^2 + 10725//32*x^3 + 182325//256*x^4 + 692835//1024*x^5)
 ```
 
 """

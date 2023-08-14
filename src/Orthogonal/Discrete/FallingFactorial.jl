@@ -18,10 +18,10 @@ system and classical discrete orthogonal polynomials are given.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = basis(FallingFactorial, 3)
-FallingFactorial(1.0⋅x³̲)
+Polynomials.MutableDensePolynomial(1.0⋅x³̲)
 
 julia> x = variable(Polynomial)
-Polynomials.Polynomial(1.0*x)
+Polynomial(1.0*x)
 
 julia> p(x) ≈ x*(x-1)*(x-2)
 true

@@ -9,7 +9,7 @@ export Charlier
 References: [Koekoek and Swarttouw §1.12](https://arxiv.org/pdf/math/9602214.pdf)
 """
 const Charlier = MutableDensePolynomial{CharlierBasis{μ}} where {μ}
-Polynomials._typealias(::Type{P}) where {P<:Charlier} = "Charlier"
+Polynomials._typealias(::Type{P}) where {μ, P<:Charlier{μ}} = "Charlier{$μ}"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{CharlierBasis{μ}}}) where {μ} = "Cᵐᵘ"
 
 abcde(::Type{<:CharlierBasis{μ}}) where {μ} = NamedTuple{(:a, :b, :c, :d, :e)}((0, 1, 0, -1, μ))

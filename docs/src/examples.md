@@ -64,10 +64,10 @@ conversion to the standard basis. For example:
 ```jldoctest example
 julia> convert.(Polynomial, [p0,p1,p2,p3])
 4-element Vector{Polynomial{Float64, :x}}:
- Polynomials.Polynomial(1.0)
- Polynomials.Polynomial(1.0*x)
- Polynomials.Polynomial(-0.5 + 1.5*x^2)
- Polynomials.Polynomial(-1.5*x + 2.5*x^3)
+ Polynomial(1.0)
+ Polynomial(1.0*x)
+ Polynomial(-0.5 + 1.5*x^2)
+ Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Polynomial instances are callable. We have, for example, to evaluate a polynomial at a set of points:
@@ -84,10 +84,10 @@ Conversion can also be achieved through polynomial evaluation, using a variable 
 
 ```jldoctest example
 julia> x = variable(Polynomial)
-Polynomials.Polynomial(1.0*x)
+Polynomial(1.0*x)
 
 julia> p3(x)
-Polynomials.Polynomial(-1.5*x + 2.5*x^3)
+Polynomial(-1.5*x + 2.5*x^3)
 ```
 
 Representation in another basis can be achieved this way:
@@ -111,7 +111,7 @@ julia> h0,h1,h2,h3 = basis.(Hermite, 0:3);
 julia> x = variable();
 
 julia> h3(x)
-Polynomials.Polynomial(-12.0*x + 8.0*x^3)
+Polynomial(-12.0*x + 8.0*x^3)
 ```
 
 For numeric evaluation of just a basis polynomial of a classical orthogonal polynomial system, the `Basis` constructor provides a direct evaluation without the construction of an intermediate polynomial:
@@ -127,14 +127,14 @@ If the coefficients of a polynomial relative to the polynomial type are known, t
 
 ```jldoctest example
 julia> Laguerre{0}([1,2,3])
-typename(Laguerre){0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
+Laguerre(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 ```
 
 Some polynomial types are parameterized, as above. The parameters may be passed to the type, as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
-typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
+Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 ```
 
 In the background, in this instance, the parameters are passed to the underlying `JacobiBasis{α, β}` type.
@@ -149,14 +149,15 @@ julia> using QuadGK
 
 
 julia> P = Legendre
-Legendre
+Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis}
 
 julia> p4,p5 = basis.(P, [4,5])
-2-element Vector{Legendre{Float64, :x}}:
+2-element Vector{Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis, Float64, :x}}:
  Legendre(1.0⋅P₄(x))
  Legendre(1.0⋅P₅(x))
 
 julia> wf, dom = SpecialPolynomials.weight_function(P), Polynomials.domain(P);
+
 
 julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
 (0.0, 0.0)
@@ -166,7 +167,7 @@ The unexported `innerproduct` will compute this as well, without the need to spe
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
--1.5309832087675112e-16
+-1.111881270890998e-16
 ```
 
 
@@ -230,13 +231,13 @@ Multiplication formulas may not be defined for each type, and a fall back may be
 
 ```jldoctest example
 julia> P = Jacobi{1/2, -1/2}
-Jacobi{0.5, -0.5}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{0.5, -0.5}}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q
-typename(Jacobi){0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+Jacobi(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 ```
 
 ### Derivatives and integrals
@@ -245,7 +246,7 @@ The classic continuous orthogonal polynomials  have  the `derivative`  and `inte
 
 ```jldoctest example
 julia> P = ChebyshevU{Float64}
-ChebyshevU{Float64}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.ChebyshevUBasis, Float64}
 
 julia> p = P([1,2,3])
 ChebyshevU(1.0⋅U₀(x) + 2.0⋅U₁(x) + 3.0⋅U₂(x))
@@ -254,31 +255,31 @@ julia> dp = derivative(p)
 ChebyshevU(4.0⋅U₀(x) + 12.0⋅U₁(x))
 
 julia> convert.(Polynomial, (p, dp))
-(Polynomials.Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomials.Polynomial(4.0 + 24.0*x))
+(Polynomial(-2.0 + 4.0*x + 12.0*x^2), Polynomial(4.0 + 24.0*x))
 
 julia> P = Jacobi{1//2, -1//2}
-Jacobi{1//2, -1//2}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{1//2, -1//2}}
 
 julia> p,q = P([1,2]), P([-2,1])
-(typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q # as above, only with rationals for paramters
-typename(Jacobi){1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+Jacobi(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
-Jacobi{1//2, 1//2}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{1//2, 1//2}}
 
 julia> p = P([1,2,3])
-typename(Jacobi){1//2,1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
+Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 
 julia> dp = derivative(p)
-typename(Jacobi){1//2,1//2}(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
+Jacobi(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
 
 julia> integrate(p)
-typename(Jacobi){1//2,1//2}(0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
+Jacobi(0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
 
 julia> integrate(p, 0, 1)
-3.125
+3.125000000000001
 ```
 
 ### Conversion
@@ -287,19 +288,19 @@ Expressing a polynomial in type `P` in type `Q` is done through several possible
 
 ```jldoctest example
 julia> P,Q = Gegenbauer{1//3}, Gegenbauer{2//3}
-(Gegenbauer{1//3}, Gegenbauer{2//3})
+(Polynomials.MutableDensePolynomial{SpecialPolynomials.GegenbauerBasis{1//3}}, Polynomials.MutableDensePolynomial{SpecialPolynomials.GegenbauerBasis{2//3}})
 
 julia> p = P([1,2,3.0])
-typename(Gegenbauer){1//3}(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
+Gegenbauer(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
 
 julia> convert(Q, p)
-typename(Gegenbauer){2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2⋅Cᵅ₂(x))
+Gegenbauer(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
 
 julia> p(variable(Q))
-typename(Gegenbauer){2//3}(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
+Gegenbauer(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
 
 julia> SpecialPolynomials._convert_cop(Q,p)
-typename(Gegenbauer){2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2⋅Cᵅ₂(x))
+Gegenbauer(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
 ```
 
 The first uses a method from the `FastTransforms` package (when loaded). This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
@@ -327,17 +328,17 @@ julia> using Polynomials, SpecialPolynomials; const SP=SpecialPolynomials
 SpecialPolynomials
 
 julia> P = Jacobi{1/2,-1/2}
-Jacobi{0.5, -0.5}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{0.5, -0.5}}
 
 
 julia> p = P([1,1,2,3])
-typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
+Jacobi(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
 
 julia> q = SP.monic(p) # monic is not exported
-typename(Jacobi){0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
+Jacobi(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
 
 julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps()))
-typename(Jacobi){0.5,-0.5}(0.0 + 0.0im)
+Jacobi(0.0 + 0.0im)
 ```
 
 For many of the orthogonal polynomials, the roots are found from the *comrade matrix* using a ``\mathcal{O}(n^2)`` algorithm of Aurentz, Vandebril, and Watkins, which computes in a more efficient manner the `eigvals(SpecialPolynomials.comrade_matrix(p))`. Alternatively, in theory roots may be identified from the companion matrix of the polynomial, once expressed in the standard basis. This approach is the fallback approach for other polynomial types, but is prone to numeric issues.
@@ -387,7 +388,44 @@ julia> maximum(abs ∘ p50, bs) < sqrt(eps())
 true
 
 julia> maximum(abs, roots(p50) - bs) < sqrt(eps())
-true
+ERROR: OverflowError: 9 * 2067609360287514303 overflowed for type Int64
+Stacktrace:
+  [1] throw_overflowerr_binaryop(op::Symbol, x::Int64, y::Int64)
+    @ Base.Checked ./checked.jl:163
+  [2] checked_mul
+    @ ./checked.jl:297 [inlined]
+  [3] *
+    @ ./rational.jl:350 [inlined]
+  [4] FlipArgs
+    @ ./reduce.jl:209 [inlined]
+  [5] BottomRF
+    @ ./reduce.jl:81 [inlined]
+  [6] MappingRF
+    @ ./reduce.jl:95 [inlined]
+  [7] _foldl_impl(op::Base.MappingRF{SpecialPolynomials.var"#32#33"{SpecialPolynomials.LegendreBasis}, Base.BottomRF{Base.FlipArgs{typeof(*)}}}, init::Int64, itr::StepRange{Int64, Int64})
+    @ Base ./reduce.jl:62
+  [8] foldl_impl
+    @ ./reduce.jl:48 [inlined]
+  [9] mapfoldr_impl
+    @ ./reduce.jl:199 [inlined]
+ [10] #mapfoldr#290
+    @ ./reduce.jl:218 [inlined]
+ [11] mapfoldr
+    @ ./reduce.jl:218 [inlined]
+ [12] #foldr#291
+    @ ./reduce.jl:237 [inlined]
+ [13] foldr
+    @ ./reduce.jl:237 [inlined]
+ [14] kn
+    @ ~/julia/SpecialPolynomials/src/Orthogonal/cop.jl:120 [inlined]
+ [15] leading_term
+    @ ~/julia/SpecialPolynomials/src/Orthogonal/cop.jl:129 [inlined]
+ [16] comrade_decomposition(P::Type{Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis, Float64, :x}}, ps::Vector{Float64})
+    @ SpecialPolynomials ~/julia/SpecialPolynomials/src/Orthogonal/comrade.jl:736
+ [17] roots(p::Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis, Float64, :x})
+    @ SpecialPolynomials ~/julia/SpecialPolynomials/src/Orthogonal/comrade.jl:823
+ [18] top-level scope
+    @ none:1
 ```
 
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)
@@ -427,7 +465,7 @@ julia> xs, ys = [0, 1/4,  1/2,  3/4], [1,2,2,3]
 ([0.0, 0.25, 0.5, 0.75], [1, 2, 2, 3])
 
 julia> p1 = fit(Polynomial,  xs, ys) |> round′
-Polynomials.Polynomial(1.0 + 8.666667*x - 24.0*x^2 + 21.333333*x^3)
+Polynomial(1.0 + 8.666667*x - 24.0*x^2 + 21.333333*x^3)
 ```
 
 The `Lagrange` and `Newton` types represent the polynomial in
@@ -460,7 +498,7 @@ julia> p = fit(Newton, [1,2,3], x->x^2)
 Newton(1.0⋅p_0(x) + 3.0⋅p_1(x) + 1.0⋅p_2(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(1.0*x^2)
+Polynomial(1.0*x^2)
 ```
 
 Polynomial interpolation can demonstrate the Runge phenomenon if the
@@ -517,13 +555,13 @@ julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
 ([1, 2, 3, 4], [2.0, 3.0, 1.0, 4.0])
 
 julia> p1 =  fit(Polynomial, xs,  ys, 1) |> round′ # degree 1  or less
-Polynomials.Polynomial(1.5 + 0.4*x)
+Polynomial(1.5 + 0.4*x)
 
 julia> p1 =  fit(Polynomial, xs,  ys, 2) |> round′ # degree 2 or less
-Polynomials.Polynomial(4.0 - 2.1*x + 0.5*x^2)
+Polynomial(4.0 - 2.1*x + 0.5*x^2)
 
 julia> p1 =  fit(Polynomial, xs,  ys) |> round′    # degree 3 or less (length(xs) - 1)
-Polynomials.Polynomial(-10.0 + 20.166667*x - 9.5*x^2 + 1.333333*x^3)
+Polynomial(-10.0 + 20.166667*x - 9.5*x^2 + 1.333333*x^3)
 ```
 
 For the orthogonal polynomial types, fitting a polynomial to a

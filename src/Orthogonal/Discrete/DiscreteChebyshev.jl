@@ -18,7 +18,7 @@ julia> α,β = 1/2, 1
 (0.5, 1)
 
 julia> P  = DiscreteChebyshev{α,β}
-DiscreteChebyshev{0.5, 1}
+Polynomials.MutableDensePolynomial{SpecialPolynomials.DiscreteChebyshevBasis{0.5, 1}}
 
 julia> i = 5
 5
@@ -41,7 +41,7 @@ true
 
 """
 const DiscreteChebyshev = MutableDensePolynomial{DiscreteChebyshevBasis{α, β}} where {α, β}
-Polynomials._typealias(::Type{P}) where {P<:DiscreteChebyshev} = "DiscreteChebyshev"
+Polynomials._typealias(::Type{P}) where {α,β,P<:DiscreteChebyshev{α,β}} = "DiscreteChebyshev{$α,$β}"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{DiscreteChebyshevBasis{α,β}}}) where {α,β} = "K⁽ᵅᵝ⁾"
 
 

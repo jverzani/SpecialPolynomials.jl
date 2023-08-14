@@ -11,7 +11,7 @@ Also spelled  Krawtchouk,  Kravhcuk,….
 References: [Koekoek and Swarttouw §1.10](https://arxiv.org/pdf/math/9602214.pdf);  see  also  [Coleman](https://arxiv.org/pdf/1101.1798.pdf) for a different  parameterization.
 """
 Krawchouk = MutableDensePolynomial{KrawchoukBasis{p, 𝐍}} where {p, 𝐍}
-Polynomials._typealias(::Type{P}) where {P<:Krawchouk} = "Krawchouk"
+Polynomials._typealias(::Type{P}) where {p,𝐍,P<:Krawchouk{p,𝐍}} = "Krawchouk{$p, $𝐍}"
 
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{KrawchoukBasis{p, 𝐍}}}) where {p, 𝐍} =
     "kᵖ" * "₍" * sprint(io -> unicode_subscript(io, 𝐍)) * "₎"

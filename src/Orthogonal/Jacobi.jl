@@ -12,10 +12,10 @@ Implements the [Jacobi](https://en.wikipedia.org/wiki/Jacobi_polynomials) polyno
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = Jacobi{-1/2, -1/2}([0,0,1])
-typename(Jacobi){-0.5,-0.5}(1⋅Jᵅᵝ₂(x))
+Jacobi(1⋅Jᵅᵝ₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(-0.375 + 0.75*x^2)
+Polynomial(-0.375 + 0.75*x^2)
 
 julia> monic(p) = (q=convert(Polynomial,p); q/q[end])
 monic (generic function with 1 method)
@@ -28,7 +28,7 @@ true
 """
 Jacobi = MutableDensePolynomial{JacobiBasis{α,β}} where {α,β}
 export Jacobi
-Polynomials._typealias(::Type{P}) where {P<:Jacobi} = "Jacobi"
+Polynomials._typealias(::Type{P}) where {α, β, P<:Jacobi{α, β}} = "Jacobi{$α,$β}"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{JacobiBasis{α,β}}}) where {α,β} =  "Jᵅᵝ"
 
 Polynomials.domain(::Type{<:JacobiBasis{α,β}}) where {α,β} =
@@ -137,7 +137,7 @@ struct MonicJacobiBasis{α, β} <: AbstractCCOPBasis end
 @register_monic(MonicJacobiBasis)
 
 MonicJacobi = MutableDensePolynomial{MonicJacobiBasis{α, β}} where {α, β}
-Polynomials._typealias(::Type{P}) where {P<:MonicJacobi} = "MonicJacobi"
+Polynomials._typealias(::Type{P}) where {α,β,P<:MonicJacobi{α,β}} = "MonicJacobi{$α, $β}"
 export MonicJacobi
 
 #
@@ -146,5 +146,5 @@ struct OrthonormalJacobiBasis{α,β} <: AbstractCCOPBasis end
 @register_orthonormal(OrthonormalJacobiBasis)
 
 OrthonormalJacobi = MutableDensePolynomial{OrthonormalJacobiBasis{α, β}} where {α, β}
-Polynomials._typealias(::Type{P}) where {P<:OrthonormalJacobi} = "OrthonormalJacobi"
+Polynomials._typealias(::Type{P}) where {α, β, P<:OrthonormalJacobi{α, β}} = "OrthonormalJacobi{$α, $β}"
 export OrthonormalJacobi

@@ -60,36 +60,6 @@ The defaults for evaluation and multplication are generally an order
 of magnitude slower than a directly defined function. For some
 families this is done (e.g. `Chebyshev`,`ChebyshevU`, `Hermite`, `Laguerre`), but not all.
 
-## Example
-
-For this example, the value of `Bn` at `0` needs help:
-
-```jldoctest
-julia> using Polynomials, SpecialPolynomials
-
-julia> const SP=SpecialPolynomials
-SpecialPolynomials
-
-julia> SP.:ϟ(::Type{<:MonicLegendre′}) = Legendre
-
-julia> SP.@register_monic MonicLegendre′  # use  ϟ to delegate methods
-
-julia> 𝐐  =  Rational{Int}
-Rational{Int64}
-
-julia> x = variable(Polynomial{𝐐})
-Polynomials.Polynomial(x)
-
-julia> [basis(MonicLegendre′{𝐐}, i)(x) for i  in 0:5]
-6-element Vector{Polynomial{T, :x} where T}:
- Polynomials.Polynomial(1//1)
- Polynomials.Polynomial(1.0*x)
- Polynomials.Polynomial(-0.3333333333333333 + 1.0*x^2)
- Polynomials.Polynomial(-0.6*x + 1.0*x^3)
- Polynomials.Polynomial(0.0857142857142857 - 0.857142857142857*x^2 + 1.0*x^4)
- Polynomials.Polynomial(0.23809523809523805*x - 1.111111111111111*x^3 + 1.0*x^5)
-```
-
 [Koekoek and Swarttouw](https://arxiv.org/pdf/math/9602214.pdf)
 present an encyclopedia of formula characterizing families of
 orthogonal polynomials.
@@ -357,7 +327,8 @@ for fn ∈ (:An, :an, :αn, :ân,:αᴵn,
           :Bn, :bn, :βn, :b̂n,:βᴵn,
           :Cn, :cn, :γn, :ĉn, :γᴵn,
           :ABCₙ, :k0, :kn, :k1k0, :k1k_1,
-          :gauss_nodes_weights)
+          :monic,
+          :gauss_nodes_weights, :weight_function, :innerproduct)
     @eval begin
         $(fn)(::Type{P},i::Int) where {B<:AbstractCOPBasis, P<:AbstractUnivariatePolynomial{B}} = $(fn)(B,i)
     end

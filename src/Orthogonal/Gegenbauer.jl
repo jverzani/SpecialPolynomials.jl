@@ -14,15 +14,15 @@ The Legendre polynomials are the specialization  `Gegenbauer{1/2}`.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p =  Gegenbauer{1/2}([1,2,3])
-typename(Gegenbauer){0.5}(1⋅Cᵅ₀(x) + 2⋅Cᵅ₁(x) + 3⋅Cᵅ₂(x))
+Gegenbauer(1⋅Cᵅ₀(x) + 2⋅Cᵅ₁(x) + 3⋅Cᵅ₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(-0.5 + 2.0*x + 4.5*x^2)
+Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 ```
 
 """
 Gegenbauer = MutableDensePolynomial{GegenbauerBasis{α}} where {α}
-Polynomials._typealias(::Type{P}) where {P<:Gegenbauer} = "Gegenbauer"
+Polynomials._typealias(::Type{P}) where {α,P<:Gegenbauer{α}} = "Gegenbauer{$(α)}"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{GegenbauerBasis{α}}}) where {α} = "Cᵅ"
 
 Polynomials.domain(::Type{<:GegenbauerBasis{α}}) where {α} = Polynomials.Interval(-1, 1)
@@ -69,5 +69,5 @@ struct OrthonormalGegenbauerBasis{α} <: AbstractCCOPBasis end
 @register_orthonormal(OrthonormalGegenbauerBasis)
 
 OrthonormalGegenbauer = MutableDensePolynomial{OrthonormalGegenbauerBasis{α}} where {α}
-Polynomials._typealias(::Type{P}) where {P<:OrthonormalGegenbauer} = "OrthonormalGegenbauer"
+Polynomials._typealias(::Type{P}) where {α,P<:OrthonormalGegenbauer{α}} = "OrthonormalGegenbauer{$α}"
 export OrthonormalGegenbauer
