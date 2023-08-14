@@ -13,8 +13,9 @@ end
 
 ## Construction
 
-This package provides several  types to represent  polynomials relative  to
-different  bases from the standard polynomial  basis, `1`,`x`,`x²`, `x³` etc.
+This package provides several types to represent polynomials relative
+to bases different from the standard polynomial basis, `1`,`x`,`x²`,
+`x³` etc.
 
 For example, the Legendre polynomials are a collection of polynomials on `[-1,1]`. The first few may be seen through:
 
@@ -32,6 +33,7 @@ Legendre(1⋅P₂(x))
 
 julia> p3 = Legendre([0,0,0,1])
 Legendre(1⋅P₃(x))
+
 ```
 
 A plot recipe is useful for a graphical view:
@@ -98,7 +100,7 @@ julia> p3(u)
 ChebyshevU(- 0.125⋅U₁(x) + 0.3125⋅U₃(x))
 ```
 
-For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provided. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. As possible, for the orthogonal polynomial types, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
+For most of the orthogonal polynomials, a conversion from the standard basis is provided, and a conversion between different parameter values  for the  same polynomial type are provided. Conversion methods between other polynomial types are not provided, but either evaluation, as above, or conversion through the `Polynomial` type is possible. For the orthogonal polynomial types, as possible and when loaded, conversion utilizes the `FastTransforms` package; this package can handle conversion between polynomials with very high degree.
 
 
 For the basis functions, the `basis` function can be used:
@@ -128,12 +130,14 @@ julia> Laguerre{0}([1,2,3])
 typename(Laguerre){0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 ```
 
-Some polynomial types are parameterized, as above. The parameters are passed to the type, as in this example:
+Some polynomial types are parameterized, as above. The parameters may be passed to the type, as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
 typename(Jacobi){0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 ```
+
+In the background, in this instance, the parameters are passed to the underlying `JacobiBasis{α, β}` type.
 
 ----
 
@@ -502,7 +506,11 @@ savefig("fitting.svg"); nothing  # hide
 There are other criteria for fitting that can be used.
 
 
-If there are a lot of points, it is common  to  fit with a  lower  degree polynomial. This won't  be an interpolating polynomial, in general. The criteria  used to select the polynomial is  typically least squares (weighted least squares is also available). Fitting  ini the standard basis, a  degree  is specified, as follows:
+If there are a lot of points, it is common to fit with a lower degree
+polynomial. This won't be an interpolating polynomial, in general. The
+criteria used to select the polynomial is typically least squares
+(weighted least squares is also available). Fitting in the standard
+basis, a degree is specified, as follows:
 
 ```jldoctest example
 julia> xs, ys =  [1,2,3,4], [2.0,3,1,4]
@@ -518,8 +526,10 @@ julia> p1 =  fit(Polynomial, xs,  ys) |> round′    # degree 3 or less (length(
 Polynomials.Polynomial(-10.0 + 20.166667*x - 9.5*x^2 + 1.333333*x^3)
 ```
 
-For the orthogonal polynomial types, fitting a polynomial to a function using least squares can be solved using the polynomial
-`a0⋅p0 + a1⋅p1 + ⋅⋅⋅ + an⋅pn` where `ai=∫f⋅pi⋅w⋅dx / ∫pi^2⋅w⋅dx`. There is no need to specify values for `x`:
+For the orthogonal polynomial types, fitting a polynomial to a
+function using least squares can be solved using the polynomial
+`a0⋅p0 + a1⋅p1 + ⋅⋅⋅ + an⋅pn` where `ai=∫f⋅pi⋅w⋅dx /
+∫pi^2⋅w⋅dx`. There is no need to specify values for `x`:
 
 ```jldoctest example
 julia> f(x) = exp(-x) * sinpi(x)

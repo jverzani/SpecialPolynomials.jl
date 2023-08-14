@@ -19,7 +19,7 @@
         @test length(p) == length(coeff)
         @test size(p) == size(coeff)
         @test size(p, 1) == size(coeff, 1)
-        @test typeof(p).parameters[1] == eltype(coeff)
+        @test typeof(p).parameters[2] == eltype(coeff)
         @test eltype(p) == eltype(coeff)
     end
 end
@@ -158,7 +158,7 @@ end
     # GCD
     c1 = Chebyshev([1, 2, 3])
     c2 = Chebyshev([3, 2, 1])
-    @test gcd(c1, c2) ≈ Chebyshev(6)
+    @test degree(gcd(c1, c2)) == degree(Chebyshev(6))
 end
 
 @testset "integrals derivatives" begin
@@ -205,11 +205,11 @@ end
 end
 
 @testset "Fit" begin
-    f(x) = exp(x)
-    p = fit(Chebyshev{Float64}, f, 16)
-    @test maximum(abs.(p(x) - f(x) for x in range(0, 1, length=100))) <= 100 * eps()
+    fn = x -> exp(x)
+    p = fit(Chebyshev{Float64}, fn, 16)
+    @test maximum(abs.(p(x) - fn(x) for x in range(0, 1, length=100))) <= 100 * eps()
 
-    f(x) = sin(6x) - sin(60 * exp(x)) # chebfun example
-    p = fit(Chebyshev{Float64}, f, 150)
-    @test maximum(abs.(p(x) - f(x) for x in range(0, 1, length=100))) <= 1000 * eps()
+    fn = (x) -> sin(6x) - sin(60 * exp(x)) # chebfun example
+    p = fit(Chebyshev{Float64}, fn, 150)
+    @test maximum(abs.(p(x) - fn(x) for x in range(0, 1, length=100))) <= 1000 * eps()
 end

@@ -10,6 +10,7 @@ The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. T
 
 An example:
 
+XXX not the case anymore, pass in a basis
 ```
 function  gauss_nodes_weights(P::Type{<:Jacobi{α,β}}, n)  where {α,β}
     # we don't  have a  good starting point  unless α=β
@@ -53,8 +54,8 @@ Compute  `p,q,r,p',q',r'` where `p(x)y'' + q(x)y' + r(x)  = 0`. Uses
 the `a,b,c,d,e` values characterizing the  system.
 
 """
-function pqr(P::Type{<:AbstractCCOP}, n, x)
-    a, b, c, d, e = abcde(P)
+function pqr(B::Type{<:AbstractCCOPBasis}, n, x)
+    a, b, c, d, e = abcde(B)
 
     p  = a * x^2 + b * x + c
     dp = 2a * x + b
@@ -70,14 +71,14 @@ end
 
 A starting  value for finding the gauss nodes
 """
-pqr_start(::Type{P}, n) where {P<:AbstractCCOP} = 0
+pqr_start(::Type{B}, n) where {B<:AbstractCCOPBasis} = 0
 
 """
     pqr_symmetry(p::P)
 
 Boolean to specify if symmetry should apply to output
 """
-pqr_symmetry(::Type{P}) where {P<:AbstractCCOP} = false
+pqr_symmetry(::Type{B}) where {B<:AbstractCCOPBasis} = false
 
 """
     pqr_weight(p::P, x, dx)
@@ -117,7 +118,7 @@ pqr_weight(p::P, n, x, dx) where {P} = throw(ArgumentError("Not implemented"))
 # end
 
 # run Newton's method to find zero of p
-function newton(p::P, x0::S) where {P<:AbstractCCOP,S}
+function newton(p::P, x0::S) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B},S}
     maxsteps = 25
     dp = derivative(p)
     while maxsteps > 0
@@ -149,7 +150,7 @@ function RK(t0, x0, F, h, n)
     x1
 end
 
-function prufer(Π::Type{P}, n) where {P<:AbstractCCOP}
+function prufer(Π::Type{B}, n) where {B<:AbstractCCOPBasis}
     (θ, x) -> begin
         dom = domain(Π)
         a, b = first(dom) + eps(), last(dom) - eps()
@@ -166,12 +167,12 @@ end
 ## specialized to the orthogonal polynomial case
 function glaser_liu_rokhlin_gauss_nodes(
     π::P,
-    x0=pqr_start(P, degree(π));
-    symmetry=pqr_symmetry(P),
+    x0=pqr_start(B, degree(π));
+    symmetry=pqr_symmetry(B),
     m=5,
-) where {P<:AbstractCCOP}
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}}
     n = degree(π)
-    F = prufer(P, n)
+    F = prufer(B, n)
     x = float(x0)
 
     # step 1 to get initial might be newton or might be RK
@@ -198,6 +199,6 @@ function glaser_liu_rokhlin_gauss_nodes(
         end
     end
     # get weights
-    weights = pqr_weight.(P, n, rts, dπrts)
+    weights = pqr_weight.(B, n, rts, dπrts)
     rts, weights
 end

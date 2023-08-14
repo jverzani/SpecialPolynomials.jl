@@ -68,7 +68,7 @@ return a good choice of `n+1` points over `[-1,1]` along with
 precomputed weights.
 
 ```jldoctest Lagrange
-julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
+julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(SpecialPolynomials.ChebyshevBasis, 64);
 
 
 julia> f(x) = exp(-x)*sinpi(x)

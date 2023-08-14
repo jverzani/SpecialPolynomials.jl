@@ -1,5 +1,8 @@
+# XXX
+# we use AbstractSpecialPolynomial when we can't pull out Basie
+# we use AbstractSpecialPolynomialBasis when we can
 """
-    AbstractSpecialPolynomial{T,X}
+    AbstractSpecialPolynomial{B,T,X}
 
 An abstract type to distinguish the different polynomial types in this package.
 
@@ -7,9 +10,9 @@ The concrete types specify different bases for the space of polynomials of degre
 
 This package includes:
 
-* several classic orthogonal polynomials.
+* XXX several classic orthogonal polynomials.
 * Newton and Lagrange interpolating polynomials
-* Bernstein polynomials
+* XXX Bernstein polynomials <XXX <: AbstractPolynomial
 
 As many of the methods for the base `Polynomials` class are directly coded if possible, but quite a few
 depend on conversion to the base `Polynomial` type (which uses the standard polynomial basis).
@@ -17,8 +20,7 @@ depend on conversion to the base `Polynomial` type (which uses the standard poly
 """
 abstract type AbstractSpecialPolynomial{T,X} <: Polynomials.AbstractPolynomial{T,X} end
 
-# for polys with a basis
-abstract type AbstractSpecialBasisPolynomial{B,T,X} <: AbstractSpecialPolynomial{T,X} end
+abstract type AbstractSpecialPolynomialBasis <: AbstractBasis end
 
 # polynomial like Vector{T} with variable
 Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T
@@ -53,10 +55,9 @@ function Polynomials.showterm(
     j,
     first::Bool,
     mimetype,
-) where {T,P<:AbstractSpecialPolynomial}
+) where {T, B<:AbstractSpecialPolynomialBasis, P<:AbstractUnivariatePolynomial{B}}
     iszero(pj) && return false
     !first && print(io, " ")
-
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)
         print(io, "- ")
         pj = -pj
@@ -67,7 +68,6 @@ function Polynomials.showterm(
     Polynomials.printcoefficient(io, pj, 1, mimetype) # j != 0; want to have ()
     print(io, "⋅")
     print(io, basis_symbol(P))
-
     unicode_subscript(io, j)
     print(io, "($(var))")
     return true
@@ -87,50 +87,3 @@ end
 Base.extrema(p::P) where {P<:AbstractSpecialPolynomial} = extrema(P)
 
 ## Polynomial operations
-
-
-
-##
-## --------------------------------------------------
-##
-
-function Polynomials.derivative(p::P, order::Integer=1) where {P<:AbstractSpecialPolynomial}
-    T = eltype(one(P))
-    q = convert(Polynomial{T}, p)
-    convert(⟒(P), derivative(q, order))
-end
-
-function Polynomials.integrate(p::P) where {P<:AbstractSpecialPolynomial}
-    q = convert(Polynomial, p)
-    integrate(q)
-end
-
-function Base.divrem(num::P, den::P) where {P<:AbstractSpecialPolynomial}
-    p1 = convert(Polynomial, num)
-    p2 = convert(Polynomial, den)
-    q, r = divrem(p1, p2)
-    convert.(P, (q, r))
-end
-
-function Polynomials.companion(p::P) where {P<:AbstractSpecialPolynomial}
-    companion(convert(Polynomial, p))
-end
-
-function Polynomials.vander(
-    ::Type{P},
-    x::AbstractVector{T},
-    n::Integer,
-) where {P<:AbstractSpecialPolynomial,T}
-    N = length(x) - 1
-    R = typeof(one(T) / one(T))
-    V = zeros(R, N + 1, n + 1)
-
-    for j in 0:n
-        bj = Polynomials.basis(P, j)
-        for i in 0:N
-            V[i + 1, j + 1] = bj(x[i + 1])
-        end
-    end
-
-    V
-end

@@ -1,5 +1,5 @@
 ## Gegenbauer Polynomials
-@registerN Gegenbauer AbstractCCOP1 α
+struct GegenbauerBasis{α} <: AbstractCCOPBasis end
 export Gegenbauer
 
 """
@@ -21,32 +21,33 @@ Polynomials.Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 ```
 
 """
-Gegenbauer
+Gegenbauer = MutableDensePolynomial{GegenbauerBasis{α}} where {α}
+Polynomials._typealias(::Type{P}) where {P<:Gegenbauer} = "Gegenbauer"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{GegenbauerBasis{α}}}) where {α} = "Cᵅ"
 
-basis_symbol(::Type{<:Gegenbauer{α}}) where {α} = "Cᵅ"
-Polynomials.domain(::Type{<:Gegenbauer{α}}) where {α} = Polynomials.Interval(-1, 1)
+Polynomials.domain(::Type{<:GegenbauerBasis{α}}) where {α} = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:Gegenbauer{α}}) where {α} =(a=-1, b=0, c=1, d=-(2α + 1), e=0)
+abcde(::Type{<:GegenbauerBasis{α}}) where {α} =(a=-1, b=0, c=1, d=-(2α + 1), e=0)
 
-k0(P::Type{<:Gegenbauer}) = one(eltype(P))
-k1k0(P::Type{<:Gegenbauer{α}}, k::Int) where {α} = (one(eltype(P)) * 2 * (α + k)) / (k + 1)
+k0(::Type{<:Gegenbauer}) = 1
+k1k0(::Type{<:GegenbauerBasis{α}}, k::Int) where {α} = (2 * (α + k)) / (k + 1)
 
-function norm2(::Type{<:Gegenbauer{α}}, n) where {α}
+function norm2(::Type{<:GegenbauerBasis{α}}, n) where {α}
     pi * 2^(1 - 2α) * gamma(n + 2α) / (gamma(n + 1) * (n + α) * gamma(α)^2)
 end
-function ω₁₀(::Type{<:Gegenbauer{α}}, n) where {α}
+function ω₁₀(::Type{<:GegenbauerBasis{α}}, n) where {α}
     val = gamma(n + 1 + 2α) / gamma(n + 2α)
     val /= (n + 1)
     val *= (n + α) / (n + 1 + α)
     sqrt(val)
 end
 
-weight_function(::Type{<:Gegenbauer{α}}) where {α} = x -> (1 - x^2)^(α - 1 / 2)
-generating_function(::Type{<:Gegenbauer{α}}) where {α} =
+weight_function(::Type{<:GegenbauerBasis{α}}) where {α} = x -> (1 - x^2)^(α - 1 / 2)
+generating_function(::Type{<:GegenbauerBasis{α}}) where {α} =
     (t, x) -> begin
         1 / (1 - 2x * t + t^2)^α
     end
-function classical_hypergeometric(::Type{<:Gegenbauer{α}}, n, x) where {α}
+function classical_hypergeometric(::Type{<:GegenbauerBasis{α}}, n, x) where {α}
     (α > -1 / 2 && !iszero(α)) || throw(ArgumentError("α > -1/2 and α ≠ 0 is necessary"))
 
     as = (-n, 2α + n)
@@ -55,15 +56,18 @@ function classical_hypergeometric(::Type{<:Gegenbauer{α}}, n, x) where {α}
 end
 
 # overrides; big speedup if we avoid generating  from  a,b,c,d,e
-B̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))
-C̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} =
-    (one(eltype(P)) * n * (n + 2 * α - 1)) / (4 * (n^2 + 2 * n * α - n + α^2 - α))
-b̂̃n(P::Type{<:Gegenbauer{α}}, n::Int) where {α} = zero(eltype(P))# one(S) *  4/α/(α+2)
-b̂̃n(P::Type{<:Gegenbauer{α}}, ::Val{N}) where {α,N} = zero(eltype(P))# one(S) *  4/α/(α+2)
-ĉ̃n(P::Type{<:Gegenbauer{α}}, ::Val{0}) where {α} = zero(eltype(P)) #one(S) *  4/α/(α+2)
+B̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} = 0
+C̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} =
+    ( n * (n + 2 * α - 1)) / (4 * (n^2 + 2 * n * α - n + α^2 - α))
+b̂̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} = 0 # one(S) *  4/α/(α+2)
+b̂̃n(::Type{<:GegenbauerBasis{α}}, ::Val{N}) where {α,N} = 0 # one(S) *  4/α/(α+2)
+ĉ̃n(::Type{<:GegenbauerBasis{α}}, ::Val{0}) where {α} = 0 #one(S) *  4/α/(α+2)
 
-@registerN OrthonormalGegenbauer AbstractCCOP1 α
+# Orthonormal version
+struct OrthonormalGegenbauerBasis{α} <: AbstractCCOPBasis end
+ϟ(::Type{OrthonormalGegenbauerBasis{α}}) where {α} = GegenbauerBasis{α}
+@register_orthonormal(OrthonormalGegenbauerBasis)
+
+OrthonormalGegenbauer = MutableDensePolynomial{OrthonormalGegenbauerBasis{α}} where {α}
+Polynomials._typealias(::Type{P}) where {P<:OrthonormalGegenbauer} = "OrthonormalGegenbauer"
 export OrthonormalGegenbauer
-ϟ(::Type{<:OrthonormalGegenbauer{α}}) where {α} = Gegenbauer{α}
-ϟ(::Type{<:OrthonormalGegenbauer{α,T}}) where {α,T} = Gegenbauer{α,T}
-@register_orthonormal(OrthonormalGegenbauer)

@@ -1,4 +1,9 @@
-abstract type AbstractBernstein{T,X} <: AbstractSpecialPolynomial{T,X} end
+#abstract type AbstractBernstein{T,X} <: AbstractSpecialPolynomial{T,X} end
+
+# XXX TODO
+# * the contraint 𝐍 < N - 1 isn't checked
+# * methods written from Bernstein{𝐍,T,X} but should be {𝐍, B<:BernsteinBasis{𝐍}, AbstractUnivariatePolynomial{B}}
+struct BernsteinBasis{𝐍} <: AbstractBasis end
 
 """
 
@@ -26,23 +31,28 @@ Polynomials.Polynomial(1.0*x^2)
     [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) Offers a  more  performant version.
 
 """
-struct Bernstein{𝐍,T,X} <: AbstractBernstein{T,X}
-    coeffs::Vector{T}
-    function Bernstein{𝐍,T,X}(coeffs::AbstractVector{T}) where {𝐍,T,X}
-        N = findlast(!iszero, coeffs)
-        N == nothing && return new{𝐍,T,X}(zeros(T, 0))
-        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficents"))
-        return new{𝐍,T,X}(coeffs[1:N])
-    end
-end
+Bernstein{𝐍} = MutableDensePolynomial{BernsteinBasis{𝐍}} where {𝐍}
+Polynomials._typealias(::Type{P}) where {P<:Bernstein{𝐍}} where {𝐍} = "Bernstein"
+
+# struct Bernstein{𝐍,T,X} <: AbstractBernstein{T,X}
+#     coeffs::Vector{T}
+#     function Bernstein{𝐍,T,X}(coeffs::AbstractVector{T}) where {𝐍,T,X}
+#         N = findlast(!iszero, coeffs)
+#         N == nothing && return new{𝐍,T,X}(zeros(T, 0))
+#         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficents"))
+#         return new{𝐍,T,X}(coeffs[1:N])
+#     end
+# end
+
+
 
 export Bernstein
-Polynomials.@registerN Bernstein 𝐍
-Polynomials.:⟒(::Type{<:Bernstein{𝐍}}) where {𝐍} = Bernstein{𝐍}
+#Polynomials.@registerN Bernstein 𝐍
+#Polynomials.:⟒(::Type{<:Bernstein{𝐍}}) where {𝐍} = Bernstein{𝐍}
 
 function Polynomials.showterm(
     io::IO,
-    ::Type{Bernstein{N,T,X}},
+    ::Type{<:AbstractUnivariatePolynomial{BernsteinBasis{N},T,X}},
     pj::T,
     var,
     j,
@@ -122,25 +132,27 @@ function Base.convert(C::Type{<:Bernstein{𝐍,T}}, p::Polynomial) where {𝐍,T
     Bernstein{𝐍,R,X}(cs)
 end
 
-function Base.convert(P::Type{<:AbstractBernstein}, p::Polynomial{T}) where {T}
+function Base.convert(P::Type{<:Bernstein}, p::Polynomial{T}) where {T}
     𝐍 = degree(p)
     X = Polynomials.indeterminate(P, p)
     convert(Bernstein{𝐍,T,X}, p)
 end
 
-Polynomials.domain(::Type{<:AbstractBernstein}) = Polynomials.Interval(0, 1)
+Polynomials.domain(::Type{<:BernsteinBasis}) = Polynomials.Interval(0, 1)
+Polynomials.domain(::Type{P}) where {𝐍,B<:BernsteinBasis{𝐍}, P<:AbstractUnivariatePolynomial{B}} = Polynomials.Interval(0, 1)
+Polynomials.domain(::Type{Bernstein}) = Polynomials.Interval(0, 1) # no N
 Polynomials.degree(p::Bernstein{N,T,X}) where {N,T,X} = degree(convert(Polynomial{T,X}, p))
 
 Polynomials.constantterm(p::Bernstein) = p[0] # β.,ᵢ = 0 + ... when i > 0
 
 ## need to do one  and variable differently,as coefficients have length N+1
 Base.one(P::Type{Bernstein{N,T,X}}) where {N,T,X} = Bernstein{N,T,X}(ones(T, N + 1))
-Base.one(P::Type{Bernstein{N,T}}, var::Polynomials.SymbolLike) where {N,T} =
-    Bernstein{N,T,Symbol(var)}(ones(T, N + 1))
-function Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N}
-    N′ = max(N, 0)
-    one(Bernstein{N′,eltype(P),Symbol(var)})
-end
+# Base.one(P::Type{Bernstein{N,T}}, var::Polynomials.SymbolLike) where {N,T} =
+#     Bernstein{N,T,Symbol(var)}(ones(T, N + 1))
+# function Base.one(P::Type{<:Bernstein{N}}, var::Polynomials.SymbolLike=:x) where {N}
+#     N′ = max(N, 0)
+#     one(Bernstein{N′,eltype(P),Symbol(var)})
+# end
 
 function Polynomials.variable(P::Type{Bernstein{𝐍,T,X}}) where {𝐍,T,X}
     𝐍 <= 0 && throw(ArgumentError("Need  𝐍 ≥ 1"))
@@ -302,16 +314,14 @@ function Base.:*(p::P, q::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},𝐌,S,Y,Q<:
 end
 
 #  use p'(t) = n ∑ (b_{i+1} - b_i) B_i,n-1
-function Polynomials.derivative(p::Bernstein{𝐍,T,X}, order::Integer=1) where {𝐍,T,X}
+function Polynomials.derivative(p::Bernstein{𝐍,T,X}) where {𝐍,T,X}
     cs = coeffs(p)
     𝐍 < -1 && return p
     iszero(𝐍) && return zero(p)
-    order == 0 && return p
 
     cs = zeros(T, 𝐍)
     dp = Bernstein{𝐍 - 1,T,X}(𝐍 * diff(coeffs(p)))
-
-    order > 1 ? derivative(dp, order - 1) : dp
+    dp
 end
 
 # use ∫b_n,nu  = 1/(n+1)  * ∑_{nu+1}^{n+1} b_n+1, j
@@ -349,7 +359,7 @@ function Base.gcd(num::Bernstein{𝐍,T}, den::Bernstein{𝐌,S}) where {𝐍,T,
 end
 
 function Polynomials.vander(
-    P::Type{<:AbstractBernstein},
+    P::Type{<:Bernstein},
     xs::AbstractVector{T},
     n::Integer,
 ) where {T<:Number}

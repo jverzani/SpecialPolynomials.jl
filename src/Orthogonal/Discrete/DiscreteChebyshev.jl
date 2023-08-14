@@ -1,4 +1,6 @@
-@registerN DiscreteChebyshev AbstractCDOP2 α β
+#@registerN DiscreteChebyshev AbstractCDOP2 α β
+
+struct DiscreteChebyshevBasis{α,β} <: AbstractCDOPBasis end
 export DiscreteChebyshev
 
 """
@@ -38,14 +40,16 @@ true
 ```
 
 """
-DiscreteChebyshev
+const DiscreteChebyshev = MutableDensePolynomial{DiscreteChebyshevBasis{α, β}} where {α, β}
+Polynomials._typealias(::Type{P}) where {P<:DiscreteChebyshev} = "DiscreteChebyshev"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{DiscreteChebyshevBasis{α,β}}}) where {α,β} = "K⁽ᵅᵝ⁾"
 
-basis_symbol(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} = "K⁽ᵅᵝ⁾"
-Polynomials.domain(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} =
+
+Polynomials.domain(::Type{<:DiscreteChebyshevBasis{α,β}}) where {α,β} =
     Polynomials.Interval(-Inf, Inf)
-abcde(::Type{<:DiscreteChebyshev{α,β}}) where {α,β} =
+abcde(::Type{<:DiscreteChebyshevBasis{α,β}}) where {α,β} =
     NamedTuple{(:a, :b, :c, :d, :e)}((0, 0, 1, α, β))
 
-function k1k0(P::Type{<:DiscreteChebyshev{α,β}}, n::Int) where {α,β}
+function k1k0(::Type{<:DiscreteChebyshevBasis{α,β}}, n::Int) where {α,β}
     α
 end

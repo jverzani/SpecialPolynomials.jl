@@ -1,5 +1,4 @@
-@registerN Laguerre AbstractCCOP1 α
-export Laguerre
+struct LaguerreBasis{α} <: AbstractCCOPBasis end
 
 """
    Laguerre{α, T <: Number}
@@ -42,35 +41,38 @@ Polynomials.Polynomial(-5.4569682106375694e-12 + 1.4551915228366852e-11*x - 7.27
 
 
 """
-Laguerre
+Laguerre = MutableDensePolynomial{LaguerreBasis{α}} where {α}
+export Laguerre
+Polynomials._typealias(::Type{P}) where {P<:Laguerre} = "Laguerre"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LaguerreBasis{α}}}) where {α} = "Lᵅ"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LaguerreBasis{0}}}) = "L"
 
-basis_symbol(::Type{<:Laguerre{α}}) where {α} = "Lᵅ"
-basis_symbol(::Type{<:Laguerre{0}}) = "L"
-Polynomials.domain(::Type{<:Laguerre}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{<:Laguerre{α}}) where {α} = (a=0, b=1, c=0, d=-1, e=α + 1)
+Polynomials.domain(::Type{<:LaguerreBasis}) = Polynomials.Interval(0, Inf)
 
-k0(P::Type{<:Laguerre}) = one(eltype(P))
-k1k0(P::Type{<:Laguerre{α}}, k::Int) where {α} = -one(eltype(P)) / (k + 1) # k >=0
+abcde(::Type{<:LaguerreBasis{α}}) where {α} = (a=0, b=1, c=0, d=-1, e=α + 1)
 
-function norm2(::Type{<:Laguerre{α}}, n) where {α}
+k0(::Type{<:LaguerreBasis}) = 1
+k1k0(::Type{<:LaguerreBasis{α}}, k::Int) where {α} = -1 / (k + 1) # k >=0
+
+function norm2(::Type{<:LaguerreBasis{α}}, n) where {α}
     iszero(α) && return one(α)
     Γ(n + α + 1) / Γ(n + 1)
 end
 
-function ω₁₀(::Type{<:Laguerre{α}}, n) where {α}
+function ω₁₀(::Type{<:LaguerreBasis{α}}, n) where {α}
     iszero(α) && return 1.0
     val = Γ(n + 1 + α + 1) / Γ(n + α + 1)
     val /= n + 1 # Γ(n+1)/Γ(n+2)
     sqrt(val)
 end
 
-weight_function(::Type{<:Laguerre{α}}) where {α} = x -> x^α * exp(-x)
-generating_function(::Type{<:Laguerre{α}}) where {α} =
+weight_function(::Type{<:LaguerreBasis{α}}) where {α} = x -> x^α * exp(-x)
+generating_function(::Type{<:LaguerreBasis{α}}) where {α} =
     (t, x) -> begin
         exp(-t * x / (1 - t)) / (1 - t)^(α + 1)
     end
-function classical_hypergeometric(::Type{<:Laguerre{α}}, n, x) where {α}
+function classical_hypergeometric(::Type{<:LaguerreBasis{α}}, n, x) where {α}
     α > -1 || throw(ArgumentError("α > -1 is required"))
     as = -n
     bs = α + 1
@@ -105,14 +107,21 @@ end
 ##
 ## --------------------------------------------------
 ##
-@registerN MonicLaguerre AbstractCCOP1 α
-export MonicLaguerre
-ϟ(::Type{<:MonicLaguerre{α}}) where {α} = Laguerre{α}
-ϟ(::Type{<:MonicLaguerre{α,T}}) where {α,T} = Laguerre{α,T}
-@register_monic(MonicLaguerre)
 
-@registerN OrthonormalLaguerre AbstractCCOP1 α
+
+struct MonicLaguerreBasis{α} <: AbstractCCOPBasis end
+ϟ(::Type{MonicLaguerreBasis{α}}) where {α} = LaguerreBasis{α}
+@register_monic(MonicLaguerreBasis)
+
+MonicLaguerre = MutableDensePolynomial{MonicLaguerreBasis{α}} where {α}
+Polynomials._typealias(::Type{P}) where {P<:MonicLaguerre} = "MonicLaguerre"
+export MonicLaguerre
+
+#
+struct OrthonormalLaguerreBasis{α} <: AbstractCCOPBasis end
+ϟ(::Type{OrthonormalLaguerreBasis{α}}) where {α} = LaguerreBasis{α}
+@register_orthonormal(OrthonormalLaguerreBasis)
+
+OrthonormalLaguerre = MutableDensePolynomial{OrthonormalLaguerreBasis{α}} where {α}
+Polynomials._typealias(::Type{P}) where {P<:OrthonormalLaguerre} = "OrthonormalLaguerre"
 export OrthonormalLaguerre
-ϟ(::Type{<:OrthonormalLaguerre{α}}) where {α} = Laguerre{α}
-ϟ(::Type{<:OrthonormalLaguerre{α,T}}) where {α,T} = Laguerre{α,T}
-@register_orthonormal(OrthonormalLaguerre)
