@@ -24,10 +24,10 @@ julia> i = 5
 5
 
 julia> yᵢ = basis(P, i)
-DiscreteChebyshev(1.0⋅K⁽ᵅᵝ⁾₅(x))
+DiscreteChebyshev{0.5,1}(1.0⋅K⁽ᵅᵝ⁾₅(x))
 
 julia> x = variable(P)
-DiscreteChebyshev(- 2.0⋅K⁽ᵅᵝ⁾₀(x) + 2.0⋅K⁽ᵅᵝ⁾₁(x))
+DiscreteChebyshev{0.5,1}(- 2.0⋅K⁽ᵅᵝ⁾₀(x) + 2.0⋅K⁽ᵅᵝ⁾₁(x))
 
 julia> a,b,c,d,e = SpecialPolynomials.abcde(P)
 (a = 0, b = 0, c = 1, d = 0.5, e = 1)

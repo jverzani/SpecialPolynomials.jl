@@ -12,7 +12,7 @@ Implements the [Jacobi](https://en.wikipedia.org/wiki/Jacobi_polynomials) polyno
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = Jacobi{-1/2, -1/2}([0,0,1])
-Jacobi(1⋅Jᵅᵝ₂(x))
+Jacobi{-0.5,-0.5}(1⋅Jᵅᵝ₂(x))
 
 julia> convert(Polynomial, p)
 Polynomial(-0.375 + 0.75*x^2)

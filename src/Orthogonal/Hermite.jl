@@ -75,9 +75,9 @@ b̂̃n(::Type{HermiteBasis}, ::Val{N}) where {N} = 0 #where {M} = error("Don't c
 ĉ̃n(::Type{HermiteBasis}, ::Val{N}) where {N} = 0 #where {M} = error("Don't call me")#zero(S)
 
 # Needed for Monic XXX
-#B̃n(::Type{HermiteBasis}, ::Val{1}) = 0
-#B̃n(::Type{HermiteBasis}, ::Val{2}) = 0
-#C̃n(B::Type{HermiteBasis}, n::Val{2}) = 0
+B̃n(::Type{HermiteBasis}, ::Val{1}) = 0
+B̃n(::Type{HermiteBasis}, ::Val{2}) = 0
+C̃n(B::Type{HermiteBasis}, n::Val{2}) = 0
 
 ## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))

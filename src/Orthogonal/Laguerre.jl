@@ -9,7 +9,7 @@ The  Laguerre polynomials have weight function `x^α * exp(-x)` over the domain 
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = Laguerre{1/2}([1,2,3])
-Laguerre(1⋅Lᵅ₀(x) + 2⋅Lᵅ₁(x) + 3⋅Lᵅ₂(x))
+Laguerre{0.5}(1⋅Lᵅ₀(x) + 2⋅Lᵅ₁(x) + 3⋅Lᵅ₂(x))
 
 julia> convert(Polynomial, p)
 Polynomial(9.625 - 9.5*x + 1.5*x^2)
@@ -21,7 +21,7 @@ The Laguerre polynomials are the case `α=0`.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = Laguerre{0}([1,2,3])
-Laguerre(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
+Laguerre{0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 
 julia> convert(Polynomial, p)
 Polynomial(6.0 - 8.0*x + 1.5*x^2)

@@ -127,14 +127,14 @@ If the coefficients of a polynomial relative to the polynomial type are known, t
 
 ```jldoctest example
 julia> Laguerre{0}([1,2,3])
-Laguerre(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
+Laguerre{0}(1⋅L₀(x) + 2⋅L₁(x) + 3⋅L₂(x))
 ```
 
 Some polynomial types are parameterized, as above. The parameters may be passed to the type, as in this example:
 
 ```jldoctest example
 julia> Jacobi{1/2, -1/2}([1,2,3])
-Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 ```
 
 In the background, in this instance, the parameters are passed to the underlying `JacobiBasis{α, β}` type.
@@ -234,10 +234,10 @@ julia> P = Jacobi{1/2, -1/2}
 Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{0.5, -0.5}}
 
 julia> p,q = P([1,2]), P([-2,1])
-(Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{0.5,-0.5}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q
-Jacobi(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+Jacobi{0.5,-0.5}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 ```
 
 ### Derivatives and integrals
@@ -261,22 +261,22 @@ julia> P = Jacobi{1//2, -1//2}
 Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{1//2, -1//2}}
 
 julia> p,q = P([1,2]), P([-2,1])
-(Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
+(Jacobi{1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), Jacobi{1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
 julia> p * q # as above, only with rationals for paramters
-Jacobi(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
+Jacobi{1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
 Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{1//2, 1//2}}
 
 julia> p = P([1,2,3])
-Jacobi(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
+Jacobi{1//2,1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x) + 3⋅Jᵅᵝ₂(x))
 
 julia> dp = derivative(p)
-Jacobi(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
+Jacobi{1//2,1//2}(3.0⋅Jᵅᵝ₀(x) + 10.0⋅Jᵅᵝ₁(x))
 
 julia> integrate(p)
-Jacobi(0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
+Jacobi{1//2,1//2}(0.24999999999999994⋅Jᵅᵝ₁(x) + 0.6⋅Jᵅᵝ₂(x) + 0.5714285714285714⋅Jᵅᵝ₃(x))
 
 julia> integrate(p, 0, 1)
 3.125000000000001
@@ -291,16 +291,16 @@ julia> P,Q = Gegenbauer{1//3}, Gegenbauer{2//3}
 (Polynomials.MutableDensePolynomial{SpecialPolynomials.GegenbauerBasis{1//3}}, Polynomials.MutableDensePolynomial{SpecialPolynomials.GegenbauerBasis{2//3}})
 
 julia> p = P([1,2,3.0])
-Gegenbauer(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
+Gegenbauer{1//3}(1.0⋅Cᵅ₀(x) + 2.0⋅Cᵅ₁(x) + 3.0⋅Cᵅ₂(x))
 
 julia> convert(Q, p)
-Gegenbauer(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
 
 julia> p(variable(Q))
-Gegenbauer(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.7999999999999999⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.1999999999999997⋅Cᵅ₂(x))
 
 julia> SpecialPolynomials._convert_cop(Q,p)
-Gegenbauer(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
+Gegenbauer{2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2000000000000002⋅Cᵅ₂(x))
 ```
 
 The first uses a method from the `FastTransforms` package (when loaded). This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
@@ -332,13 +332,13 @@ Polynomials.MutableDensePolynomial{SpecialPolynomials.JacobiBasis{0.5, -0.5}}
 
 
 julia> p = P([1,1,2,3])
-Jacobi(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
+Jacobi{0.5,-0.5}(1⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x) + 2⋅Jᵅᵝ₂(x) + 3⋅Jᵅᵝ₃(x))
 
 julia> q = SP.monic(p) # monic is not exported
-Jacobi(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
+Jacobi{0.5,-0.5}(0.13333333333333333⋅Jᵅᵝ₀(x) + 0.13333333333333333⋅Jᵅᵝ₁(x) + 0.26666666666666666⋅Jᵅᵝ₂(x) + 0.4⋅Jᵅᵝ₃(x))
 
 julia> fromroots(P, roots(q)) - q |> u -> truncate(u, atol=sqrt(eps()))
-Jacobi(0.0 + 0.0im)
+Jacobi{0.5,-0.5}(0.0 + 0.0im)
 ```
 
 For many of the orthogonal polynomials, the roots are found from the *comrade matrix* using a ``\mathcal{O}(n^2)`` algorithm of Aurentz, Vandebril, and Watkins, which computes in a more efficient manner the `eigvals(SpecialPolynomials.comrade_matrix(p))`. Alternatively, in theory roots may be identified from the companion matrix of the polynomial, once expressed in the standard basis. This approach is the fallback approach for other polynomial types, but is prone to numeric issues.
