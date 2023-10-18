@@ -1,6 +1,6 @@
 # special case these once FastGaussQuadrature is loaded
 gauss_nodes_weights(p::Type{P}, n) where {P<:Chebyshev} =
-    gausschebyshev(n)
+    gausschebyshevt(n)
 
 gauss_nodes_weights(p::Type{P}, n) where {α,β,P<:Jacobi{α,β}} =
     FastGaussQuadrature.gaussjacobi(n, α, β)
