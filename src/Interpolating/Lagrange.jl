@@ -32,7 +32,7 @@ julia> p.([1,2,3]) # the coefficients
  3
 
 julia> convert(Polynomial,  p)
-Polynomials.Polynomial(1.0*x)
+Polynomial(1.0*x)
 ```
 
 The instances hold the nodes and weights, which are necessary for
@@ -48,13 +48,13 @@ julia> variable(p)
 Lagrange(1⋅ℓ_0(x) + 2⋅ℓ_1(x) + 3⋅ℓ_2(x))
 
 julia> q = Polynomial([0,0,1])
-Polynomials.Polynomial(x^2)
+Polynomial(x^2)
 
 julia> qq = fit(Lagrange, p.xs, p.ws, q)
 Lagrange(1⋅ℓ_0(x) + 4⋅ℓ_1(x) + 9⋅ℓ_2(x))
 
 julia> convert(Polynomial, qq)
-Polynomials.Polynomial(1.0*x^2)
+Polynomial(1.0*x^2)
 ```
 
 For a given set of nodes,
@@ -68,7 +68,7 @@ return a good choice of `n+1` points over `[-1,1]` along with
 precomputed weights.
 
 ```jldoctest Lagrange
-julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(Chebyshev, 64);
+julia> xs, ws = SpecialPolynomials.lagrange_barycentric_nodes_weights(SpecialPolynomials.ChebyshevBasis, 64);
 
 
 julia> f(x) = exp(-x)*sinpi(x)
@@ -94,7 +94,6 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
     xs::Vector{S}
     ws::Vector{R}
     coeffs::Vector{T}
-    var::Symbol
     function Lagrange(
         xs::Vector{S},
         ws::Vector{R},
@@ -128,8 +127,10 @@ basis_symbol(::Type{<:Lagrange}) = "ℓ"
 
 ## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P<:Lagrange} = p
-Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange) where {N,S,R,T} =
-    Lagrange{N,S,R,T}(p.xs, p.ws, coeffs(p), p.var)
+function Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange{M,S′,R′,T′,X}) where {N,S,R,T, M,S′,R′,T′,X}
+    M == N || throw(ArgumentError("size mismatch"))
+    Lagrange(S.(p.xs), R.(p.ws), T.(p.coeffs),X)
+end
 Base.promote_rule(
     ::Type{Lagrange{N,S,R,T}},
     ::Type{Lagrange{N,S,R,Q}},
@@ -276,7 +277,7 @@ polynomials. There are explicit formula for `Chebyshev` and `Chebyshev`, for oth
 
 """
 lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) =
-    throw(MethodError())
+    throw(ArgumentError("Not implemented"))
 
 
 # do we have the same nodes (which makes easier to combine)

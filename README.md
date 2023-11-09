@@ -11,3 +11,16 @@ polynomial bases) beyond the standard basis polynomials in the
 [`Polynomials.jl`](https://github.com/JuliaMath/Polynomials.jl) package. This package includes many classic orthogonal
 polynomials, the Lagrange and Newton interpolating polynomials, and the
 Bernstein polynomials.
+
+## Alternatives
+
+There are many alternatives to this package, for example:
+
+* [https://github.com/JuliaApproximation/ClassicalOrthogonalPolynomials.jl](https://github.com/JuliaApproximation/ClassicalOrthogonalPolynomials.jl)
+* [https://github.com/JuliaApproximation/SemiclassicalOrthogonalPolynomials.jl](https://github.com/JuliaApproximation/SemiclassicalOrthogonalPolynomials.jl)
+
+* [https://github.com/JuliaApproximation/FastTransforms.jl](https://github.com/JuliaApproximation/FastTransforms.jl)
+
+* [https://github.com/JuliaMath/FastChebInterp.jl](https://github.com/JuliaMath/FastChebInterp.jl)
+
+* [https://github.com/JuliaApproximation/ApproxFun.jl](https://github.com/JuliaApproximation/ApproxFun.jl)

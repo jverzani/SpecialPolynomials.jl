@@ -129,7 +129,7 @@ weight_function(::Type{<:AbstractWeightFunction}) =
 ϟ(P::Type{<:AbstractWeightFunction}) = throw(ArgumentError("No default method"))
 
 Polynomials.domain(W::Type{<:AbstractWeightFunction}) = (domain ∘ ϟ)(W)
-basis_symbol(::Type{<:AbstractWeightFunction}) = "W"
+Polynomials.basis_symbol(::Type{<:AbstractWeightFunction}) = "W"
 
 ## An,Bn,Cn for the monic orthogonal polynomials for the given weight function
 ## We  have An=1;  α(n) =  -Bn(n); β(n) = Cn(n)

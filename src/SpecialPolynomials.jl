@@ -6,8 +6,13 @@ import SpecialFunctions: gamma
 
 using Polynomials
 import Polynomials:
-    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof
+    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof, basistype, basis_symbol,
+    AbstractBasis, StandardBasis,
+    AbstractUnivariatePolynomial,AbstractDenseUnivariatePolynomial,
+    MutableDensePolynomial, ImmutableDensePolynomial, MutableDenseViewPolynomial
 export basis
+export Basis # ???
+
 
 #import Intervals
 #import Intervals: Open, Closed, Unbounded, bounds_types
@@ -24,7 +29,6 @@ include("Orthogonal/abstract.jl")
 include("Orthogonal/orthogonal.jl")
 include("Orthogonal/cop.jl")
 include("Orthogonal/ccop.jl")
-
 include("Orthogonal/Bessel.jl")
 include("Orthogonal/Chebyshev.jl")
 include("Orthogonal/Hermite.jl")
@@ -32,9 +36,10 @@ include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Gegenbauer.jl")
 include("Orthogonal/Jacobi.jl")
 include("Orthogonal/Legendre.jl")
-include("Orthogonal/WeightFunction.jl")
-
-include("Orthogonal/Discrete/discrete-orthogonal.jl")
+#include("Orthogonal/WeightFunction.jl")
+#=
+=#
+#include("Orthogonal/Discrete/discrete-orthogonal.jl")
 include("Orthogonal/Discrete/cdop.jl")
 include("Orthogonal/Discrete/FallingFactorial.jl")
 include("Orthogonal/Discrete/Hahn.jl")
@@ -52,7 +57,7 @@ include("Interpolating/Lagrange.jl")
 include("Interpolating/Newton.jl")
 
 include("Bernstein.jl")
-
+#=
 using Requires
 function __init__()
     @static if !isdefined(Base, :get_extension)
@@ -64,5 +69,5 @@ function __init__()
         )
     end
 end
-
+=#
 end # module
