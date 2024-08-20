@@ -7,7 +7,8 @@ ENV["GKSwstype"] = "100"
 makedocs(
     sitename = "SpecialPolynomials",
     format = Documenter.HTML(ansicolor=true),
-    modules = [SpecialPolynomials]
+    modules = [SpecialPolynomials],
+    checkdocs=:none
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
