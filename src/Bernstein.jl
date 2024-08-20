@@ -19,7 +19,7 @@ julia> p = basis(Bernstein{3},  2)
 Bernstein(1⋅β₂,₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(1.0*x^2)
+Polynomial(1.0*x^2)
 ```
 
 !!! note

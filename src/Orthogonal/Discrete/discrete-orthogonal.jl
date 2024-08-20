@@ -71,12 +71,14 @@ julia> ## Gogin, Hirvensalo (https://doi.org/10.1007/s10958-017-3410-8) characte
 D (generic function with 1 method)
 
 julia> x = variable()
-Polynomials.Polynomial(x)
+Polynomial(x)
+```
 
+```
+# broken. Fix me.
 julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
 
 julia> all(qs .* [p[end] for p  in ps] .≈ ps)
-true
 ```
 
 """

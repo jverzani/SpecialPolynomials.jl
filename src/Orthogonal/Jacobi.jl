@@ -14,7 +14,7 @@ julia> p = Jacobi{-1/2, -1/2}([0,0,1])
 typename(Jacobi){-0.5,-0.5}(1⋅Jᵅᵝ₂(x))
 
 julia> convert(Polynomial, p)
-Polynomials.Polynomial(-0.375 + 0.75*x^2)
+Polynomial(-0.375 + 0.75*x^2)
 
 julia> monic(p) = (q=convert(Polynomial,p); q/q[end])
 monic (generic function with 1 method)
