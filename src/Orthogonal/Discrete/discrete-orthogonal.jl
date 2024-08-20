@@ -72,35 +72,13 @@ D (generic function with 1 method)
 
 julia> x = variable()
 Polynomial(x)
+```
 
+```
+# broken. Fix me.
 julia> ps,qs = [D(k,N-1,x)  for  k in 0:N-1], [basis(DWF, k)(x) for k  in 0:N-1];
-ERROR: MethodError: no method matching eval_cop(::Type{DWF{Float64, :x}}, ::Vector{Float64}, ::Polynomial{Int64, :x})
-
-Closest candidates are:
-  eval_cop(!Matched::Type{<:SpecialPolynomials.AbstractCOP{T, X}}, ::Any, ::S) where {T, X, S}
-   @ SpecialPolynomials ~/julia/SpecialPolynomials/src/Orthogonal/cop.jl:150
-
-Stacktrace:
- [1] evalpoly(x::Polynomial{Int64, :x}, p::DWF{Float64, :x})
-   @ Main ~/julia/SpecialPolynomials/src/Orthogonal/abstract.jl:47
- [2] polynomial_composition(p::DWF{Float64, :x}, q::Polynomial{Int64, :x})
-   @ Polynomials ~/julia/Polynomials/src/common.jl:1017
- [3] (::DWF{Float64, :x})(x::Polynomial{Int64, :x})
-   @ Main ~/julia/Polynomials/src/abstract.jl:124
- [4] (::var"#6#8")(k::Int64)
-   @ Main ./none:0
- [5] iterate(::Base.Generator{Base.Iterators.Enumerate{Vector{Any}}, RecipesBase.var"#sub#4"})
-   @ Base ./generator.jl:47 [inlined]
- [6] collect(itr::Base.Generator{UnitRange{Int64}, var"#6#8"})
-   @ Base ./array.jl:834
- [7] top-level scope
-   @ none:1
 
 julia> all(qs .* [p[end] for p  in ps] .≈ ps)
-ERROR: UndefVarError: `qs` not defined
-Stacktrace:
- [1] top-level scope
-   @ none:1
 ```
 
 """
