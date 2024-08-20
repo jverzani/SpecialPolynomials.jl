@@ -78,7 +78,7 @@ SpecialPolynomials.Bn
 SpecialPolynomials.Cn
 SpecialPolynomials.jacobi_matrix
 SpecialPolynomials.gauss_nodes_weights
-SpecialPolynomials.lagrange_barycentri_nodes_weights
+SpecialPolynomials.lagrange_barycentric_nodes_weights
 ```
 
 ### Defining new types
