@@ -83,7 +83,7 @@ abcde(::Type{<:AbstractCOP}) = throw(ArgumentError("No default method"))
 """
     k1k0
 
-Let  `kᵢ` be the leading  coeffiecient of the  polynomial  in  the standard basis.
+Let  `kᵢ` be the leading  coefficient of the  polynomial  in  the standard basis.
 This  function implements  `k₍ᵢ₊₁₎/kᵢ` for `i ≥ 0`.
 
 The values `kᵢ` and `k₍ᵢ₊₁₎/k₍ᵢ₋₁₎` can  be generated.

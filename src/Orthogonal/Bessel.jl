@@ -5,7 +5,7 @@
     Bessel{α}
 
 Implements the [Bessel](https://dlmf.nist.gov/18.34) polynomials, introduced by [Krall and Frink](https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf) (with `b=2`). The  case `a=2` corresponds to the
-[Bessel](https://en.wikipedia.org/wiki/Bessel_polynomials) polynomials of Wikipedia. The Bessel  polynomials are not orthogonal over  a domain of the real  line, rather over an arbitray curve in the complex plane enclosing the  origin.  The weight  function is `ρ(x)=(2πi)^(-1)∑Γ(α)/Γ(α+n-1)(-β/x)^n`,   where `β=2`.
+[Bessel](https://en.wikipedia.org/wiki/Bessel_polynomials) polynomials of Wikipedia. The Bessel  polynomials are not orthogonal over  a domain of the real  line, rather over an arbitrary curve in the complex plane enclosing the  origin.  The weight  function is `ρ(x)=(2πi)^(-1)∑Γ(α)/Γ(α+n-1)(-β/x)^n`,   where `β=2`.
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
@@ -63,7 +63,7 @@ function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
     pFq(as, bs, -x / 2) #/ kn
 end
 
-## Overrides XXX fails wih 1 and 2
+## Overrides XXX fails with 1 and 2
 function B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
     val = one(eltype(P))
     (iszero(n) && α == 2) && return val

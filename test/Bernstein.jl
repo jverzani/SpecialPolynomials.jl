@@ -19,6 +19,9 @@
         @test typeof(p).parameters[end - 1] == eltype(coeff)
         @test eltype(p) == eltype(coeff)
     end
+
+    # issue 84
+    @test repr(basis(Bernstein{2}, 1)) == "Bernstein(1⋅β₂,₁(x))"
 end
 
 @testset "Other Construction" begin
