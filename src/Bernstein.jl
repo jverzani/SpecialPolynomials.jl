@@ -167,7 +167,7 @@ end
 function basis(P::Type{<:Bernstein}, k::Int, _var::Polynomials.SymbolLike=:x; var=_var)
     zs = zeros(Int, k + 1)
     zs[end] = 1
-    Bernstein(zs, var)
+    P(zs, var)
 end
 
 # poly evaluation
