@@ -1,4 +1,4 @@
-@testset "Continous Weight" begin
+@testset "Continuous Weight" begin
     T = Float64
 
     ## known set of modified moments
