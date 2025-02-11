@@ -112,7 +112,7 @@ function Base.convert(::Type{P}, q::Q) where {P<:AbstractCDOP,Q<:FallingFactoria
     _convert_cop(P, q)
 end
 
-##  Koepf and Schmersa Thm 6 connection for P, Q=x^n̲
+##  Koepf and Schmersa Theorem 6 connection for P, Q=x^n̲
 function connection_m(
     ::Type{P},
     ::Type{Q},
@@ -130,7 +130,7 @@ function connection_m(
     (c₀, c₁, c₂)
 end
 
-##  Koepf and Schmersa Thm 7, p25 connection for P=x^n̲, Q
+##  Koepf and Schmersa Theorem 7, p25 connection for P=x^n̲, Q
 function connection_m(
     ::Type{P},
     ::Type{Q},

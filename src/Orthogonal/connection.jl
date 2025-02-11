@@ -82,7 +82,7 @@ end
 
 ## Use FastTransform for conversion, as possible, when loaded
 
-##  Koepf and Schmersa Thm 2, p11 connection for P to Q when σ = σ̂
+##  Koepf and Schmersa Theorem 2, p11 connection for P to Q when σ = σ̂
 function connection_m(::Type{P}, ::Type{Q}, m, n) where {P<:AbstractCCOP,Q<:AbstractCCOP}
     a, b, c, d, e = abcde(P)
     ā, b̄, c̄, d̄, ē = abcde(Q)
@@ -116,7 +116,7 @@ function connection_m(::Type{P}, ::Type{Q}, m, n) where {P<:AbstractCCOP,Q<:Abst
     return (c0, c1, c2)
 end
 
-##  Koepf and Schmersa Thm 4, p14 connection for P, Q=x^n
+##  Koepf and Schmersa Theorem 4, p14 connection for P, Q=x^n
 function connection_m(
     ::Type{P},
     ::Type{Q},
@@ -134,7 +134,7 @@ function connection_m(
     return (c0, c1, c2)
 end
 
-##  Koepf and Schmersa Thm 5, p16 connection for P=x^n, Q
+##  Koepf and Schmersa Theorem 5, p16 connection for P=x^n, Q
 function connection_m(
     ::Type{P},
     ::Type{Q},

@@ -11,7 +11,7 @@ abstract type AbstractDiscreteOrthogonalPolynomial{T,X} <: AbstractOrthogonalPol
 """
     AbstractOrthogonalPolynomial{T,X}
 
-Type to represent systems of orthogonal polynomials. These polynomials have  several properties, including an accompanying inner product satsifying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
+Type to represent systems of orthogonal polynomials. These polynomials have  several properties, including an accompanying inner product satisfying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
 
 In addition to methods inherited from the underlying `AbstractPolynomial`  type, orthogonal polynomial  types may have methods   `weight_function`, `generating_function`, `leading_term`, `norm2`, `jacobi_matrix`, and `gauss_nodes_weights`,  though none are  exported.
 
@@ -22,7 +22,7 @@ Subtypes of `AbstractCOP <: AbstractOrthogonalPolynomial` utilize the fact that 
 
 where the structural relations are functions of `a,b,c,d,e`. These allow default definitions for polynomial evaluation,   addition, multiplication, differentiation, integration, and  conversion to and from  the `Polynomial` type (the `FallingFactorial` type in the discrete  c case),
 
-A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx +  Bᵢ)yᵢ -  Cᵢyᵢ₋₁`. For systems  specfied by  a  weight function, the  values of `Aᵢ`, `Bᵢ`, and `Cᵢ` can  be  generated, yielding formulas for polynomial evaluation, addition, and conversion to the `Polynomial`  type throughe evaluation.
+A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx +  Bᵢ)yᵢ -  Cᵢyᵢ₋₁`. For systems  specified by  a  weight function, the  values of `Aᵢ`, `Bᵢ`, and `Cᵢ` can  be  generated, yielding formulas for polynomial evaluation, addition, and conversion to the `Polynomial`  type throughe evaluation.
 """
 AbstractOrthogonalPolynomial
 

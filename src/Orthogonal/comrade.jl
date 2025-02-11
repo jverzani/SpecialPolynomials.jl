@@ -2,7 +2,7 @@
 ## The comrade matrix plays the role of the companion matrix for static basis polynomials
 
 #
-# generate the  matrix for an orhtogonal polynomial family
+# generate the  matrix for an orthogonal polynomial family
 # should have eigvals(comrade_matrix(p)) ≈ roots(convert(Polynomial, p))
 # This isn't exported
 function comrade_matrix(p::P) where {P<:AbstractCCOP}
@@ -126,7 +126,7 @@ Return an LU decomposition of `λC₁ - C₀`, where `C₀` and `C₁` are
 the pieces of the comrade pencil.
 
 The returned value is a function. We have `L,Ũ = comrade_pencil_LU(p)(λ)`.
-The upper-triangular part, `Ũ` is not quite `U`, as `U` is singluar at eigenvalues. Rather,
+The upper-triangular part, `Ũ` is not quite `U`, as `U` is singular at eigenvalues. Rather,
 this holds up to floating point
 
 ```
@@ -725,7 +725,7 @@ end
 # In paper, we have
 # αₖ pₖ = (z  - βₖ) ⋅ pₖ₋₁ - γₖ ⋅ pₖ₋₂
 ## Decompose p::P into Cs, B where
-## * Cs -- a vector of Gauss Transfroms
+## * Cs -- a vector of Gauss Transforms
 ## * B -- an Upper triangular matrix
 ## Matrix(Cs, B) is comrade matrix
 function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
@@ -809,7 +809,7 @@ The eigenvalue of the comrade matrix are identified using an algorithm from
 *Fast computation of eigenvalues of companion, comrade, and related matrices*
 by Jared L. Aurentz, Raf Vandebril, and David S. Watkins
 DOI [10.1007/s10543-013-0449-x](https://doi.org/10.1007/s10543-013-0449-x)
-BIT Numer Math (2014) 54:7–30
+BIT Numeric Math (2014) 54:7–30
 
 The paper presents both a single- and double-shift version. The paper
 has this caveat: "The double-shift code was less successful. It too is

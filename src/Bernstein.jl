@@ -31,7 +31,7 @@ struct Bernstein{𝐍,T,X} <: AbstractBernstein{T,X}
     function Bernstein{𝐍,T,X}(coeffs::AbstractVector{T}) where {𝐍,T,X}
         N = findlast(!iszero, coeffs)
         N == nothing && return new{𝐍,T,X}(zeros(T, 0))
-        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficents"))
+        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
         return new{𝐍,T,X}(coeffs[1:N])
     end
 end
@@ -366,7 +366,8 @@ function Polynomials.vander(
     V
 end
 
-# direct compuation of roots using numerical stable method of y Guðbjörn and Jónsson as
+# direct computation of roots using numerical stable method of
+# Guðbjörn and Jónsson as
 # noted by Corless, Sevyeri  in §2.1 of
 # https://arxiv.org/pdf/1910.01998.pdf
 function Polynomials.roots(p::Bernstein{𝐍,T}) where {𝐍,T}

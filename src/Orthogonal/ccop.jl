@@ -1,7 +1,7 @@
 ##
 ## --------------------------------------------------
 ##
-## Classic Continuos Orthogonal Polynomials
+## Classic Continuous Orthogonal Polynomials
 abstract type AbstractCCOP{T,X} <: AbstractCOP{T,X} end
 """
     AbstractCCOP{T,X} <:  AbstractCOP{T,X}
@@ -15,8 +15,8 @@ solution of the differential equation
 A family is characterized, up to choice of leading term, by the 5 coefficients: `a,b,c,d,e`.
 Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e)`.
 
-From these  5  coefficients several structural  equations are represented. For example
-the three-point recusion.
+From these  5  coefficients several structural  equations are represented.
+For example the three-point recursion.
 
 `P₍ᵢ₊₁₎ = (Aᵢ⋅x + Bᵢ) * Pᵢ - Cᵢ *  P₍ᵢ₋₁₎`,
 
@@ -383,7 +383,7 @@ function Base.convert(::Type{Q}, p::P) where {Q<:AbstractCCOP,P<:AbstractCCOP}
     _convert(Q, p)
 end
 
-# work around method ambiguity introducted in abstract
+# work around method ambiguity introduced in abstract
 # dispatch  to  specific FastTransform  method  (defined in `connection.jl`) or
 # use this default
 function _convert(::Type{Q}, p::P) where {Q<:AbstractCCOP,P<:AbstractCCOP}

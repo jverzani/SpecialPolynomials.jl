@@ -5,7 +5,7 @@
 
 Find Gauss nodes and weights of the  basis  polynomial  `π = basis(P,n)`. The nodes  are the  roots of the  polynomial and the weights are computed  from known formulas.
 
-The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. This is  an  O(n)  method (whereas the method  basedon the Jacobi  matrix is O(n^2)). This method fits easily  into the framework  provided  through  the `AbstractCCOP` types.  The [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides even more efficient  algorithms and  pays attention to numerical  issues, examples of  which  can  be found in  [Hale and Townsend](https://core.ac.uk/download/pdf/9403469.pdf). The `FastGuassQuadrature` package is used when it is loaded.
+The method from  [Glaser,  Liu, and Rokhlin](DOI: 10.1137/06067016X) is  used. This is  an  O(n)  method (whereas the method  basedon the Jacobi  matrix is O(n^2)). This method fits easily  into the framework  provided  through  the `AbstractCCOP` types.  The [FastGaussQuadrature](https://github.com/JuliaApproximation/FastGaussQuadrature.jl) package provides even more efficient  algorithms and  pays attention to numerical  issues, examples of  which  can  be found in  [Hale and Townsend](https://core.ac.uk/download/pdf/9403469.pdf). The `FastGaussQuadrature` package is used when it is loaded.
 
 
 An example:
@@ -33,7 +33,7 @@ function pqr_weight(P::Type{<:MonicJacobi{α,α}}, n, x, dπx) where {α}
     # https://www.chebfun.org/publications/HaleTownsend2013a.pdf
     # Eqn  (1.4)
     # Cnαβ should be  computed  using asymptotic formula  for larger n (§3.2.3)
-    # XXX TThere i ss ome constant  that  makes this not work....
+    # XXX There is some constant  that  makes this not work....
     β = α
     Cnαβ = 2^(α+β+1)
     Cnαβ *= gamma(n + α +  1) * gamma(n + β + 1) / gamma(n + α + β + 1)

@@ -158,7 +158,7 @@ julia> quadgk(x -> p4(x) * p5(x) *  wf(x), first(dom), last(dom))
 (0.0, 0.0)
 ```
 
-The unexported `innerproduct` will compute this as well, without the need to specifiy the domain or weight function, which can be gleaned from the type.
+The unexported `innerproduct` will compute this as well, without the need to specify the domain or weight function, which can be gleaned from the type.
 
 ```jldoctest example
 julia> SpecialPolynomials.innerproduct(P, p4, p5)
@@ -173,7 +173,7 @@ For each polynomial type, this package implements as many of the methods for pol
 
 ### Evaluation
 
-Evalution, as seen, is done through making polynomial objects callable:
+Evaluation, as seen, is done through making polynomial objects callable:
 
 ```
 julia> P = Chebyshev
@@ -258,7 +258,7 @@ Jacobi{1//2, -1//2}
 julia> p,q = P([1,2]), P([-2,1])
 (typename(Jacobi){1//2,-1//2}(1⋅Jᵅᵝ₀(x) + 2⋅Jᵅᵝ₁(x)), typename(Jacobi){1//2,-1//2}(- 2⋅Jᵅᵝ₀(x) + 1⋅Jᵅᵝ₁(x)))
 
-julia> p * q # as above, only with rationals for paramters
+julia> p * q # as above, only with rationals for parameters
 typename(Jacobi){1//2,-1//2}(- 1.5⋅Jᵅᵝ₀(x) - 2.0⋅Jᵅᵝ₁(x) + 1.3333333333333333⋅Jᵅᵝ₂(x))
 
 julia> P = Jacobi{1//2, 1//2}
@@ -298,7 +298,7 @@ julia> SpecialPolynomials._convert_cop(Q,p)
 typename(Gegenbauer){2//3}(0.8⋅Cᵅ₀(x) + 1.0⋅Cᵅ₁(x) + 1.2⋅Cᵅ₂(x))
 ```
 
-The first uses a method from the `FastTransforms` package (when loaded). This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evalution (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
+The first uses a method from the `FastTransforms` package (when loaded). This package can handle polynomials of very high degree. It is used by default, as much as possible. The second uses polynomial evaluation (Clenshaw evaluation) to perform the conversion. The third uses the structural equations for conversion, when possible, and defaults to converting through the `Polynomial` type
 
 ### Roots
 
