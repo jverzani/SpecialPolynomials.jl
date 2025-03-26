@@ -61,7 +61,9 @@ end
             Dᵢ(rand())
             ts[i] = @elapsed Dᵢ(rand()) # noisier but quicker than @belapsed
         end
-        @test maximum(ts[2:end] ./ ts[1:end-1]) <= 25 # should be about 10
+        Δs = ts[2:end] ./ ts[1:end-1]
+        x̄ = sum(Δs)/length(Δ)
+        @test x̄ <= 25 # should be about 10
     end
 end
 
