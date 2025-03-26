@@ -59,7 +59,7 @@ end
         for (i, n) ∈ enumerate([10^i for i in 1:6])
             Dᵢ = basis(DualBernstein{n,α,β}, n÷2)
             Dᵢ(rand())
-            ts[i] = @elapsed Dᵢ(rand()) # noiser but quicker than @belapsed
+            ts[i] = @elapsed Dᵢ(rand()) # noisier but quicker than @belapsed
         end
         @test maximum(ts[2:end] ./ ts[1:end-1]) <= 25 # should be about 10
     end
@@ -72,7 +72,7 @@ end
     D = DualBernstein{n,α,β}
     Iₖ = [ip(f, basis(D,k), α, β) for k in 0:n]
 
-    R = ShiftedJacobi{α, β} # say, jus tsome comparison
+    R = ShiftedJacobi{α, β} # say, just some comparison
     Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n]
 
     B = Bernstein{n}
