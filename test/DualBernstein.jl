@@ -62,7 +62,7 @@ end
             ts[i] = @elapsed Dᵢ(rand()) # noisier but quicker than @belapsed
         end
         Δs = ts[2:end] ./ ts[1:end-1]
-        x̄ = sum(Δs)/length(Δ)
+        x̄ = sum(Δs)/length(Δs)
         @test x̄ <= 25 # should be about 10
     end
 end
