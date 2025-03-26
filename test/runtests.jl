@@ -7,10 +7,14 @@ using Test
 
 @testset "Orthogonal" begin
     include("Orthogonal.jl")
+    @testset "ShiftedJacobi" begin
+        include("ShiftedJacobi.jl")
+    end
 end
 @testset "Orthogonal compare with tables" begin
     include("Orthogonal-compare.jl")
 end
+
 #@testset "ChebyshevT" begin include("ChebyshevT.jl") end
 #@testset "ChebyshevU" begin include("ChebyshevU.jl") end
 #@testset "Laguerre{α}" begin include("GeneralizedLaguerre.jl") end
@@ -25,4 +29,5 @@ end
 
 @testset "Bernstein" begin
     include("Bernstein.jl")
+    include("DualBernstein.jl")
 end

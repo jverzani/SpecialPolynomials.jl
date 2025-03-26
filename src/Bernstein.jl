@@ -23,7 +23,7 @@ Polynomial(3.0*x^2 - 3.0*x^3)
 ```
 
 !!! note
-    [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) Offers a  more  performant version.
+    [StaticUnivariatePolynomials](https://github.com/tkoolen/StaticUnivariatePolynomials.jl) offers a  more  performant version.
 
 """
 struct Bernstein{𝐍,T,X} <: AbstractBernstein{T,X}

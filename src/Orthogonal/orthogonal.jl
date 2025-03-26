@@ -22,7 +22,7 @@ Subtypes of `AbstractCOP <: AbstractOrthogonalPolynomial` utilize the fact that 
 
 where the structural relations are functions of `a,b,c,d,e`. These allow default definitions for polynomial evaluation,   addition, multiplication, differentiation, integration, and  conversion to and from  the `Polynomial` type (the `FallingFactorial` type in the discrete  c case),
 
-A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx +  Bᵢ)yᵢ -  Cᵢyᵢ₋₁`. For systems  specified by  a  weight function, the  values of `Aᵢ`, `Bᵢ`, and `Cᵢ` can  be  generated, yielding formulas for polynomial evaluation, addition, and conversion to the `Polynomial`  type throughe evaluation.
+A key structural relation is the three-term recursion,  `yᵢ₊₁ =  (Aᵢx +  Bᵢ)yᵢ -  Cᵢyᵢ₋₁`. For systems  specified by  a  weight function, the  values of `Aᵢ`, `Bᵢ`, and `Cᵢ` can  be  generated, yielding formulas for polynomial evaluation, addition, and conversion to the `Polynomial`  type through evaluation.
 """
 AbstractOrthogonalPolynomial
 
