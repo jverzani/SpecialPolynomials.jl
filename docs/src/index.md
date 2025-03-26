@@ -47,6 +47,7 @@ Hermite
 ChebyshevHermite
 Gegenbauer
 Jacobi
+ShiftedJacobi
 Bessel
 ShiftedLegendre
 ```
@@ -108,6 +109,7 @@ Newton
 
 ```@docs
 Bernstein
+DualBernstein
 ```
 
 #### Example of a [Bezier](https://pomax.github.io/bezierinfo/) curve (parameterized by `r(t) = ∑₀ᴺ bᵢBᵢ(t)`):
