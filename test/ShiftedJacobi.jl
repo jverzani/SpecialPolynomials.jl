@@ -11,6 +11,7 @@ function ip(f,g,α,β; n=100)
 end
 
 @testset "Construction" begin
+    α,β = 1/2, 1/2
     R = ShiftedJacobi{α, β}
     p = R([1,2,3])
     @test p(.2) ≈ 1/40
