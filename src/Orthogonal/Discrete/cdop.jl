@@ -31,7 +31,7 @@ For example, on p29 they give  formulas for Hahn polynomials through:
 `BΔy(x) - D∇y(x) -λ y(x)  = 0`. From the rexpressed Eqn (4) for Koepf & Schemersau we have the identification:
 `σ+τ =  B; σ=D`,  so  `τ=B-D`. From this `a,b,c,d,e` can be  gleaned.
 
-The above, is termed the eigevalue equation (e.g. [Goertz and Offner](https://arxiv.org/pdf/1609.07291.pdf)), as it can be reexpressed as
+The above, is termed the eigenvalue equation (e.g. [Goertz and Offner](https://arxiv.org/pdf/1609.07291.pdf)), as it can be reexpressed as
 
 `Δ(D(x)⋅ω(x)⋅∇yᵢ(x) = λᵢ⋅ω(x)⋅yᵢ(x)`
 

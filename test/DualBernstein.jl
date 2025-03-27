@@ -78,9 +78,8 @@ end
     Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n]
 
     B = Bernstein{n}
-    pn = sum(iₖ*bₖ for (iₖ,bₖ) ∈ zip(Iₖ,basis(B,k) for k in 0:n))
-    qn = sum(iₖ*bₖ for (iₖ,bₖ) ∈ zip(Jₖ,basis(B,k) for k in 0:n))
-
+    pn = B(Iₖ)
+    qn = B(Jₖ)
     Fp, Fq = x -> f(x) - pn(x), x -> f(x) - qn(x)
     @test ip(Fp, Fp, α, β) < ip(Fq, Fq, α, β)
 end

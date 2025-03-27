@@ -19,6 +19,34 @@ julia> bi(0.2)
 7.910400000000036
 ```
 
+The Bernstein-Bezier form of `f` minimizes the value of the least-square error for the `α-β` norm.
+
+```julia
+julia> function ip(f,g,α,β; n=100) # compute <>ᵅᵝ inner product
+           simpsons  = (f,a,b) -> (c = a/2 + b/2;(1/6) * (f(a) + 4*f(c) + f(b)))
+           λ = x -> (1-x)^α*x^β * f(x) * g(x)
+           xs = range(0, 1, n+1)
+           xs′ = zip(Iterators.take(xs, n), Iterators.drop(xs, 1))
+           sum(simpsons(λ, xᵢ₋₁, xᵢ) * (xᵢ-xᵢ₋₁) for (xᵢ₋₁, xᵢ) ∈ xs′)
+       end;
+
+julia> f(x) = sin(x);
+
+julia> n, α, β = 5, 1/2, 1/2
+(5, 0.5, 0.5)
+
+julia> B, D = Bernstein{n}, DualBernstein{n,α,β};
+
+julia> Iₖ = [ip(f, basis(D,k), α, β) for k in 0:n];
+
+julia> pₙ = B(Iₖ);
+
+julia> λ = x -> f(x) - pₙ(x);
+
+julia> ip(λ,λ, α, β)
+0.023445701885079478
+```
+
 ## Reference
 
 The implementation follows that of [Chudy and Woźny](https://arxiv.org/abs/2004.09801).
