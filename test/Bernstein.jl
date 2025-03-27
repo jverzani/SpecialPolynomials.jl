@@ -134,6 +134,18 @@ end
     end
 end
 
+@testset "addition" begin
+    n = 4
+    B = Bernstein{n}
+    ps = [2,1,0,0,0]
+    @test B(ps) ≈ sum(p*b for (p,b) ∈ zip(ps, basis.(B,0:n)))
+
+    m = 5
+    p,q = basis(B,3), basis(Bernstein{m},3)
+    x = 0.2
+    @test (p+q)(x) ≈ p(x) + q(x)
+end
+
 @testset "integrals derivatives" begin
     c1 = one(Bernstein{1,Int})
     @test integrate(c1) == Bernstein([0, 0.5, 1])
