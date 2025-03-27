@@ -267,10 +267,13 @@ end
 # not needed, but speeds things along
 function Base.:+(p1::P, p2::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},𝐌,S,Q<:Bernstein{𝐌,S,X}}
     p, q = promote(p1, p2)
-    𝐎, R = length(p.coeffs), eltype(p)
-    P′ = Bernstein{𝐎,R,X}
-    return Bernstein([p[i] + q[i] for i in 0:𝐎], X)
+    p + q
 end
+
+function Base.:+(p::P, q::P) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}}
+    return Bernstein{𝐍}([p[i] + q[i] for i in 0:𝐍], X)
+end
+
 
 # no promote(p1,p2)  called here
 function Base.:*(p::P, q::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},𝐌,S,Y,Q<:Bernstein{𝐌,S,Y}}
