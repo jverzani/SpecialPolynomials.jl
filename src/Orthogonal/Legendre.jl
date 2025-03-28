@@ -117,7 +117,11 @@ export OrthonormalLegendre
 struct ShiftedLegendreBasis <: AbstractCCOPBasis end
 ϟ(::Type{ShiftedLegendreBasis}) = LegendreBasis
 @register_shifted(ShiftedLegendreBasis, 2, -1)
+"""
+    ShiftedLegendre
 
+Shifted Legendre polynomial constructor; shifted Legendre are orthogonal on ``[0,1]``.
+"""
 ShiftedLegendre = MutableDensePolynomial{ShiftedLegendreBasis}
 Polynomials._typealias(::Type{P}) where {P<:ShiftedLegendre} = "ShiftedLegendre"
 export ShiftedLegendre

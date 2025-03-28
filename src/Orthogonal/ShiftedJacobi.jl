@@ -18,7 +18,7 @@ julia> convert(Polynomial, b)
 Polynomial(3.0 - 15.0*x + 15.0*x^2)
 ```
 
-Note: these are not `Jᵢᵅᵝ((x+1)/2)`, `J=basis(Jacobi{α,β},i)`.
+Note: These are `Jᵢᵅᵝ(2x-1)`, `J=basis(Jacobi{α,β},i)`.
 """
 ShiftedJacobi = MutableDensePolynomial{ShiftedJacobiBasis{α,β}} where {α,β}
 export ShiftedJacobi
