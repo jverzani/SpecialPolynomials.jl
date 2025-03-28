@@ -1,5 +1,8 @@
 ## Bessel
-@registerN Bessel AbstractCCOP1 α
+#@registerN Bessel AbstractCCOP1 α
+
+struct BesselBasis{α} <: AbstractCCOPBasis end
+
 
 """
     Bessel{α}
@@ -27,53 +30,56 @@ julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
 ```
 
 """
-Bessel
+Bessel = MutableDensePolynomial{BesselBasis{α}} where {α}
+Polynomials._typealias(::Type{P}) where {P<:Bessel} = "Bessel"
 export Bessel
-basis_symbol(::Type{<:Bessel{α}}) where {α} = "Cᵅ"
-Polynomials.domain(::Type{<:Bessel}) = Polynomials.Interval(0, Inf)
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{BesselBasis{α}}}) where {α} = "Cᵅ"
 
-abcde(::Type{<:Bessel{α}}) where {α} = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, α, 2))
 
-function k1k0(::Type{P}, k::Int) where {α,P<:Bessel{α}}
-    k < 0 && return zero(eltype(P)) * one(α) / 1
-    iszero(k) && return (one(eltype(P)) * α) / 2
+Polynomials.domain(::Type{<:BesselBasis}) = Polynomials.Interval(0, Inf)
 
-    val = one(eltype(P)) * one(α)
+abcde(::Type{BesselBasis{α}}) where{α} = (a=1, b=0, c=0, d=α, e=2)
+
+function k1k0(::Type{BesselBasis{α}}, k::Int) where {α}
+    k < 0 && return zero(α) / 1
+    iszero(k) && return α / 2
+
+    val = one(α)
     val *= (2k + α) * (2k + α - 1)
     val /= (k + α - 1) * 2
     val
 end
 
-norm2(::Type{<:Bessel{α}}, n) where {α} =
+norm2(::Type{BesselBasis{α}}, n) where {α} =
     -1^(n + α - 1) * Γ(1 + n) * 2^(α - 1) / (Γ(n + α - 2) * (2n + α - 1))
 
 # From https://www.ams.org/journals/tran/1949-065-01/S0002-9947-1949-0028473-1/S0002-9947-1949-0028473-1.pdf we use
 # kn = (n + α - 1)_n / 2^n not (n+α+1)_n/2^n
 # Koepf suggests kn = (n + α + 1)_n/2^n
-function leading_term(P::Type{<:Bessel{α}}, n::Int) where {α}
-    one(eltype(P)) / 2^n * Pochhammer(n + α - 1, n)
+function leading_term(P::Type{BesselBasis{α}}, n::Int) where {α}
+    1 / 2^n * Pochhammer(n + α - 1, n)
 end
 
-weight_function(::Type{<:Bessel{α}}) where {α} =
+weight_function(::Type{BesselBasis{α}}) where {α} =
     z -> (2π * im)^(-1) * z^(α - 2) * exp(-2 / z)
-generating_function(::Type{<:Bessel}) = (t, x) -> error("XXX")
-function classical_hypergeometric(::Type{<:Bessel{α}}, n, x) where {α}
+generating_function(::Type{<:BesselBasis}) = (t, x) -> error("XXX")
+function classical_hypergeometric(::Type{BesselBasis{α}}, n, x) where {α}
     as = (-n, n + α - 1)
     bs = ()
     pFq(as, bs, -x / 2) #/ kn
 end
 
-## Overrides XXX fails with 1 and 2
-function B̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
-    val = one(eltype(P))
+## Overrides XXX fails wih 1 and 2
+function B̃n(P::Type{BesselBasis{α}}, n::Int) where {α}
+    val = one(α)
     (iszero(n) && α == 2) && return val
     val *= 2 * (α - 2)
     val /= (2 * n + α) * (2 * n + α - 2)
     val
 end
 
-function C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
-    val = one(eltype(P))*one(α)
+function C̃n(P::Type{BesselBasis{α}}, n::Int) where {α}
+    val = one(α)
     n == 1 && return -(val * 4) / (α^2 * (α + 1))
 
     val *= -4 * n * (n + α - 2)
@@ -81,10 +87,11 @@ function C̃n(P::Type{<:Bessel{α}}, n::Int) where {α}
     val
 end
 
-#Bn(::Type{<:Bessel{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
-#B̃n(P::Type{<:Bessel{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
+#Bn(::Type{<:AbstractDenseUnivariatePolynomial{BesselBasis{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
+#B̃n(P::Type{<:AbstractDenseUnivariatePolynomial{BesselBasis{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
 #iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
-#C̃n(P::Type{<:Bessel{α}}, ::Val{1}) where {α} =  -(one(eltype(P))*4)/(α^2*(α + 1))
+C̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} =  -4/(α^2*(α + 1))
+ĉ̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} =  Inf
 
-b̂̃n(::Type{<:Bessel{2}}, n::Int) = (one(eltype(P)) * 2) / (n * (2n + 2))
-b̂̃n(::Type{<:Bessel{2}}, ::Val{0}) = one(eltype(P)) * Inf
+b̂̃n(P::Type{BesselBasis{2}}, n::Int) = 2 // (n * (2n + 2))
+b̂̃n(P::Type{BesselBasis{2}}, ::Val{0}) =  Inf

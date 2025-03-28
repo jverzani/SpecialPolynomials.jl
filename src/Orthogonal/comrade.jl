@@ -5,7 +5,7 @@
 # generate the  matrix for an orthogonal polynomial family
 # should have eigvals(comrade_matrix(p)) ≈ roots(convert(Polynomial, p))
 # This isn't exported
-function comrade_matrix(p::P) where {P<:AbstractCCOP}
+function comrade_matrix(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
     U, V = comrade_pencil(p)
     U * inv(V)
 end
@@ -13,18 +13,18 @@ end
 # Generate the [comrade pencil](http://www.cecm.sfu.ca/personal/pborwein/MITACS/papers/LinMatPol.pdf)
 # C₀, C₁ with λ C₁ - C₀ the linearization; and C₀ ⋅ C₁⁻¹ the companion matrix
 # can be used with square matrix coefficients
-function comrade_pencil(p::P, symmetrize=false) where {T,P<:AbstractCCOP{T}}
+function comrade_pencil(p::P, symmetrize=false) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}}
     comrade_pencil(p, αβγk(p)..., symmetrize)
 end
 
-function αβγk(p::P) where {T,P<:AbstractCCOP{T}}
+function αβγk(p::P) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}}
     n = Polynomials.degree(p)
     𝐏 = _comrade_pencil_type(p)
 
     As = An.(𝐏, 0:(n - 1))
     Bs = Bn.(𝐏, 0:(n - 1))
     Cs = Cn.(𝐏, 1:(n - 1))
-    kₙ, kₙ₋₁ = leading_term(𝐏{T}, n), leading_term(𝐏{T}, n - 1)
+    kₙ, kₙ₋₁ = leading_term(B, n), leading_term(B, n - 1)
 
     # α = 1/A
     # β = -B/A
@@ -36,8 +36,8 @@ function αβγk(p::P) where {T,P<:AbstractCCOP{T}}
 
     (α, β, γ, kₙ₋₁, kₙ)
 end
-_comrade_pencil_type(p::P) where {T,P<:AbstractCCOP{T}} = ⟒(P){T}
-_comrade_pencil_type(p::P) where {T,M<:AbstractMatrix{T},P<:AbstractCCOP{M}} = ⟒(P){T}
+_comrade_pencil_type(p::P) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}} = ⟒(P){T}
+_comrade_pencil_type(p::P) where {B<:AbstractCCOPBasis,T,M<:AbstractMatrix{T},P<:AbstractUnivariatePolynomial{B,M}} = ⟒(P){M}
 
 # α = [α₀, α₁, ⋯, αₙ₋₂]
 # β = [β₀, β₁, ⋯, βₙ₋₂, βₙ₋₁]
@@ -137,7 +137,7 @@ Ũ[end,end] *= p(λ)
 L*Ũ - (λ*C₁ - C₀) ≈ 0 # if atol=sqrt(eps())
 ```
 """
-comrade_pencil_LU(p::P) where {P<:AbstractCCOP} = comrade_pencil_LU(p, αβγk(p)...)
+comrade_pencil_LU(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}} = comrade_pencil_LU(p, αβγk(p)...)
 
 function comrade_pencil_LU(
     p::P,
@@ -642,7 +642,7 @@ function _eigvals(B::Matrix{T}) where {T}
 end
 
 # one step improves accuracy
-function newton_refinement(λs, p::P) where {P<:AbstractCCOP}
+function newton_refinement(λs, p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
     p′ = derivative(p)
     λs .- p.(λs) ./ p′.(λs)
 end
@@ -728,12 +728,12 @@ end
 ## * Cs -- a vector of Gauss Transforms
 ## * B -- an Upper triangular matrix
 ## Matrix(Cs, B) is comrade matrix
-function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
+function comrade_decomposition(P::Type{PP}, ps) where {B<:AbstractCCOPBasis, PP<:AbstractUnivariatePolynomial{B}}
     n = length(ps) - 1
-    As = An.(P, 0:(n - 1))
-    Bs = Bn.(P, 0:(n - 1))
-    Cs = Cn.(P, 1:(n - 1))
-    kₙ, kₙ₋₁ = leading_term(P, n), leading_term(P, n - 1)
+    As = An.(B, 0:(n - 1))
+    Bs = Bn.(B, 0:(n - 1))
+    Cs = Cn.(B, 1:(n - 1))
+    kₙ, kₙ₋₁ = leading_term(B, n), leading_term(B, n - 1)
 
     p̂s = copy(ps) ./ 1
 
@@ -742,7 +742,7 @@ function comrade_decomposition(P::Type{<:AbstractCCOP}, ps)
     # γs = [C1/A1, ..., Cn-1/An-1]
     # cs [ 0 ... 0 γ[end] β[end]] - ps[1:end-1]/ps[end] / An-1
 
-    aₙ = An(P, n)
+    aₙ = An(B, n)
     βs = -Bs ./ As
     βn = pop!(βs)
     γs = [Cs[i] / As[i + 1] for i in 1:length(Cs)]
@@ -819,12 +819,13 @@ polynomials. It could find use as an extremely fast method to get a
 rough estimate of the spectrum"
 
 """
-function Polynomials.roots(p::P) where {P<:AbstractCCOP}
-    Cs, B = comrade_decomposition(P, coeffs(p))
-    λs = AVW_eigvals(Cs, B)
+function Polynomials.roots(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
+    Cs, Bₚ = comrade_decomposition(P, coeffs(p))
+    λs = AVW_eigvals(Cs, Bₚ)
 
     # hacky check on whether roots are good enough
     ns = p.(λs) ./ derivative(p).(λs)
+
     δ = maximum(abs, ns)
     if δ >= sqrt(eps())
         rts = eigvals(Polynomials.companion(p))
@@ -840,7 +841,7 @@ end
 ## test root quality
 ## could presumably be much more efficient
 ## This test backwards stability
-function a_posteriori_check(λs, p::P) where {P<:AbstractCCOP}
+function a_posteriori_check(λs, p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
     ps = coeffs(p)
     n = length(ps) - 1
     v(λ) = [basis(P, i)(λ) for i in (n - 1):-1:0]
