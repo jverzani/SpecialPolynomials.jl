@@ -18,7 +18,7 @@ A family is characterized by the 5 coefficients: `a,b,c,d,e`.
 Let `σ = (a⋅x²+b⋅x+c)`, `τ = (d⋅x + e).`
 
 As in the classical-continuous-orthogonal-polynomial case
-[`AbstractCCOP`](@ref), from these 5 values the coefficients in the
+[`AbstractCCOPBasis`](@ref), from these 5 values the coefficients in the
 there-point recursion, and other structural equations can be
 represented. These allow polynomial multiplication, integration,
 differentiation, conversion, etc. to be defined generically.

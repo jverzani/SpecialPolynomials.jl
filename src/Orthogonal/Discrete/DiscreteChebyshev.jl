@@ -3,11 +3,15 @@
 struct DiscreteChebyshevBasis{α,β} <: AbstractCDOPBasis end
 export DiscreteChebyshev
 
+#=
+[DiscreteWeightFunction is on pause right now]
+See  the example  in [`DiscreteWeightFunction`](@ref) for implementing  the [DiscreteChebyshev](https://en.wikipedia.org/wiki/Discrete_Chebyshev_polynomials)  polynomials  from Wikipedia.
+=#
+
 """
     DiscreteChebyshev
 
 This uses p22 of [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf)  to define a two-parameter  family of *non* orthogonal polynomials.
-See  the example  in [`DiscreteWeightFunction`](@ref) for implementing  the [DiscreteChebyshev](https://en.wikipedia.org/wiki/Discrete_Chebyshev_polynomials)  polynomials  from Wikipedia.
 
 ```jldoctest
 julia> using Polynomials, SpecialPolynomials
