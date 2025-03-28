@@ -25,7 +25,7 @@ export ShiftedJacobi
 
 Polynomials._typealias(::Type{P}) where {α, β, P<:ShiftedJacobi{α, β}} = "ShiftedJacobi{$α,$β}"
 
-basis_symbol(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} = "Rᵅᵝ"
+basis_symbol(::Type{<:AbstractUnivariatePolynomial{ShiftedJacobiBasis{α,β}}}) where {α,β} = "Rᵅᵝ"
 Polynomials.domain(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} =
     Polynomials.Interval{β >= 0 ? Open : Closed,α >= 0 ? Open : Closed}(0, 1)
 

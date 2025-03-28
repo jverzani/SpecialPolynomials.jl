@@ -11,8 +11,8 @@ julia> using Polynomials, SpecialPolynomials
 julia> p = Laguerre{1/2}([1,2,3])
 Laguerre{0.5}(1⋅Lᵅ₀(x) + 2⋅Lᵅ₁(x) + 3⋅Lᵅ₂(x))
 
-julia> convert(LaurentPolynomial, p)
-LaurentPolynomial(9.625 - 9.5*x + 1.5*x^2)
+julia> convert(Polynomial, p)
+Polynomial(9.625 - 9.5*x + 1.5*x^2)
 ```
 
 The Laguerre polynomials are the case `α=0`.
@@ -36,7 +36,7 @@ julia> n = 7
 7
 
 julia> factorial(n) * basis(Laguerre{0}, n) - foldl(phi, 1:n, init=x^n)
-LaurentPolynomial(-5.4569682106375694e-12 + 1.4551915228366852e-11*x - 7.275957614183426e-12*x^2)
+LaurentPolynomial(-5.4569682106375694e-12 + 1.4551915228366852e-11*x - 7.275957614183426e-12*x²)
 ```
 
 
