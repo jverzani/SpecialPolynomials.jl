@@ -119,6 +119,9 @@ julia> Basis(Hermite, 3)(0.5)
 -5.0
 ```
 
+!!! note "Evaluation with `Basis` is not robust
+    The evaluation of a `Basis` object relies on a classical hypergeometric representation and for values of ``n`` as small as ``30`` can be very susceptible to round off error.
+
 
 
 If the coefficients of a polynomial relative to the polynomial type are known, they can be directly passed to the constructor:
