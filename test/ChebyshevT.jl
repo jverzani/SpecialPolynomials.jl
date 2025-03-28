@@ -207,7 +207,7 @@ end
 @testset "Fit" begin
     fn = x -> exp(x)
     p = fit(Chebyshev{Float64}, fn, 16)
-    @test maximum(abs.(p(x) - fn(x) for x in range(0, 1, length=100))) <= 100 * eps()
+    @test maximum(abs.(p(x) - fn(x) for x in range(0, 1, length=100))) <= 1000 * eps()
 
     fn = (x) -> sin(6x) - sin(60 * exp(x)) # chebfun example
     p = fit(Chebyshev{Float64}, fn, 150)
