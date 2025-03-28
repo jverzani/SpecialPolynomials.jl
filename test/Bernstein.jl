@@ -135,9 +135,10 @@ end
 end
 
 @testset "addition" begin
+    n = 4
+    B = Bernstein{n}
+
     if VERSION >= v"1.8"
-        n = 4
-        B = Bernstein{n}
         ps = [2,1,0,0,0]
         u,v = B(ps), sum(p*b for (p,b) ∈ zip(ps, basis.(B,0:n)))
         @test u ≈ v
