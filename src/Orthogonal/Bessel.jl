@@ -69,7 +69,7 @@ function classical_hypergeometric(::Type{BesselBasis{α}}, n, x) where {α}
     pFq(as, bs, -x / 2) #/ kn
 end
 
-## Overrides XXX fails wih 1 and 2
+## Overrides XXX fails with 1 and 2
 function B̃n(P::Type{BesselBasis{α}}, n::Int) where {α}
     val = one(α)
     (iszero(n) && α == 2) && return val

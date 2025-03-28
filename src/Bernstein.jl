@@ -1,7 +1,7 @@
 #abstract type AbstractBernstein{T,X} <: AbstractSpecialPolynomial{T,X} end
 
 # XXX TODO
-# * the contraint 𝐍 < N - 1 isn't checked
+# * the constraint 𝐍 < N - 1 isn't checked
 # * methods written from Bernstein{𝐍,T,X} but should be {𝐍, B<:BernsteinBasis{𝐍}, AbstractUnivariatePolynomial{B}}
 struct BernsteinBasis{𝐍} <: AbstractBasis end
 
@@ -39,7 +39,7 @@ Polynomials._typealias(::Type{P}) where {P<:Bernstein{𝐍}} where {𝐍} = "Ber
 #     function Bernstein{𝐍,T,X}(coeffs::AbstractVector{T}) where {𝐍,T,X}
 #         N = findlast(!iszero, coeffs)
 #         N == nothing && return new{𝐍,T,X}(zeros(T, 0))
-#         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficents"))
+#         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
 #         return new{𝐍,T,X}(coeffs[1:N])
 #     end
 # end

@@ -14,7 +14,7 @@ abstract type  AbstractOrthogonalBasis <: AbstractSpecialPolynomialBasis end
 
 This is an alias for polys with an Orthogonal Basis (`AbstractOrthogonalBasis`) specified.
 
-These polynomials have  several properties, including an accompanying inner product satsifying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
+These polynomials have  several properties, including an accompanying inner product satisfying  `⟨yᵢ, yⱼ⟩ = cᵢδᵢⱼ`.
 
 In addition to methods inherited from the underlying `AbstractPolynomial`  type, orthogonal polynomial  types may have methods   `weight_function`, `generating_function`, `leading_term`, `norm2`, `jacobi_matrix`, and `gauss_nodes_weights`,  though none are  exported.
 
