@@ -32,7 +32,7 @@ julia> x = Polynomial(:x)
 Polynomial(1.0*x)
 
 julia> derivative((x^2-1)^n, n) - 2^n *  factorial(n) * basis(Legendre, n)
-Polynomial(0.0)
+LaurentPolynomial(0.0)
 
 julia> p4, p5  =  basis.(Legendre, (4,5)) # verify  orthogonality  of  P₄,P₅
 (Legendre(1.0⋅P₄(x)), Legendre(1.0⋅P₅(x)))

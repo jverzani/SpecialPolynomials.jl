@@ -12,7 +12,7 @@ Implements the [ShiftedJacobi](https://arxiv.org/abs/2004.09801) orthogonal poly
 julia> using Polynomials, SpecialPolynomials
 
 julia> b = ShiftedJacobi{1,1}([0,0,1])
-typename(ShiftedJacobi){1,1}(1⋅Rᵅᵝ₂(x))
+ShiftedJacobi{1,1}(1⋅Rᵅᵝ₂(x))
 
 julia> convert(Polynomial, b)
 Polynomial(3.0 - 15.0*x + 15.0*x^2)

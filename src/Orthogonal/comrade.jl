@@ -820,7 +820,7 @@ rough estimate of the spectrum"
 
 """
 function Polynomials.roots(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
-    Cs, Bₚ = comrade_decomposition(P, coeffs(p))
+    Cs, Bₚ = comrade_decomposition(P, float(coeffs(p)))
     λs = AVW_eigvals(Cs, Bₚ)
 
     # hacky check on whether roots are good enough

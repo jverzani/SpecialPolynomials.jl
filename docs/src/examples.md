@@ -388,44 +388,7 @@ julia> maximum(abs ∘ p50, bs) < sqrt(eps())
 true
 
 julia> maximum(abs, roots(p50) - bs) < sqrt(eps())
-ERROR: OverflowError: 9 * 2067609360287514303 overflowed for type Int64
-Stacktrace:
-  [1] throw_overflowerr_binaryop(op::Symbol, x::Int64, y::Int64)
-    @ Base.Checked ./checked.jl:163
-  [2] checked_mul
-    @ ./checked.jl:297 [inlined]
-  [3] *
-    @ ./rational.jl:350 [inlined]
-  [4] FlipArgs
-    @ ./reduce.jl:209 [inlined]
-  [5] BottomRF
-    @ ./reduce.jl:81 [inlined]
-  [6] MappingRF
-    @ ./reduce.jl:95 [inlined]
-  [7] _foldl_impl(op::Base.MappingRF{SpecialPolynomials.var"#32#33"{SpecialPolynomials.LegendreBasis}, Base.BottomRF{Base.FlipArgs{typeof(*)}}}, init::Int64, itr::StepRange{Int64, Int64})
-    @ Base ./reduce.jl:62
-  [8] foldl_impl
-    @ ./reduce.jl:48 [inlined]
-  [9] mapfoldr_impl
-    @ ./reduce.jl:199 [inlined]
- [10] #mapfoldr#290
-    @ ./reduce.jl:218 [inlined]
- [11] mapfoldr
-    @ ./reduce.jl:218 [inlined]
- [12] #foldr#291
-    @ ./reduce.jl:237 [inlined]
- [13] foldr
-    @ ./reduce.jl:237 [inlined]
- [14] kn
-    @ ~/julia/SpecialPolynomials/src/Orthogonal/cop.jl:120 [inlined]
- [15] leading_term
-    @ ~/julia/SpecialPolynomials/src/Orthogonal/cop.jl:129 [inlined]
- [16] comrade_decomposition(P::Type{Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis, Float64, :x}}, ps::Vector{Float64})
-    @ SpecialPolynomials ~/julia/SpecialPolynomials/src/Orthogonal/comrade.jl:736
- [17] roots(p::Polynomials.MutableDensePolynomial{SpecialPolynomials.LegendreBasis, Float64, :x})
-    @ SpecialPolynomials ~/julia/SpecialPolynomials/src/Orthogonal/comrade.jl:823
- [18] top-level scope
-    @ none:1
+true
 ```
 
 (The roots of the classic orthogonal polynomials  are  all  real  and distinct.)

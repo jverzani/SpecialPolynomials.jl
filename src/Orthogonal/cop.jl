@@ -117,7 +117,9 @@ k0(::Type{B}) where {B<:Polynomials.StandardBasis} = 1
 # For non-monic subtypes of `AbstractCOP` only need k1k0  to be defined, as `kn` and `k1k_1` come for free
 
 # kn = prod(k1k0(i) for i in 0:n-1)  *  k0(P)
-kn(::Type{B}, n::Int) where {B<:AbstractCOPBasis} = foldr(*, (k1k0(B, i) for i in 0:(n - 1)), init=k0(B))
+function kn(::Type{B}, n::Int) where {B<:AbstractCOPBasis}
+    foldr(*, (k1k0(B, i) for i in 0:(n - 1)), init=float(k0(B)))
+end
 
 # k₍ᵢ₊₁₎/k₍ᵢ₋₁₎ =  (k₍ᵢ₊₁₎/kᵢ) ⋅ (kᵢ/k₍ᵢ₋₁₎)
 function k1k_1(::Type{B}, i::Int) where {B<:AbstractCOPBasis}
