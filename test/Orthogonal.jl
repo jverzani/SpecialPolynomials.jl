@@ -441,7 +441,7 @@ end
         @test typeof([p]) == typeof([p,q])
     end
 
-    q = basis(Polynomial, 3)
+    q = basis(LaurentPolynomial, 3) # not Polynomial v4.0
     @testset for P ∈ Ps
         p = basis(P,2)
         @test typeof([q]) == typeof([p,q])

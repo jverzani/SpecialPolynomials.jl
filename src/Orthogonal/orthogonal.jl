@@ -117,6 +117,7 @@ end
 function clenshaw_eval(::Type{B}, cs, x::S) where {B<:AbstractOrthogonalBasis,S}
     T, N = eltype(cs), length(cs)
     p₀ = k0(B)
+
     R = promote_type(typeof(p₀), promote_type(promote_type(T, S), typeof(An(B, 0))))
     N == 0 && return zero(R)
     N == 1 && return (cs[1] * p₀) * one(R)

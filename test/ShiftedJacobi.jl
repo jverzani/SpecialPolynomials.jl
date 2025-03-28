@@ -2,6 +2,7 @@ using SpecialPolynomials: Pochhammer
 using Polynomials
 
 # compute <>ᵅᵝ inner product
+# also used in DualBernstein tests.
 function ip(f,g,α,β; n=100)
     simpsons  = (f,a,b) -> (c = a/2 + b/2;(1/6) * (f(a) + 4*f(c) + f(b)))
     λ = x -> (1-x)^α*x^β * f(x) * g(x)
@@ -24,9 +25,8 @@ end
     for (α,β) ∈ ((0,0), (1/2,1/2), (1,1))
         n = 3
         Polynomials.@variable x
-        R = ShiftedJacobi{α, β}
-        Rn₁ = SpecialPolynomials.classical_hypergeometric(R,n,x)
-        Rn₂ = basis(R,n)(x)
+        Rn₁ = Basis{SpecialPolynomials.ShiftedJacobiBasis{α, β}}(n)(x)
+        Rn₂ = basis(ShiftedJacobi{α, β},n)(x)
         @test Rn₁ ≈ Rn₂
     end
 
