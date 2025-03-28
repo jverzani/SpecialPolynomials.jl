@@ -4,7 +4,7 @@ abstract type AbstractCDOPBasis <: AbstractCOPBasis end
 
 #abstract type AbstractCDOP{T,X} <: AbstractCOP{T,X} end
 """
-     AbstractCDOP{T,X} <: AbstractCOP{T,X}
+     AbstractCDOPBasis{T,X} <: AbstractCOPBasis{T,X}
 
 Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
 for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
@@ -41,6 +41,9 @@ The above, is termed the eigenvalue equation (e.g. [Goertz and Offner](https://a
 
 
 """
+AbstractCDOPBasis
+
+# type for dispatch
 const AbstractCDOPPolynomial = AbstractUnivariatePolynomial{<:AbstractCDOPBasis,T,X} where {T,X}
 
 #AbstractCDOP
