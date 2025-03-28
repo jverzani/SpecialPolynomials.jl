@@ -28,8 +28,8 @@ end
 end
 
 @testset "roots" begin
-    for n in 4:2:8
-        p = ChebyshevU(vcat(zeros(n), 1))
+    for n in 4:6
+        p = basis(ChebyshevU, n)
         @test cos.((n:-1:1) / (n + 1) * pi) ≈ roots(p)
     end
 end
