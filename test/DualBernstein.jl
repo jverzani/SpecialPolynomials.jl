@@ -33,11 +33,12 @@ end
         D = DualBernstein{n, α, β}
         Di, Dj = basis.(D, (i,j))
         Bi, Bj = basis.(Bernstein{n}, (i,j))
-        dij = ip(Bi,Dj,α,β)
+        R = ShiftedJacobi{α, β}
+        dij = ip(Bi,Dj, α, β)
         @test dij ≈ 0 atol = ϵ
-        dij = ip(Bj,Di,α,β)
+        dij = ip(Bj,Di, α, β)
         @test dij ≈ 0 atol = ϵ
-        dii = ip(Bi,Di,α,β)
+        dii = SpecialPolynomials.innerproduct(R,Bi,Di)
         @test dii ≈ 1 atol=ϵ
     end
 end
@@ -62,10 +63,11 @@ end
     n = 5
     α, β = 1/2, 1/2
     D = DualBernstein{n,α,β}
+    R = ShiftedJacobi{α, β}
     Iₖ = [ip(f, basis(D,k), α, β) for k in 0:n]
 
-    R = ShiftedJacobi{α, β} # say, just some comparison
-    Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n]
+
+    Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n] # say, just some comparison
 
     B = Bernstein{n}
     pn = B(Iₖ)

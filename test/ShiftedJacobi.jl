@@ -4,11 +4,7 @@ using Polynomials
 # compute <>ᵅᵝ inner product
 # also used in DualBernstein tests.
 function ip(f,g,α,β; n=100)
-    simpsons  = (f,a,b) -> (c = a/2 + b/2;(1/6) * (f(a) + 4*f(c) + f(b)))
-    λ = x -> (1-x)^α*x^β * f(x) * g(x)
-    xs = range(0, 1, n+1)
-    xs′ = zip(Iterators.take(xs, n), Iterators.drop(xs, 1))
-    sum(simpsons(λ, xᵢ₋₁, xᵢ) * (xᵢ-xᵢ₋₁) for (xᵢ₋₁, xᵢ) ∈ xs′)
+    SpecialPolynomials.innerproduct(ShiftedJacobi{α,β}, f, g)
 end
 
 @testset "Construction" begin
