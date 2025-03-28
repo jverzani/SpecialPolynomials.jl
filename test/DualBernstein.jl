@@ -3,16 +3,6 @@ using SpecialFunctions
 using SpecialPolynomials
 using SpecialPolynomials: Pochhammer
 
-
-# compute <>ᵅᵝ inner product
-function ip(f,g,α,β; n=100)
-    simpsons  = (f,a,b) -> (c = a/2 + b/2;(1/6) * (f(a) + 4*f(c) + f(b)))
-    λ = x -> (1-x)^α*x^β * f(x) * g(x)
-    xs = range(0, 1, n+1)
-    xs′ = zip(Iterators.take(xs, n), Iterators.drop(xs, 1))
-    sum(simpsons(λ, xᵢ₋₁, xᵢ) * (xᵢ-xᵢ₋₁) for (xᵢ₋₁, xᵢ) ∈ xs′)
-end
-
 @testset "Construction" begin
     n,α,β = 5,0,0
     D = DualBernstein{n,α,β}
@@ -43,11 +33,12 @@ end
         D = DualBernstein{n, α, β}
         Di, Dj = basis.(D, (i,j))
         Bi, Bj = basis.(Bernstein{n}, (i,j))
-        dij = ip(Bi,Dj,α,β)
+        R = ShiftedJacobi{α, β}
+        dij = ip(Bi,Dj, α, β)
         @test dij ≈ 0 atol = ϵ
-        dij = ip(Bj,Di,α,β)
+        dij = ip(Bj,Di, α, β)
         @test dij ≈ 0 atol = ϵ
-        dii = ip(Bi,Di,α,β)
+        dii = SpecialPolynomials.innerproduct(R,Bi,Di)
         @test dii ≈ 1 atol=ϵ
     end
 end
@@ -72,10 +63,11 @@ end
     n = 5
     α, β = 1/2, 1/2
     D = DualBernstein{n,α,β}
+    R = ShiftedJacobi{α, β}
     Iₖ = [ip(f, basis(D,k), α, β) for k in 0:n]
 
-    R = ShiftedJacobi{α, β} # say, just some comparison
-    Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n]
+
+    Jₖ = [ip(f, basis(R,k), α, β) for k in 0:n] # say, just some comparison
 
     B = Bernstein{n}
     pn = B(Iₖ)

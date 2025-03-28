@@ -1,6 +1,7 @@
 ## Hermite
-@register0 Hermite AbstractCCOP0
-export Hermite
+
+abstract type AbstractHermiteBasis <: AbstractCCOPBasis end
+struct HermiteBasis <: AbstractHermiteBasis end
 
 """
     Hermite
@@ -38,23 +39,25 @@ julia> [basis(ChebyshevHermite, i)(x) for i in 0:5]
 !!! note
     The Hermite family needs help, as the computed values for `Bn`,and,`Cn` are  both 0.
 """
-Hermite
+const Hermite = MutableDensePolynomial{HermiteBasis}
+export Hermite
+Polynomials._typealias(::Type{P}) where {P<:Hermite} = "Hermite"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{HermiteBasis}})  = "H"
 
-basis_symbol(::Type{<:Hermite}) = "H"
-Polynomials.domain(::Type{<:Hermite}) = Polynomials.Interval(-Inf, Inf)
+Polynomials.domain(::Type{HermiteBasis}) = Polynomials.Interval(-Inf, Inf)
 
-abcde(::Type{<:Hermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((1, 0, 0, -2, 0))
+abcde(::Type{HermiteBasis}) = (a=1, b=0, c=0, d=-2, e=0)
 
-k0(P::Type{<:Hermite}) = one(eltype(P))
-function k1k0(P::Type{<:Hermite}, k::Int)
-    val = 2 * one(eltype(P))
+k0(B::Type{HermiteBasis}) = 1
+function k1k0(B::Type{HermiteBasis}, k::Int)
+    val = 2
     val
 end
 
-norm2(::Type{<:Hermite}, n) = sqrt(pi) * 2^n * gamma(n + 1)
-weight_function(::Type{<:Hermite}) = x -> exp(-x^2)
-generating_function(::Type{<:Hermite}) = (t, x) -> exp(2 * t * x - t^2)
-function classical_hypergeometric(::Type{<:Hermite}, n, x)
+norm2(::Type{HermiteBasis}, n) = sqrt(pi) * 2^n * gamma(n + 1)
+weight_function(::Type{HermiteBasis}) = x -> exp(-x^2)
+generating_function(::Type{HermiteBasis}) = (t, x) -> exp(2 * t * x - t^2)
+function classical_hypergeometric(::Type{HermiteBasis}, n, x)
     as = iseven(n) ? (-n ÷ 2, -(n - 1) / 2) : (-n / 2, -(n - 1) ÷ 2)
     bs = ()
     (2x)^n * pFq(as, bs, -inv(x)^2)
@@ -62,23 +65,28 @@ end
 
 ## Overrides
 # Use override here, as we get  An,Bn,Cn =  1, 0,0, otherwise
-An(P::Type{<:Hermite}, n::Int) = 2 * one(eltype(P))
-Bn(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
-Cn(P::Type{<:Hermite}, n::Int) = 2 * n * one(eltype(P))
+An(::Type{HermiteBasis}, n::Int) = 2
+Bn(::Type{HermiteBasis}, n::Int) = 0
+Cn(::Type{HermiteBasis}, n::Int) = 2n
 
-β̃n(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
-γ̃n(P::Type{<:Hermite}, n::Int) = zero(eltype(P))
-b̂̃n(P::Type{<:Hermite}, ::Val{N}) where {N} = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
-ĉ̃n(P::Type{<:Hermite}, ::Val{N}) where {N} = zero(eltype(P)) #where {M} = error("Don't call me")#zero(S)
+β̃n(::Type{HermiteBasis}, n::Int) = 0
+γ̃n(::Type{HermiteBasis}, n::Int) = 0
+b̂̃n(::Type{HermiteBasis}, ::Val{N}) where {N} = 0 #where {M} = error("Don't call me")#zero(S)
+ĉ̃n(::Type{HermiteBasis}, ::Val{N}) where {N} = 0 #where {M} = error("Don't call me")#zero(S)
+
+# Needed for Monic XXX
+B̃n(::Type{HermiteBasis}, ::Val{1}) = 0
+B̃n(::Type{HermiteBasis}, ::Val{2}) = 0
+C̃n(B::Type{HermiteBasis}, n::Val{2}) = 0
 
 ## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
 
-Base.convert(P::Type{<:Hermite}, q::Polynomial) = connection(P, q)
+Base.convert(P::Type{<:AbstractUnivariatePolynomial{HermiteBasis}}, q::Polynomial) = connection(P, q)
 function Base.iterate(
     o::Connection{P,Q},
     state=nothing,
-) where {P<:Hermite,Q<:Polynomials.StandardBasisPolynomial}
+) where {P<:HermiteBasis,Q<:Polynomials.StandardBasis}#Polynomial}
     k, n = o.k, o.n
 
     if state == nothing
@@ -107,7 +115,7 @@ function __hermite_lambda(n, k)
 end
 
 # 2x more performant
-function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
+function Polynomials.integrate(p::P) where {B<:HermiteBasis, T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     # int H_n = 1/(n+1) H_{n+1}
     R = eltype(one(T) / 1)
     d = degree(p)
@@ -118,7 +126,6 @@ function Polynomials.integrate(p::P, C::Number=0) where {T,X,P<:Hermite{T,X}}
     end
 
     q = ⟒(P){R,X}(qs)
-    q = q - q(0) + R(C)
 
     return q
 end
@@ -126,12 +133,13 @@ end
 ##
 ## --------------------------------------------------
 ##
+struct MonicHermiteBasis <: AbstractCCOPBasis end
+ϟ(MonicHermiteBasis) = HermiteBasis
+@register_monic(MonicHermiteBasis)
 
-@register0 MonicHermite AbstractCCOP0
+MonicHermite = MutableDensePolynomial{MonicHermiteBasis}
+Polynomials._typealias(::Type{P}) where {P<:MonicHermite} = "MonicHermite"
 export MonicHermite
-ϟ(::Type{<:MonicHermite}) = Hermite
-ϟ(::Type{<:MonicHermite{T}}) where {T} = Hermite{T}
-@register_monic(MonicHermite)
 
 pqr_start(::Type{<:MonicHermite}) = 0
 pqr_symmetry(::Type{<:MonicHermite}) = true
@@ -140,7 +148,9 @@ pqr_weight(P::Type{<:MonicHermite}, n, x, dπx) = (one(P) * 2) * exp(-x^2) / (d�
 ##
 ## --------------------------------------------------
 ##
-@register0 ChebyshevHermite AbstractCCOP0
+
+#@register0 ChebyshevHermite AbstractCCOP0
+struct ChebyshevHermiteBasis <: AbstractHermiteBasis end
 export ChebyshevHermite
 """
     ChebyshevHermite
@@ -148,39 +158,39 @@ export ChebyshevHermite
 Type for the Probabalist's  [Hermite](https://en.wikipedia.org/wiki/Hermite_polynomials) polynomials.
 
 """
-ChebyshevHermite
+const ChebyshevHermite = MutableDensePolynomial{ChebyshevHermiteBasis}
 
-basis_symbol(::Type{<:ChebyshevHermite}) = "Hₑ"
-Polynomials.domain(::Type{<:ChebyshevHermite}) = Polynomials.Interval(-Inf, Inf)
+Polynomials.basis_symbol(::Type{<:AbstractDenseUnivariatePolynomial{ChebyshevHermiteBasis}}) = "Hₑ"
+Polynomials.domain(::Type{ChebyshevHermiteBasis}) = Polynomials.Interval(-Inf, Inf)
 
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
-abcde(::Type{<:ChebyshevHermite}) = NamedTuple{(:a, :b, :c, :d, :e)}((0, 0, 1, -1, 0))
+abcde(::Type{ChebyshevHermiteBasis}) = (a=0, b=0, c=1, d=-1, e=0)
 
-kn(P::Type{<:ChebyshevHermite}, n::Int)    = one(eltype(P))
-k1k0(P::Type{<:ChebyshevHermite}, k::Int)  = one(eltype(P))
-k1k_1(P::Type{<:ChebyshevHermite}, k::Int) = one(eltype(P))
-ismonic(::Type{<:ChebyshevHermite})        = true
+kn(::Type{ChebyshevHermiteBasis}, n::Int)    = 1
+k1k0(::Type{ChebyshevHermiteBasis}, k::Int)  = 1
+k1k_1(::Type{ChebyshevHermiteBasis}, k::Int) = 1
+ismonic(::Type{ChebyshevHermiteBasis})        = true
 
-weight_function(P::Type{ChebyshevHermite}) = x -> exp(-(one(eltype(P)) * x^2) / 2)
-generating_function(::Type{<:ChebyshevHermite}) = (t, x) -> exp(t * x - t^2 / 2)
-function classical_hypergeometric(::Type{<:ChebyshevHermite}, n, x)
-    2^(-n / 2) * classical_hypergeometric(Hermite, n, x / sqrt(2))
+weight_function(::Type{ChebyshevHermiteBasis}) = x -> exp(-(x^2) / 2)
+generating_function(::Type{ChebyshevHermiteBasis}) = (t, x) -> exp(t * x - t^2 / 2)
+function classical_hypergeometric(::Type{ChebyshevHermiteBasis}, n, x)
+    2^(-n / 2) * classical_hypergeometric(HermiteBasis, n, x / sqrt(2))
 end
 
-function gauss_nodes_weights(P::Type{<:ChebyshevHermite}, n)
+function gauss_nodes_weights(::Type{ChebyshevHermiteBasis}, n)
     xs, ws = glaser_liu_rokhlin_gauss_nodes(basis(ChebyshevHermite, n))
     xs, ws
 end
 
-pqr_start(::Type{<:ChebyshevHermite}) = 0
-pqr_symmetry(::Type{<:ChebyshevHermite}) = true
-pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =
+pqr_start(::Type{ChebyshevHermiteBasis}) = 0
+pqr_symmetry(::Type{ChebyshevHermiteBasis}) = true
+pqr_weight(P::Type{ChebyshevHermiteBasis}, n, x, dπx) =
     sqrt(2) * gamma(1 + n) * sqrt(pi) / (dπx)^2
 
 ## Overrides
-#An(P::Type{<:ChebyshevHermite}, n::Int) = one(eltype(P))
-#Bn(P::Type{<:ChebyshevHermite}, n::Int) = zero(eltype(P))
-#Cn(P::Type{<:ChebyshevHermite}, n::Int) = -one(eltype(P))*n
+#An(P::Type{ChebyshevHermiteBasis}, n::Int) = one(eltype(P))
+#Bn(P::Type{ChebyshevHermiteBasis}, n::Int) = zero(eltype(P))
+#Cn(P::Type{ChebyshevHermiteBasis}, n::Int) = -one(eltype(P))*n
 
 ##
 ## --------------------------------------------------
@@ -190,16 +200,26 @@ pqr_weight(P::Type{<:ChebyshevHermite}, n, x, dπx) =
 ## TODO: work  on  types
 AbstractHermite{T,X} = Union{Hermite{T,X},ChebyshevHermite{T,X}}
 
+for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+    @eval begin
+        function Base.:*(p::P, q::Q) where {B <: HermiteBasis,X,
+                                            T, P<:$P{B,T,X},
+                                            S, Q<:$P{B,S,X}}
+            ⊗(B, p, q)
+        end
+    end
+end
+
 # Default is slow. Instead
 # directly use a linearization formula from
 # https://arxiv.org/pdf/1901.01648.pdf
 # and  for Hermite, Hn(x) =2^(n/2)Hₑ_n(sqrt(2) x)
 # so Hm⋅Hn = ∑ C_{m,n,j} 2^j H_{m+n-2j}
 function ⊗(
-    ::Type{<:AbstractHermite},
+    ::Type{<:AbstractHermiteBasis},#    ::Type{<:AbstractHermite},
     p::P,
     q::Q,
-) where {T,X,S,Y,P<:AbstractHermite{T,X},Q<:AbstractHermite{S,Y}}
+) where {B,T,X,S,Y,P<:AbstractUnivariatePolynomial{B,T,X},Q<:AbstractUnivariatePolynomial{B,S,Y}}
     R = eltype(one(promote_type(T, S)) / 1)
     N, M = degree(p), degree(q)
     N == -1 && return zero(⟒(P){R,Y})
@@ -226,8 +246,8 @@ function ⊗(
     ⟒(P){R,X}(as)
 end
 
-hermite_α(P::Type{<:ChebyshevHermite}) = 1
-hermite_α(P::Type{<:Hermite}) = 2
+hermite_α(P::Type{ChebyshevHermiteBasis}) = 1
+hermite_α(P::Type{<:AbstractDenseUnivariatePolynomial{HermiteBasis}}) = 2
 
 #⊗(p::Hermite, q::Hermite) = linearization_product(p, q)
 #⊗(p::ChebyshevHermite, q::ChebyshevHermite) = linearization_product(p, q)
@@ -276,5 +296,5 @@ hermite_α(P::Type{<:Hermite}) = 2
 #     val *= gamma(1+m)*gamma(1+n)/gamma(1+s-m)/gamma(1+s-n)/gamma(1+s-l)
 #     val *= linearization_λ(P, l, m,n)
 # end
-# linearization_λ(::Type{<:Hermite}, l, m, n) = 2.0^((m+n-l)/2)
-# linearization_λ(::Type{<:ChebyshevHermite}, l, m, n) = 1
+# linearization_λ(::Type{<:AbstractDenseUnivariatePolynomial{HermiteBasis}}, l, m, n) = 2.0^((m+n-l)/2)
+# linearization_λ(::Type{ChebyshevHermiteBasis}, l, m, n) = 1

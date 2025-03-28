@@ -1,4 +1,5 @@
 # represent the   basis x^(mbar) = x⋅(x-1)⋯(x-m+1) ∈ Πm
+struct FallingFactorialBasis <: AbstractCDOPBasis end
 """
     FallingFactorial{T}
 
@@ -17,7 +18,7 @@ system and classical discrete orthogonal polynomials are given.
 julia> using Polynomials, SpecialPolynomials
 
 julia> p = basis(FallingFactorial, 3)
-FallingFactorial(1.0⋅x³̲)
+Polynomials.MutableDensePolynomial(1.0⋅x³̲)
 
 julia> x = variable(Polynomial)
 Polynomial(1.0*x)
@@ -27,23 +28,25 @@ true
 ```
 
 """
-struct FallingFactorial{T<:Number,X} <: AbstractSpecialPolynomial{T,X}
-    coeffs::Vector{T}
-    function FallingFactorial{T,X}(coeffs::Vector{T}) where {T<:Number,X}
-        length(coeffs) == 0 && return new{T,X}(zeros(T, 1))
-        last_nz = findlast(!iszero, coeffs)
-        last = max(1, last_nz === nothing ? 0 : last_nz)
-        return new{T,X}(coeffs[1:last])
-    end
-    function FallingFactorial{T}(
-        coeffs::Vector{T},
-        var::Polynomials.SymbolLike=:x,
-    ) where {T<:Number}
-        FallingFactorial{T,Symbol(var)}(coeffs)
-    end
-end
+FallingFactorial = MutableDensePolynomial{FallingFactorialBasis}
 
-Polynomials.@register FallingFactorial
+# struct FallingFactorial{T<:Number,X} <: AbstractSpecialPolynomial{T,X}
+#     coeffs::Vector{T}
+#     function FallingFactorial{T,X}(coeffs::Vector{T}) where {T<:Number,X}
+#         length(coeffs) == 0 && return new{T,X}(zeros(T, 1))
+#         last_nz = findlast(!iszero, coeffs)
+#         last = max(1, last_nz === nothing ? 0 : last_nz)
+#         return new{T,X}(coeffs[1:last])
+#     end
+#     function FallingFactorial{T}(
+#         coeffs::Vector{T},
+#         var::Polynomials.SymbolLike=:x,
+#     ) where {T<:Number}
+#         FallingFactorial{T,Symbol(var)}(coeffs)
+#     end
+# end
+
+# Polynomials.@register FallingFactorial
 export FallingFactorial
 
 # modified from  Polynomials.unicode_exponent
@@ -75,7 +78,7 @@ function Polynomials.showterm(
     return true
 end
 
-function Polynomials.evalpoly(x, p::FallingFactorial)
+function Polynomials.evalpoly(x, p::AbstractUnivariatePolynomial{FallingFactorialBasis})
     d = degree(p)
     d <= 0 && return p[0] * one(x)
 
@@ -99,16 +102,27 @@ function Polynomials.variable(::Type{P}) where {P<:FallingFactorial}
     ⟒(P){T,X}([zero(T), one(T)])
 end
 
-k0(P::Type{<:FallingFactorial}) = one(eltype(P))
+k0(P::Type{<:FallingFactorialBasis}) = 1
 
-Base.:*(p::FallingFactorial, q::FallingFactorial) =
-    convert(FallingFactorial, convert(Polynomial, p) * convert(Polynomial, q))
+for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+    @eval begin
+        function Base.:*(p::P, q::Q) where {B <: FallingFactorialBasis,X,
+                                            T, P<:$P{B,T,X},
+                                            S, Q<:$P{B,S,X}}
+            p′, q′ = convert.(Polynomial, (p, q))
+            convert(⟒(P), p′ * q′)
+        end
+    end
+end
+
+#Base.:*(p::FallingFactorial, q::FallingFactorial) =
+#    convert(FallingFactorial, convert(Polynomial, p) * convert(Polynomial, q))
 
 ## Connect FallingFactorial with AbstractCDOP
-function Base.convert(::Type{P}, q::Q) where {P<:FallingFactorial,Q<:AbstractCDOP}
+function Base.convert(::Type{P}, q::Q) where {P<:FallingFactorial,Q<:AbstractCDOPPolynomial}
     _convert_cop(P, q)
 end
-function Base.convert(::Type{P}, q::Q) where {P<:AbstractCDOP,Q<:FallingFactorial}
+function Base.convert(::Type{P}, q::Q) where {P<:AbstractCDOPPolynomial,Q<:FallingFactorial}
     _convert_cop(P, q)
 end
 
@@ -118,7 +132,7 @@ function connection_m(
     ::Type{Q},
     m,
     n,
-) where {P<:AbstractCDOP,Q<:FallingFactorial}
+) where {P<:AbstractCDOPBasis,Q<:FallingFactorialBasis}
     a, b, c, d, e = abcde(P)
 
     c₀ = (a * n + a * m - a + d) * (n - m)
@@ -136,7 +150,7 @@ function connection_m(
     ::Type{Q},
     m,
     n,
-) where {P<:FallingFactorial,Q<:AbstractCDOP}
+) where {P<:FallingFactorialBasis,Q<:AbstractCDOPBasis}
     ā, b̄, c̄, d̄, ē = abcde(Q)
 
     c₀ =
@@ -189,13 +203,14 @@ end
 function Base.convert(
     ::Type{P},
     q::Q,
-) where {P<:Polynomials.StandardBasisPolynomial,Q<:FallingFactorial}
+) where {P<:Polynomials.StandardBasisPolynomial,Q<:AbstractUnivariatePolynomial{FallingFactorialBasis}}
     q(variable(P))
 end
 function Base.convert(
     ::Type{P},
     q::Q,
-) where {P<:FallingFactorial,Q<:Polynomials.StandardBasisPolynomial}
+) where {P<:AbstractUnivariatePolynomial{FallingFactorialBasis},
+         Q<:Polynomials.StandardBasisPolynomial}
     connection(P, q)
 end
 
@@ -211,7 +226,7 @@ end
 function Base.iterate(
     o::Connection{P,Q},
     state=nothing,
-) where {P<:FallingFactorial,Q<:Polynomials.StandardBasisPolynomial}
+) where {P<:FallingFactorialBasis,Q<:Polynomials.StandardBasis}
     n, k = o.n, o.k
     if state == nothing
         j = k

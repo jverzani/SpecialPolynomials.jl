@@ -28,8 +28,8 @@ SpecialPolynomials.AbstractSpecialPolynomial
 
 ```@docs
 SpecialPolynomials.AbstractOrthogonalPolynomial
-SpecialPolynomials.AbstractCCOP
-SpecialPolynomials.AbstractCDOP
+SpecialPolynomials.AbstractCCOPBasis
+SpecialPolynomials.AbstractCDOPBasis
 ```
 
 ## Implemented polynomial  types
@@ -86,13 +86,7 @@ SpecialPolynomials.lagrange_barycentric_nodes_weights
 
 A new polynomial system  of classical type can  be specified fairly  succinctly,  provided the 5 constants  for the  `abcde`  method are known.
 
-Polynomial systems  can also be generated  through  an associated weight function.
-
-```@docs
-WeightFunction
-DiscreteWeightFunction
-```
-
+Polynomial systems  can also be generated  through  an associated weight function, but the code base currently needs some tending, so this feature is not enabled.
 
 ### Interpolating polynomials
 

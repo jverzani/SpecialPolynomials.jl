@@ -1,3 +1,27 @@
+#=
+struct DualBernstein{𝐍,α,β,T,X} <: AbstractBernstein{T,X}
+    coeffs::Vector{T}
+    function DualBernstein{𝐍,α,β,T,X}(coeffs::AbstractVector{T}) where {𝐍,α, β,T,X}
+        # coeffs is length 𝐍 + 1 make sure
+        N = length(coeffs)
+        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
+        if N < 𝐍
+            coeffs = vcat(coeffs, zeros(𝐍 - N + 1))
+        end
+        return new{𝐍,α,β,T,X}(coeffs)
+    end
+end
+function DualBernstein{𝐍,α,β}(coeffs::AbstractVector{T}; var=:x) where {𝐍,α, β,T}
+        N = findlast(!iszero, coeffs)
+        N == nothing && return new{𝐍,α,β,T,X}(zeros(T, 0))
+        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
+        return DualBernstein{𝐍,α,β,T,var}(coeffs[1:N])
+    end
+
+
+=#
+struct DualBernsteinBasis{𝐍,α,β} <: AbstractBasis end
+
 """
 
     DualBernstein{N, α, β, T, X}
@@ -51,26 +75,13 @@ julia> ip(λ,λ, α, β)
 
 The implementation follows that of [Chudy and Woźny](https://arxiv.org/abs/2004.09801).
 """
-struct DualBernstein{𝐍,α,β,T,X} <: AbstractBernstein{T,X}
-    coeffs::Vector{T}
-    function DualBernstein{𝐍,α,β,T,X}(coeffs::AbstractVector{T}) where {𝐍,α, β,T,X}
-        # coeffs is length 𝐍 + 1 make sure
-        N = length(coeffs)
-        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
-        if N < 𝐍
-            coeffs = vcat(coeffs, zeros(𝐍 - N + 1))
-        end
-        return new{𝐍,α,β,T,X}(coeffs)
-    end
-end
-
-function DualBernstein{𝐍,α,β}(coeffs::AbstractVector{T}; var=:x) where {𝐍,α, β,T}
-        N = findlast(!iszero, coeffs)
-        N == nothing && return new{𝐍,α,β,T,X}(zeros(T, 0))
-        (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
-        return DualBernstein{𝐍,α,β,T,var}(coeffs[1:N])
-    end
+DualBernstein{𝐍,α,β} = MutableDensePolynomial{DualBernsteinBasis{𝐍,α,β}} where
+{𝐍,α,β}
 export DualBernstein
+
+Polynomials._typealias(::Type{P}) where {P<:DualBernstein{𝐍,α,β}} where {𝐍,α,β} = "DualBernsteinᵅᵝ"
+export DualBernstein
+
 Polynomials.@registerN DualBernstein 𝐍
 Polynomials.:⟒(::Type{<:DualBernstein{𝐍,α,β}}) where {𝐍,α,β} = Bernstein{𝐍,α,β}
 

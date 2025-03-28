@@ -1,5 +1,6 @@
 # Chebyshev Polynomials of first and second kind
-@register0 Chebyshev AbstractCCOP0
+
+struct ChebyshevBasis <: AbstractCCOPBasis end
 export Chebyshev
 """
     Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
@@ -31,19 +32,21 @@ Chebyshev(1.0⋅T₀(x))
 !!! note
     The sample chapter available online of [Numerical Methods for Special Functions" by Amparo Gil, Javier Segura, and Nico Temme](https://archive.siam.org/books/ot99/OT99SampleChapter.pdf) gives a very nice overview of these polynomials.
 """
-Chebyshev
+const Chebyshev = MutableDensePolynomial{ChebyshevBasis}
+Polynomials._typealias(::Type{P}) where {P<:Chebyshev} = "Chebyshev"
+Polynomials.basis_symbol(::Type{<:AbstractDenseUnivariatePolynomial{<:ChebyshevBasis}}) = "T"
 
-basis_symbol(::Type{<:Chebyshev}) = "T"
-Polynomials.domain(::Type{<:Chebyshev}) = Polynomials.Interval{Open,Open}(-1, 1)
-weight_function(::Type{<:Chebyshev}) = x -> one(x) / sqrt(one(x) - x^2)
-generating_function(::Type{<:Chebyshev}) = (t, x) -> (1 - t * x) / (1 - 2 * t * x - t^2)
-function classical_hypergeometric(P::Type{<:Chebyshev}, n, x)
+Polynomials.domain(::Type{<:ChebyshevBasis}) = Polynomials.Interval{Open,Open}(-1, 1)
+
+weight_function(::Type{<:ChebyshevBasis}) = x -> one(x) / sqrt(one(x) - x^2)
+generating_function(::Type{<:ChebyshevBasis}) = (t, x) -> (1 - t * x) / (1 - 2 * t * x - t^2)
+function classical_hypergeometric(P::Type{<:ChebyshevBasis}, n, x)
     as = (-n, n)
     bs = (one(eltype(P)) / 2,)
     pFq(as, bs, (1 - x) / 2)
 end
 
-function eval_basis(::Type{Chebyshev}, n, x)
+function eval_basis(::Type{<:ChebyshevBasis}, n, x)
     if abs(x) <= 1
         cos(n * acos(x))
     elseif x > 1
@@ -53,51 +56,56 @@ function eval_basis(::Type{Chebyshev}, n, x)
     end
 end
 
-abcde(::Type{<:Chebyshev}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -1, 0))
+abcde(::Type{<:ChebyshevBasis}) = (a=-1, b=0, c=1, d=-1, e=0)
 
-k0(P::Type{<:Chebyshev}) = one(eltype(P))
-k1k0(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P))
+k0(B::Type{<:ChebyshevBasis}) = 1
+k1k0(B::Type{<:ChebyshevBasis}, n::Int) = iszero(n) ? 1 : 2
+kn(B::Type{<:ChebyshevBasis}, n::Int) = iszero(n) ? 1 : 2^(n-1)
 
-norm2(P::Type{<:Chebyshev}, n::Int) = (iszero(n) ? 1 : 1 / 2) * pi
-ω₁₀(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) / sqrt(2) : one(eltype(P)) # √(norm2(n+1)/norm2(n)
+norm2(B::Type{<:ChebyshevBasis}, n::Int) = (iszero(n) ? 1 : 1 / 2) * pi
+ω₁₀(B::Type{<:ChebyshevBasis}, n::Int) = iszero(n) ? 1 / sqrt(2) : 1 # √(norm2(n+1)/norm2(n)
 
-leading_term(P::Type{<:Chebyshev}, n::Int) =
-    iszero(n) ? one(eltype(P)) : (2 * one(eltype(P)))^(n - 1)
+leading_term(B::Type{<:ChebyshevBasis}, n::Int) =
+    iszero(n) ? 1 : 2^(n - 1)
 
 # directly adding these gives a large (20x) speed up in polynomial evaluation
-An(P::Type{<:Chebyshev}, n::Int) = iszero(n) ? one(eltype(P)) : 2 * one(eltype(P))
-Bn(P::Type{<:Chebyshev}, n::Int) = zero(eltype(P))
-Cn(P::Type{<:Chebyshev}, n::Int) = one(eltype(P))
+An(B::Type{<:ChebyshevBasis}, n::Int) = iszero(n) ? 1 : 2
+Bn(B::Type{<:ChebyshevBasis}, n::Int) = 0
+Cn(B::Type{<:ChebyshevBasis}, n::Int) = 1
 
 #
-C̃n(P::Type{<:Chebyshev}, ::Val{1}) = one(eltype(P)) / 2
-ĉ̃n(P::Type{<:Chebyshev}, ::Val{0}) = one(eltype(P)) / 4
-ĉ̃n(P::Type{<:Chebyshev}, ::Val{1}) = Inf
-γ̃n(P::Type{<:Chebyshev}, n::Int) = (n == 1) ? one(eltype(P)) / 2 : n * one(eltype(P)) / 4
+C̃n(P::Type{<:ChebyshevBasis}, ::Val{1}) = 1 // 2
+ĉ̃n(P::Type{<:ChebyshevBasis}, ::Val{0}) = 1 // 4
+ĉ̃n(P::Type{<:ChebyshevBasis}, ::Val{1}) = Inf
+γ̃n(P::Type{<:ChebyshevBasis}, n::Int) = (n == 1) ? 1 // 2 : n * 1 // 4
 
-function ⊗(::Type{<:Chebyshev}, p1::Chebyshev{T,X}, p2::Chebyshev{S,Y}) where {T,X,S,Y}
-    isconstant(p1) && return p2 * p1[0]
-    isconstant(p2) && return p1 * p2[0]
-    assert_same_variable(X, Y) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+    @eval begin
+        function Base.:*(p::P, q::Q) where {B<:ChebyshevBasis,X,
+                                            T, P<:$P{B,T,X},
+                                            S, Q<:$P{B,S,X}}
+            ⊗(B, p, q)
+        end
+    end
+end
 
-    R = promote_type(T, S)
-    z1 = _c_to_z(convert(Vector{R}, p1.coeffs))
-    z2 = _c_to_z(convert(Vector{R}, p2.coeffs))
+
+function ⊗(::Type{<:ChebyshevBasis}, p1::AbstractUnivariatePolynomial{B,T,X}, p2::AbstractUnivariatePolynomial{B,S,X}) where {B,T,S,X}
+    R = Base.promote_op(/, promote_type(T, S), Int)
+    z1 = _c_to_z(convert(Vector{R}, coeffs(p1)))
+    z2 = _c_to_z(convert(Vector{R}, coeffs(p2)))
     prod = Polynomials.fastconv(z1, z2)
-    ret = Chebyshev(_z_to_c(prod), X)
-    return truncate(ret)
+    ret = ⟒(p1){R,X}(_z_to_c(prod))
 end
 
 ## Defining p' and ∫dp directly speeds things up, and works around an issue with ĉ
-function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
-    order < 0 && throw(ArgumentError("Order of derivative must be non-negative"))
+function Polynomials.derivative(p::P) where {T,X,P<:AbstractUnivariatePolynomial{Chebyshev,T,X}}
     R = eltype(one(T) / 1)
-    P = Chebyshev{R,X}
-    order == 0 && return P(coeffs(p))
-    hasnan(p) && return P([NaN])
-    order > length(p) && return zero(P)
+    P′ = ⟒(P){R,X}
+    hasnan(p)::Bool && return P′([NaN])
+    isconstant(p) && return zero(P′)
 
-    q = P(copy(coeffs(p)))
+    q = P′(copy(coeffs(p))) # XXX use vector, not ...
     n = length(p)
     der = Vector{R}(undef, n)
 
@@ -111,29 +119,28 @@ function Polynomials.derivative(p::Chebyshev{T,X}, order::Int=1) where {T,X}
     der[1] = q[1]
 
     dp = P(der)
-    return order > 1 ? derivative(dp, order - 1) : dp
+    dp
 end
 
-function Polynomials.integrate(p::P, C::S) where {T,X,P<:Chebyshev{T,X},S<:Number}
-    R = promote_type(eltype(one(T) / 1), S)
-    if hasnan(p) || isnan(C)
-        return ⟒{P}{R,X}([NaN])
-    end
-    n = length(p)
-    if n == 1
-        return ⟒{P}{R,X}([C, p[0]])
-    end
-    a2 = Vector{R}(undef, n + 1)
+function Polynomials.integrate(p::P) where {T,X,P<:AbstractUnivariatePolynomial{<:ChebyshevBasis}{T,X}}
+    R = eltype(one(T)/1)
+    P′ = ⟒(P){R,X}
+    hasnan(p) && return P′([NaN])
+
+    n = degree(p)
+    n ≤ 0 && return P′([0, p[0]])
+
+    a2 = Vector{R}(undef, n + 2)
     a2[1] = zero(R)
     a2[2] = p[0]
     a2[3] = p[1] / 4
-    @inbounds for i in 2:(n - 1)
+    @inbounds for i in 2:(n)
         a2[i + 2] = p[i] / (2 * (i + 1))
         a2[i] -= p[i] / (2 * (i - 1))
     end
-    a2[1] = C - sum(a2[1 + i] for i in 2:2:n)
+    a2[1] =  - sum(a2[1 + i] for i in 2:2:(n+1))
 
-    return ⟒(P){R,X}(a2)
+    return P′(a2)
 end
 
 function Polynomials.companion(p::Chebyshev{T}) where {T}
@@ -180,13 +187,13 @@ end
 
 # nodes/weights for fitting a polynomial using Lagrange polynomial
 # cf. https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
-function gauss_nodes_weights(::Type{<:Chebyshev}, n::Int)
+function gauss_nodes_weights(::Type{<:ChebyshevBasis}, n::Int)
     xs = cos.(pi/2n * (2*(n:-1:1).-1))
     ws = pi/n * ones(n)
     xs, ws
 end
 
-function lagrange_barycentric_nodes_weights(::Type{<:Chebyshev}, n::Int)
+function lagrange_barycentric_nodes_weights(::Type{<:ChebyshevBasis}, n::Int)
     xs = cospi.((j + 1 / 2) / (n + 1) for j in 0:n)
     ws = sinpi.((j + 1 / 2) / (n + 1) for j in 0:n)
     for j ∈ 1:2:n
@@ -328,20 +335,24 @@ end
 ##
 ## --------------------------------------------------
 ##
-@register0 MonicChebyshev AbstractCCOP0
+
+struct MonicChebyshevBasis <: AbstractCCOPBasis end
+ϟ(::Type{MonicChebyshevBasis})  = ChebyshevBasis
+@register_monic(MonicChebyshevBasis)
+#kn(::Type{MonicChebyshevBasis}) = 1.0
+
+MonicChebyshev = MutableDensePolynomial{MonicChebyshevBasis}
+Polynomials._typealias(::Type{P}) where {P<:MonicChebyshev} = "MonicChebyshev"
 export MonicChebyshev
-ϟ(::Type{<:MonicChebyshev}) = Chebyshev
-ϟ(::Type{<:MonicChebyshev{T}}) where {T} = Chebyshev{T}
-@register_monic(MonicChebyshev)
-C̃n(P::Type{<:MonicChebyshev}, ::Val{1}) = one(eltype(P))
 
-##
+#
+struct OrthonormalChebyshevBasis <: AbstractCCOPBasis end
+ϟ(::Type{OrthonormalChebyshevBasis}) = ChebyshevBasis
+@register_orthonormal(OrthonormalChebyshevBasis)
 
-@register0 OrthonormalChebyshev AbstractCCOP0
+OrthonormalChebyshev = MutableDensePolynomial{OrthonormalChebyshevBasis}
+Polynomials._typealias(::Type{P}) where {P<:OrthonormalChebyshev} = "OrthonormalChebyshev"
 export OrthonormalChebyshev
-ϟ(::Type{<:OrthonormalChebyshev}) = Chebyshev
-ϟ(::Type{<:OrthonormalChebyshev{T}}) where {T} = Chebyshev{T}
-@register_orthonormal(OrthonormalChebyshev)
 
 ##
 ##  --------------------------------------------------
@@ -406,8 +417,7 @@ end
 ## --------------------------------------------------
 ##
 
-@register0 ChebyshevU AbstractCCOP0
-export ChebyshevU
+struct ChebyshevUBasis <: AbstractCCOPBasis end
 """
     ChebyshevU{T}
 
@@ -434,40 +444,48 @@ julia> roots(p)
  0.27429188517743175 + 0.0im
 ```
 """
-ChebyshevU
+const ChebyshevU = MutableDensePolynomial{ChebyshevUBasis}
+export ChebyshevU
+Polynomials._typealias(::Type{P}) where {P<:ChebyshevU} = "ChebyshevU"
+Polynomials.basis_symbol(::Type{<:AbstractDenseUnivariatePolynomial{ChebyshevUBasis}}) = "U"
 
-basis_symbol(::Type{<:ChebyshevU}) = "U"
-weight_function(::Type{<:ChebyshevU}) = x -> sqrt(one(x) - x^2)
-generating_function(::Type{<:ChebyshevU}) = (t, x) -> 1 / (1 - 2t * x + t^2)
-function classical_hypergeometric(P::Type{<:ChebyshevU}, n, x)
+weight_function(::Type{<:ChebyshevUBasis}) = x -> sqrt(one(x) - x^2)
+generating_function(::Type{<:ChebyshevUBasis}) = (t, x) -> 1 / (1 - 2t * x + t^2)
+function classical_hypergeometric(::Type{<:ChebyshevUBasis}, n, x)
     as = (-n, n + 2)
-    bs = ((3one(eltype(P))) / 2,)
+    bs = (3 // 2,)
     (n + 1) * pFq(as, bs, (1 - x) / 2)
 end
 
-Polynomials.domain(::Type{<:ChebyshevU}) = Polynomials.Interval(-1, 1)
+Polynomials.domain(::Type{<:ChebyshevUBasis}) = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:ChebyshevU}) = NamedTuple{(:a, :b, :c, :d, :e)}((-1, 0, 1, -3, 0))
+abcde(::Type{<:ChebyshevUBasis}) = (a=-1, b=0, c=1, d=-3, e=0)
 
-kn(P::Type{<:ChebyshevU}, n::Int) = (2 * one(eltype(P)))^n
-k1k0(P::Type{<:ChebyshevU}, n::Int) = 2 * one(eltype(P))
-k1k_1(P::Type{<:ChebyshevU}, n::Int) = 4 * one(eltype(P))
+kn(::Type{<:ChebyshevUBasis}, n::Int) = 2^n
+k1k0(::Type{<:ChebyshevUBasis}, n::Int) = 2
+k1k_1(::Type{<:ChebyshevUBasis}, n::Int) = 4
 
-norm2(P::Type{<:ChebyshevU}, n::Int) = pi / 2
-ω₁₀(P::Type{<:ChebyshevU}, n::Int) = one(eltype(P))
+norm2(::Type{<:ChebyshevUBasis}, n::Int) = pi / 2
+ω₁₀(::Type{<:ChebyshevUBasis}, n::Int) = 1
 
 # directly adding these gives a 5x speed up in polynomial evaluation
-An(::Type{<:ChebyshevU}, n::Int) = 2
-Bn(::Type{<:ChebyshevU}, n::Int) = 0
-Cn(::Type{<:ChebyshevU}, n::Int) = 1
+An(::Type{<:ChebyshevUBasis}, n::Int) = 2
+Bn(::Type{<:ChebyshevUBasis}, n::Int) = 0
+Cn(::Type{<:ChebyshevUBasis}, n::Int) = 1
 # work around cancellation
-ĉ̃n(P::Type{<:ChebyshevU}, n::Int) = -one(eltype(P)) / (4n + 4)
+ĉ̃n(::Type{<:ChebyshevUBasis}, n::Int) = -1 / (4n + 4)
 
-function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where {T,X,S,Y}
-    isconstant(p) && return q * p[0]
-    isconstant(q) && return p * q[0]
-    assert_same_variable(X, Y) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+    @eval begin
+        function Base.:*(p::P, q::Q) where {B <: ChebyshevUBasis,X,
+                                            T, P<:$P{B,T,X},
+                                            S, Q<:$P{B,S,X}}
+            ⊗(B, p, q)
+        end
+    end
+end
 
+function ⊗(::Type{<:ChebyshevUBasis}, p::AbstractUnivariatePolynomial{B,T,X}, q::AbstractUnivariatePolynomial{B,S,X}) where {B,T,S,X}
     M, N = degree(p), degree(q)
     R = promote_type(T, S)
     out = zeros(R, M + N + 1)
@@ -484,26 +502,26 @@ function ⊗(::Type{<:ChebyshevU}, p::ChebyshevU{T,X}, q::ChebyshevU{S,Y}) where
         end
     end
 
-    ChebyshevU{R,X}(out)
+    ⟒(p){R,X}(out)
 end
 
 ## σ_P = σ_Q:e
-Base.convert(::Type{Q}, p::P) where {Q<:Chebyshev,P<:ChebyshevU} = _convert_cop(Q, p)
-Base.convert(::Type{Q}, p::P) where {Q<:ChebyshevU,P<:Chebyshev} = _convert_cop(Q, p)
+Base.convert(::Type{Q}, p::P) where {Q<:Chebyshev,P<:AbstractDenseUnivariatePolynomial{ChebyshevUBasis}} = _convert_cop(Q, p)
+Base.convert(::Type{Q}, p::P) where {Q<:AbstractDenseUnivariatePolynomial{ChebyshevUBasis},P<:Chebyshev} = _convert_cop(Q, p)
 
 ##
 ## --------------------------------------------------
 ##
 ## nodes/weights
 
-function gauss_nodes_weights(::Type{<:ChebyshevU}, n::Int)
+function gauss_nodes_weights(::Type{<:ChebyshevUBasis}, n::Int)
     # from https://github.com/JuliaApproximation/FastGaussQuadrature.jl/blob/master/src/gausschebyshev.jl
     xs = cospi.(k / (n + 1) for k = n:-1:1)
     ws = [π/(n + 1) * sin(k / (n + 1) * π)^2 for k = n:-1:1]
     xs, ws
 end
 
-function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevU}, n::Int)
+function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevUBasis}, n::Int)
     xs = cospi.((0:n) / n)
     ws = ones(eltype(P), n + 1)
     ws[1] /= 2
@@ -514,14 +532,20 @@ function lagrange_barycentric_nodes_weights(P::Type{<:ChebyshevU}, n::Int)
     xs, ws
 end
 
-@register0 MonicChebyshevU AbstractCCOP0
-export MonicChebyshevU
-ϟ(::Type{<:MonicChebyshevU}) = ChebyshevU
-ϟ(::Type{<:MonicChebyshevU{T}}) where {T} = ChebyshevU{T}
-@register_monic(MonicChebyshevU)
+# Monic version
+struct MonicChebyshevUBasis <: AbstractCCOPBasis end
+ϟ(::Type{MonicChebyshevUBasis}) =  ChebyshevUBasis
+@register_monic(MonicChebyshevUBasis)
 
-@register0 OrthonormalChebyshevU AbstractCCOP0
+MonicChebyshevU = MutableDensePolynomial{MonicChebyshevUBasis}
+Polynomials._typealias(::Type{P}) where {P<:MonicChebyshevU} = "MonicChebyshevU"
+export MonicChebyshevU
+
+# Orthonormal version
+struct OrthonormalChebyshevUBasis <: AbstractCCOPBasis end
+ϟ(::Type{OrthonormalChebyshevUBasis}) = ChebyshevUBasis
+@register_orthonormal(OrthonormalChebyshevUBasis)
+
+OrthonormalChebyshevU = MutableDensePolynomial{OrthonormalChebyshevUBasis}
+Polynomials._typealias(::Type{P}) where {P<:OrthonormalChebyshevU} = "OrthonormalChebyshevU"
 export OrthonormalChebyshevU
-ϟ(::Type{<:OrthonormalChebyshevU}) = ChebyshevU
-ϟ(::Type{<:OrthonormalChebyshevU{T}}) where {T} = ChebyshevU{T}
-@register_orthonormal(OrthonormalChebyshevU)

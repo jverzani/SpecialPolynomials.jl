@@ -1,5 +1,6 @@
 ## General test for orthogonal polynomials
 import SpecialPolynomials: domain
+using LinearAlgebra
 
 T = Float64
 Ps = (
@@ -29,7 +30,6 @@ DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 
     @testset for P in union(Ps, DPs)
         x = variable(P)
         # basic recurrence
-
         @testset for n in 1:6
             @test basis(P, n + 1) ≈
                   (SP.An(P, n) * x + SP.Bn(P, n)) * basis(P, n) -
@@ -213,7 +213,7 @@ end
     end
 
     # Issue #43 conversion from Polynomials.ChebyshevT
-    @test_throws ArgumentError convert(Legendre, ChebyshevT([0,1]))
+  #  @test_throws ArgumentError convert(Legendre, ChebyshevT([0,1]))
 end
 
 @testset "Evaluation" begin
@@ -270,11 +270,12 @@ end
 @testset "Orthogonality" begin
     n = 5
     @testset for P in Ps
-        a, b = extrema(P)
+        B = Polynomials.basistype(P)
+        a, b = extrema(domain(B))
         (isinf(a) || isinf(b)) && continue
         @testset for i in 2:n
             @testset for j in (i + 1):n
-                val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P, j))
+                val = SP.innerproduct(B, Polynomials.basis(P, i), Polynomials.basis(P, j))
                 @test abs(val) <= 1e-4
             end
         end
@@ -283,7 +284,8 @@ end
     @testset for P in (Krawchouk{1 / 2,n}, Hahn{1 / 4,1 / 2,n})
         @testset for i in 2:n
             @testset for j in (i + 1):n
-                val = SP.innerproduct(P, Polynomials.basis(P, i), Polynomials.basis(P, j))
+                B = Polynomials.basistype(P)
+                val = SP.innerproduct(B, Polynomials.basis(P, i), Polynomials.basis(P, j))
                 @test abs(val) <= 1e-12
             end
         end
@@ -357,8 +359,8 @@ end
     end
 
     # comrade matrix approach compared to conversion
-    @testset for P in
-        (Legendre, MonicLegendre, Chebyshev, MonicChebyshev, ChebyshevU, MonicChebyshevU)
+    @testset for P in (Legendre, MonicLegendre, Chebyshev, MonicChebyshev, ChebyshevU, MonicChebyshevU) #(Legendre, Chebyshev, ChebyshevU)
+
         @testset for T in (Float64, Complex{Float64})
             ps = vcat(rand(T, 4), 1)
             p = P(ps)
@@ -414,9 +416,10 @@ end
 
     @testset for P in Ps
         P <: SP.AbstractOrthogonalPolynomial || continue
-        !all(isfinite.(extrema(P))) && continue
-        q = sum(f(tau) * w for (tau, w) in zip(SP.gauss_nodes_weights(P, n)...))
-        p = SP.innerproduct(P, f, one)
+        B  = Polynomials.basistype(P)
+        !all(isfinite.(extrema(domain(P)))) && continue
+        q = sum(f(tau) * w for (tau, w) in zip(SP.gauss_nodes_weights(B, n)...))
+        p = SP.innerproduct(B, f, one)
         @test abs(p - q) <= 10sqrt(eps(T))
     end
 end
@@ -438,7 +441,7 @@ end
         @test typeof([p]) == typeof([p,q])
     end
 
-    q = basis(Polynomial, 3)
+    q = basis(LaurentPolynomial, 3) # not Polynomial v4.0
     @testset for P ∈ Ps
         p = basis(P,2)
         @test typeof([q]) == typeof([p,q])

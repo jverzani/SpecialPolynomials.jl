@@ -1,6 +1,5 @@
 ## ShiftedJacobi Polynomials
-@registerN ShiftedJacobi AbstractCCOP2 α β
-export ShiftedJacobi
+struct ShiftedJacobiBasis{α,β} <: AbstractCCOPBasis end
 
 """
     ShiftedJacobi{α,  β, T}
@@ -13,34 +12,37 @@ Implements the [ShiftedJacobi](https://arxiv.org/abs/2004.09801) orthogonal poly
 julia> using Polynomials, SpecialPolynomials
 
 julia> b = ShiftedJacobi{1,1}([0,0,1])
-typename(ShiftedJacobi){1,1}(1⋅Rᵅᵝ₂(x))
+ShiftedJacobi{1,1}(1⋅Rᵅᵝ₂(x))
 
 julia> convert(Polynomial, b)
 Polynomial(3.0 - 15.0*x + 15.0*x^2)
 ```
 
-Note: these are not `Jᵢᵅᵝ((x+1)/2)`, `J=basis(Jacobi{α,β},i)`.
+Note: These are `Jᵢᵅᵝ(2x-1)`, `J=basis(Jacobi{α,β},i)`.
 """
-ShiftedJacobi
+ShiftedJacobi = MutableDensePolynomial{ShiftedJacobiBasis{α,β}} where {α,β}
+export ShiftedJacobi
 
-basis_symbol(::Type{<:ShiftedJacobi{α,β}}) where {α,β} = "Rᵅᵝ"
-Polynomials.domain(::Type{<:ShiftedJacobi{α,β}}) where {α,β} =
+Polynomials._typealias(::Type{P}) where {α, β, P<:ShiftedJacobi{α, β}} = "ShiftedJacobi{$α,$β}"
+
+basis_symbol(::Type{<:AbstractUnivariatePolynomial{ShiftedJacobiBasis{α,β}}}) where {α,β} = "Rᵅᵝ"
+Polynomials.domain(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} =
     Polynomials.Interval{β >= 0 ? Open : Closed,α >= 0 ? Open : Closed}(0, 1)
 
 # use ζ₀(n)Rₙ + ζ₁(n)Rₙ₊₁ + ζ₂(n)Rₙ₊₂ = 0
-function ζ₀(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function ζ₀(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     σ = α + β + 1
     -2(n+α+1)*(n+β+1)*(2n+σ+3)
 end
-function ζ₁ₓ(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function ζ₁ₓ(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     σ = α + β + 1
     (2n+σ+2) * (2n+σ+1) * (2n+σ+3) * 2
 end
-function ζ₁c(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function ζ₁c(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     σ = α + β + 1
     (2n+σ+2) * ((2n+σ+1) * (2n+σ+3) * (-1) + α^2 - β^2)
 end
-function ζ₂(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function ζ₂(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     σ = α + β + 1
     -2 * (n+2) * (n+σ+1) * (2n+σ+1)
 end
@@ -48,11 +50,11 @@ end
 
 
 # Pₙ₊₁ = (Aₙ*x + Bₙ)Pₙ - CₙPₙ₋₁
-function An(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function An(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     n == 0 && return α + β + 2
     -ζ₁ₓ(P,n-1)/ζ₂(P,n-1)
 end
-function Bn(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function Bn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     if iszero(n)
         num,den = (α^2 - β^2 - (α + β)*(α + β + 2)), (2*(α + β))
         iszero(num) && return -1 - β
@@ -60,7 +62,7 @@ function Bn(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
     end
     -ζ₁c(P,n-1)/ζ₂(P,n-1)
 end
-function Cn(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function Cn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     if n == 0
         num, den = α*β*(α + β + 2), ((α + β)*(α + β + 1))
         if iszero(num)
@@ -78,7 +80,7 @@ function Cn(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
 end
 
 #kn =  1/2^n ⋅ choose(2n+α+β, n) = (2n+α+β)_n / (2^b  n!)
-function leading_term(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
+function leading_term(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     a = α + β + n + 1
     nn = n
     tot = one(eltype(P)) / 1
@@ -90,10 +92,10 @@ function leading_term(P::Type{<:ShiftedJacobi{α,β}}, n::Int) where {α,β}
     tot
 end
 
-weight_function(::Type{<:ShiftedJacobi{α,β}}) where {α,β} = x -> (1 - x)^α * x^β
-#generating_function(::Type{<:ShiftedJacobi{α,β}}) where {α,β}
+weight_function(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} = x -> (1 - x)^α * x^β
+#generating_function(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β}
 
-function classical_hypergeometric(::Type{<:ShiftedJacobi{α,β}}, n, x) where {α,β}
+function classical_hypergeometric(::Type{<:ShiftedJacobiBasis{α,β}}, n, x) where {α,β}
     (α ≤ -1 || β ≤ -1) && throw(ArgumentError("α and β must be > -1"))
 
     Rₙ =  Pochhammer(α+1,n)/factorial(n)

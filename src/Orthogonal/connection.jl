@@ -33,29 +33,40 @@
 
 ## For `AbstractCCOP` polynomials, Koepf and Schmersau present recursive formulas for the connection coefficients
 ## between Q and the standard basis, the standard and Q, and between P and Q when σ and σ̂ are the same. (This is the case when a polynomial system is parameterized, like Laguerre, Gegenbauer, Bessel, and  Jacobi.)
-
+#=
 ConvertibleTypes = Union{AbstractCOP,Polynomials.StandardBasisPolynomial,FallingFactorial}
+
 kn(::Type{P}, n) where {P<:Union{Polynomials.StandardBasisPolynomial,FallingFactorial}} =
     one(eltype(one(P)))
 k1k0(::Type{P}, n) where {P<:Union{Polynomials.StandardBasisPolynomial,FallingFactorial}} =
     one(eltype(one(P)))
 knk_1(::Type{P}, n) where {P<:Union{Polynomials.StandardBasisPolynomial,FallingFactorial}} =
     one(eltype(one(P)))
+=#
+
+kn(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
+k1k0(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
+knk_1(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
+
+#kn(::Type{B}, n) where {B <: FallingFactorialBasis} = 1
+#k1k0(::Type{B}, n) where {B <: FallingFactorialBasis} = 1
+#knk_1(::Type{B}, n) where {B <: FallingFactorialBasis} = 1
 
 ## If  the connection  coefficients for  (P,Q) satisfy c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ = 0 for some computable
 ##  values c₀,c₁,c₂ then this  will implement  `convert(Q,p::P)`
-function _convert_cop(::Type{Q}, p::P) where {P<:ConvertibleTypes,Q<:ConvertibleTypes}
+function _convert_cop(::Type{Q}, p::P) where {B<:Union{StandardBasis, AbstractCOPBasis},  P<:AbstractUnivariatePolynomial{B},
+                                              B′<:Union{StandardBasis, AbstractCOPBasis}, Q<:AbstractUnivariatePolynomial{B′}}
     d = degree(p)
     T, S = eltype(Q), eltype(p)  #
     R = typeof(one(T) * p[0] / 1)
     as = zeros(R, 1 + d)
 
-    λⱼⱼ = one(R) * k0(P) / k0(Q)
+    λⱼⱼ = one(R) * k0(B) / k0(B′)
 
     for j in 0:d
         λ = λⱼⱼ
 
-        λⱼⱼ *= k1k0(P, j) / k1k0(Q, j)
+        λⱼⱼ *= k1k0(B, j) / k1k0(B′, j)
 
         pⱼ = p[j]
         iszero(pⱼ) && continue
@@ -66,10 +77,10 @@ function _convert_cop(::Type{Q}, p::P) where {P<:ConvertibleTypes,Q<:Convertible
 
         C̃ⁱ⁺²ⱼ, C̃ⁱ⁺¹ⱼ = zero(R), C̃ʲⱼ  # for recursion starting  with C̃ʲ⁺¹ⱼ, C̃ʲⱼ
         for i in (j - 1):-1:0
-            λ *= k1k0(Q, i)
+            λ *= k1k0(B′, i)
 
             # c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ) = 0
-            c₀, c₁, c₂ = connection_m(P, Q, i, j)
+            c₀, c₁, c₂ = connection_m(B, B′, i, j)
             C̃ⁱⱼ = iszero(c₀) ? zero(R) : -one(R) * (c₁ * C̃ⁱ⁺¹ⱼ + c₂ * C̃ⁱ⁺²ⱼ) / c₀
             as[1 + i] += pⱼ * (λ * C̃ⁱⱼ)
 
@@ -83,7 +94,7 @@ end
 ## Use FastTransform for conversion, as possible, when loaded
 
 ##  Koepf and Schmersa Theorem 2, p11 connection for P to Q when σ = σ̂
-function connection_m(::Type{P}, ::Type{Q}, m, n) where {P<:AbstractCCOP,Q<:AbstractCCOP}
+function connection_m(::Type{P}, ::Type{Q}, m, n) where {P<:AbstractCCOPBasis,Q<:AbstractCCOPBasis}
     a, b, c, d, e = abcde(P)
     ā, b̄, c̄, d̄, ē = abcde(Q)
 
@@ -122,7 +133,7 @@ function connection_m(
     ::Type{Q},
     m,
     n,
-) where {P<:AbstractCCOP,Q<:Polynomials.StandardBasisPolynomial}
+) where {P<:AbstractCCOPBasis,Q<:StandardBasis}
     a, b, c, d, e = abcde(P)
 
     c0 = (m - n) ⋅ (a ⋅ n + d - a + a ⋅ m)
@@ -140,7 +151,7 @@ function connection_m(
     ::Type{Q},
     m,
     n,
-) where {P<:Polynomials.StandardBasisPolynomial,Q<:AbstractCCOP}
+) where {P<:Polynomials.StandardBasis,Q<:AbstractCCOPBasis}
     ā, b̄, c̄, d̄, ē = abcde(Q)
     ā², b̄², c̄², d̄², ē², m², n² = ā^2, b̄^2, c̄^2, d̄^2, ē^2, m^2, n^2
 
@@ -177,7 +188,7 @@ function connection(
     cs = zeros(T, n + 1)
 
     for k in 0:n
-        for (i, val) in Connection{P,Q}(n, k)
+        for (i, val) in Connection{basistype(P), basistype(Q)}(n, k)
             cs[1 + k] = muladd(q[i], val, cs[1 + k])
         end
     end
