@@ -35,7 +35,7 @@ include("Orthogonal/Hermite.jl")
 include("Orthogonal/Laguerre.jl")
 include("Orthogonal/Gegenbauer.jl")
 include("Orthogonal/Jacobi.jl")
-include("Orthogonal/ShiftedJacobi.jl")
+#include("Orthogonal/ShiftedJacobi.jl")
 include("Orthogonal/Legendre.jl")
 #include("Orthogonal/WeightFunction.jl")
 #=

@@ -1,4 +1,6 @@
 ## ShiftedJacobi Polynomials
+## This doesn't seem to be faster or more accurate than
+## that from Jacobi. Remove if all is good.
 struct ShiftedJacobiBasis{α,β} <: AbstractCCOPBasis end
 
 """

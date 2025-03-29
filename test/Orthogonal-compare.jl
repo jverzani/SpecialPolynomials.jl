@@ -1,4 +1,5 @@
 # Compare with tabulated values,  classical hypergeometric formulas
+using SpecialPolynomials: monic
 
 @testset "Bessel" begin
     T = Float64
@@ -202,6 +203,24 @@ end
             @test p(x) ≈ SP.classical_hypergeometric(Polynomials.basistype(P), n, x)
         end
     end
+
+    # Jacobi{α - 1/2, α-1/2 } = Gegenbauer{α}
+    # Legendre = Gegenbauer{1/2}
+    # ChebyshevU = Gegenbauer{1}
+    @testset for (alpha, Q) in (
+        (1/4, Jacobi{1/4 - 1/2, 1/4 - 1/2}),
+        (1, ChebyshevU),
+        (1/2, Legendre),
+    )
+        P = Gegenbauer{alpha}
+        @testset for i in 2:6
+            p = basis(P, i)
+            q = basis(Q, i)
+            monic(p)(x) ≈ monic(q)(x)
+        end
+    end
+
+
 end
 
 @testset "Jacobi" begin
@@ -209,16 +228,18 @@ end
     x = variable()
 
     # ChebyshevT = J(-1/2, -1/2)
+    # ChebyshevU = J(1/2, 1/2)
+    # Legendre = J(0,0)
     @testset for (alpha_beta, Q) in (
-        ((-1 / 2, -1 / 2), Chebyshev{T}),
-        ((1 / 2, 1 / 2), ChebyshevU{T}),
-        ((0, 0), Legendre{T}),
+        ((-1 / 2, -1 / 2), Chebyshev),
+        ((1 / 2, 1 / 2), ChebyshevU),
+        ((0, 0), Legendre),
     )
-        P = Jacobi{alpha_beta...,T}
+        P = Jacobi{alpha_beta...}
         @testset for i in 2:6
             p = basis(P, i)
             q = basis(Q, i)
-            # XXX@test SP.monic(p)(x) ≈ SP.monic(q)(x)
+            monic(p)(x) ≈ monic(q)(x)
         end
     end
 
