@@ -141,7 +141,7 @@ struct ShiftedJacobiBasis{α,β} <: AbstractCCOPBasis end
     ShiftedJacobi
 
 Shifted Jacobi polynomial constructor. `P̃(x) = P(2x-1)`.
-Shifted Jacobi are orthogonal on ``[0,1]``.
+Shifted Jacobi polynomials are orthogonal on ``[0,1]``.
 """
 ShiftedJacobi = MutableDensePolynomial{ShiftedJacobiBasis{α,β}} where {α,β}
 Polynomials._typealias(::Type{P}) where {P<:ShiftedJacobi} = "ShiftedJacobi"
