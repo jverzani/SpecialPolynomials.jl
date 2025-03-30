@@ -5,7 +5,7 @@ export Chebyshev
 """
     Chebyshev{<:Number}(coeffs::AbstractVector, var=:x)
 
-[Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_polynomials) polynomial of the first kind. These have domain ``(-1,1)`` and weight function ``1/\sqrt{1-x^2}``.
+[Chebyshev](https://en.wikipedia.org/wiki/Chebyshev_polynomials) polynomial of the first kind. These have domain ``(-1,1)`` and weight function ``1/\\sqrt{1-x^2}``.
 
 A polynomial is constructed from its coefficients `a`, lowest order first, optionally in terms of the given variable `x`. `x` can be a character, symbol, or string.
 
