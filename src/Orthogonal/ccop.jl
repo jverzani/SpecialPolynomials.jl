@@ -9,7 +9,7 @@ abstract type AbstractCCOPBasis <: AbstractCOPBasis end
     AbstractCCOPBasis <:  AbstractCOPBasis
 
 Following [Koepf and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
-for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *continuous* orthogonal polynomials if each is  a
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classical *continuous* orthogonal polynomials if each is  a
 solution of the differential equation
 
 `(a⋅x²+b⋅x+c) ⋅ yᵢ'' + (d⋅x + e) ⋅ yᵢ' + λᵢ⋅ yᵢ = 0.`
