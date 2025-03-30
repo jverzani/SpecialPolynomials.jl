@@ -126,6 +126,11 @@ ShiftedLegendre = MutableDensePolynomial{ShiftedLegendreBasis}
 Polynomials._typealias(::Type{P}) where {P<:ShiftedLegendre} = "ShiftedLegendre"
 export ShiftedLegendre
 
+# issue at 0
+An(P::Type{<:ShiftedLegendreBasis}, n::Int) = 2An(LegendreBasis, n)
+Bn(P::Type{<:ShiftedLegendreBasis}, n::Int) = -An(LegendreBasis, n) + Bn(LegendreBasis, n)
+
+
 # MonicShifted
 struct MonicShiftedLegendreBasis <: AbstractCCOPBasis end
 ϟ(::Type{MonicShiftedLegendreBasis}) = ShiftedLegendreBasis

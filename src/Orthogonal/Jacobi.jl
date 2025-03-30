@@ -25,6 +25,8 @@ true
 
 ```
 
+Special cases include `Jacobi{α-1/2,α-1/2} = Gegenbauer{α}`, `Jacobi{-1/2,-1/2} = Chebyshev`, `Jacobi{1/2,1/2} = ChebyshevU`, and `Jacobi{0,0} = Legendre`.
+
 """
 Jacobi = MutableDensePolynomial{JacobiBasis{α,β}} where {α,β}
 export Jacobi
@@ -132,6 +134,72 @@ ĉ̃n(B::Type{<:JacobiBasis{α,β}}, ::Val{1}) where {α,β} =
 ##
 ## --------------------------------------------------
 ##
+struct ShiftedJacobiBasis{α,β} <: AbstractCCOPBasis end
+ϟ(::Type{ShiftedJacobiBasis{α,β}}) where {α,β}= JacobiBasis{α,β}
+@register_shifted(ShiftedJacobiBasis, 2, -1)
+"""
+    ShiftedJacobi
+
+Shifted Jacobi polynomial constructor. `P̃(x) = P(2x-1)`.
+Shifted Jacobi are orthogonal on ``[0,1]``.
+"""
+ShiftedJacobi = MutableDensePolynomial{ShiftedJacobiBasis{α,β}} where {α,β}
+Polynomials._typealias(::Type{P}) where {P<:ShiftedJacobi} = "ShiftedJacobi"
+export ShiftedJacobi
+Polynomials.domain(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} =
+    Polynomials.Interval{β >= 0 ? Open : Closed,α >= 0 ? Open : Closed}(0, 1)
+weight_function(::Type{<:ShiftedJacobiBasis{α,β}}) where {α,β} = x -> (1 - x)^α * x^β
+
+# helpers for n = 0
+# use ζ₀(n)Rₙ + ζ₁(n)Rₙ₊₁ + ζ₂(n)Rₙ₊₂ = 0
+function ζ₀(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    σ = α + β + 1
+    -2(n+α+1)*(n+β+1)*(2n+σ+3)
+end
+function ζ₁ₓ(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    σ = α + β + 1
+    (2n+σ+2) * (2n+σ+1) * (2n+σ+3) * 2
+end
+function ζ₁c(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    σ = α + β + 1
+    (2n+σ+2) * ((2n+σ+1) * (2n+σ+3) * (-1) + α^2 - β^2)
+end
+function ζ₂(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    σ = α + β + 1
+    -2 * (n+2) * (n+σ+1) * (2n+σ+1)
+end
+
+# Pₙ₊₁ = (Aₙ*x + Bₙ)Pₙ - CₙPₙ₋₁
+function An(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    n == 0 && return α + β + 2
+    -ζ₁ₓ(P,n-1)/ζ₂(P,n-1)
+end
+function Bn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    if iszero(n)
+        num,den = (α^2 - β^2 - (α + β)*(α + β + 2)), (2*(α + β))
+        iszero(num) && return -1 - β
+        return num/den
+    end
+    -ζ₁c(P,n-1)/ζ₂(P,n-1)
+end
+function Cn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
+    if n == 0
+        num, den = α*β*(α + β + 2), ((α + β)*(α + β + 1))
+        if iszero(num)
+            if iszero(α)
+                d = (β+2)^2
+                return 2/d2 + 5β/(2d) + β^2/(2d)
+            elseif iszero(β)
+                d = (α + 2)^2
+                return 2/d2 + 5α/(2d) + α^2/(2d)
+            end
+        end
+        return num/den
+    end
+    ζ₀(P,n-1)/ζ₂(P,n-1)
+end
+
+# --- monic
 struct MonicJacobiBasis{α, β} <: AbstractCCOPBasis end
 ϟ(::Type{MonicJacobiBasis{α, β}}) where {α, β} = JacobiBasis{α, β}
 @register_monic(MonicJacobiBasis)
@@ -140,7 +208,7 @@ MonicJacobi = MutableDensePolynomial{MonicJacobiBasis{α, β}} where {α, β}
 Polynomials._typealias(::Type{P}) where {α,β,P<:MonicJacobi{α,β}} = "MonicJacobi{$α, $β}"
 export MonicJacobi
 
-#
+#--- orthogonal
 struct OrthonormalJacobiBasis{α,β} <: AbstractCCOPBasis end
 ϟ(::Type{OrthonormalJacobiBasis{α,β}}) where {α, β} = JacobiBasis{α, β}
 @register_orthonormal(OrthonormalJacobiBasis)

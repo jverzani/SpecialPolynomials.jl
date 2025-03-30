@@ -448,3 +448,16 @@ end
     end
 
 end
+
+@testset "Shifted" begin
+    for (P,Q) ∈ ((Legendre, ShiftedLegendre),
+                 (Jacobi{1/2, 1/2}, ShiftedJacobi{1/2, 1/2}))
+
+        p,q = basis(P, 4), basis(Q,4)
+        x = Polynomial(:x)
+        ϕ(x) = 2x - 1
+
+        @test p(ϕ(x)) ≈ q(x)
+        @test p(ϕ(0.5)) ≈ q(0.5)
+    end
+end
