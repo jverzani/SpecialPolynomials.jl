@@ -42,7 +42,7 @@ A plot recipe is useful for a graphical view:
 using Plots, Polynomials, SpecialPolynomials  # hide
 n = 6
 ψ₁, ψ₂, ψ₃, ψ₄, ψ₅, ψ₆ = basis.(Legendre, 0:n - 1)
-kw = (xlabel="r", ylabel="ψₙ(r)")
+kw = (xlabel="r", ylabel="ψₙ(r)", legend=false)
 sps = [
   plot( ψ₁, label="ψ₁(r)"; kw...),
   plot( ψ₂, label="ψ₂(r)"; kw...),
@@ -51,9 +51,10 @@ sps = [
   plot( ψ₅, label="ψ₅(r)"; kw...),
   plot( ψ₆, label="ψ₆(r)"; kw...),
 ]
-plot(sps..., layout=(3, 2))
-show(current())  # hide
+p = plot(sps..., layout=(3, 2))
+savefig(p, "LegendrePolynomials.svg"); nothing  # hide
 ```
+![](LegendrePolynomials.svg)
 
 The coefficients, e.g., `[0,0,0,1]` indicate a polynomial `0⋅p0 +
 0⋅p1 + 0⋅p2 + 1⋅p3`. The `show` method expresses these polynomials
@@ -121,7 +122,7 @@ julia> Basis(Hermite, 3)(0.5)
 -5.0
 ```
 
-!!! note "Evaluation with `Basis` is not robust
+!!! note "Evaluation with `Basis` is not robust"
     The evaluation of a `Basis` object relies on a classical hypergeometric representation and for values of ``n`` as small as ``30`` can be very susceptible to round off error.
 
 
@@ -200,6 +201,8 @@ By default, for classical orthogonal polynomials,  the Clenshaw reduction formul
 julia> SpecialPolynomials.eval_hyper(P, coeffs(p),  0.4)
 -4.016
 ```
+
+(As mentioned before, evaluating the hypergeometric formula for even moderate size ``n`` can be numerically unstable.)
 
 
 

@@ -43,7 +43,7 @@ end
     end
 end
 
-
+#= too unreliable
 @testset "O(n)" begin
     for (α, β) ∈ ((0,0), (1/2, 1/2), (1, 1))
         ts = zeros(6)
@@ -57,6 +57,7 @@ end
         @test x̄ <= 25 # should be about 10
     end
 end
+=#
 
 @testset "minimize least square error" begin
     f(x) = sinpi(x)

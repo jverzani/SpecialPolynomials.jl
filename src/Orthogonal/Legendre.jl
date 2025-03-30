@@ -120,7 +120,7 @@ struct ShiftedLegendreBasis <: AbstractCCOPBasis end
 """
     ShiftedLegendre
 
-Shifted Legendre polynomial constructor; shifted Legendre are orthogonal on ``[0,1]``.
+Shifted Legendre polynomial constructor. Shifted Legendre polynoials are orthogonal on ``[0,1]``.
 """
 ShiftedLegendre = MutableDensePolynomial{ShiftedLegendreBasis}
 Polynomials._typealias(::Type{P}) where {P<:ShiftedLegendre} = "ShiftedLegendre"

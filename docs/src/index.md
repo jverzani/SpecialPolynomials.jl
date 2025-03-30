@@ -39,17 +39,17 @@ SpecialPolynomials.AbstractCDOPBasis
 There are  several classical continuous  orthogonal polynomials available:
 
 ```@docs
-Legendre
+Jacobi
+Gegenbauer
 Chebyshev
 ChebyshevU
+Legendre
+ShiftedJacobi
+ShiftedLegendre
 Laguerre
 Hermite
 ChebyshevHermite
-Gegenbauer
-Jacobi
-ShiftedJacobi
 Bessel
-ShiftedLegendre
 ```
 
 ### Classical discrete orthogonal polynomials

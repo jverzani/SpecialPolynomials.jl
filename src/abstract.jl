@@ -10,9 +10,9 @@ The concrete types specify different bases for the space of polynomials of degre
 
 This package includes:
 
-* XXX several classic orthogonal polynomials.
+* Several classical orthogonal polynomials.
 * Newton and Lagrange interpolating polynomials
-* XXX Bernstein polynomials <XXX <: AbstractPolynomial
+* Bernstein polynomials
 
 As many of the methods for the base `Polynomials` class are directly coded if possible, but quite a few
 depend on conversion to the base `Polynomial` type (which uses the standard polynomial basis).
