@@ -22,7 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.7' # lowest supported version; though possibly with errors
           - 'lts' # LTS support
           - '1'   # last released version
         os:
