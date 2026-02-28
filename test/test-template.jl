@@ -12,7 +12,7 @@
 
 @testset "Comparisons" begin end
 
-@testset "Derivatives and ntegrals" begin end
+@testset "Derivatives and integrals" begin end
 
 @testset "roots" begin end
 

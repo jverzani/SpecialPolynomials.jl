@@ -56,7 +56,7 @@ defining `k1k0` is usually sufficient to define a new system, though
 the general equations may need specializations when algebraic
 cancellation is required.
 
-The defaults for evaluation and multplication are generally an order
+The defaults for evaluation and multiplication are generally an order
 of magnitude slower than a directly defined function. For some
 families this is done (e.g. `Chebyshev`,`ChebyshevU`, `Hermite`, `Laguerre`), but not all.
 
