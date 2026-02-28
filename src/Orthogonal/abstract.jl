@@ -13,8 +13,8 @@ macro register0(name, parent)
             coeffs::Vector{T}
             function $poly{T,X}(::Val{false}, coeffs::Vector{T}) where {T,X}
                 isempty(coeffs) && return new{T,X}(T[])
-                if iszero(coeffs[end])
-                    N = findlast(!iszero, coeffs)
+                if iscoeffzero(coeffs[end])
+                    N = findlast(!iscoeffzero, coeffs)
                     N == nothing && return new{T,X}(T[])
                     resize!(coeffs, N)
                 end
@@ -64,7 +64,7 @@ macro registerN(name, parent, params...)
         struct $poly{$(αs...),T,X} <: $parent_type{$(αs...),T,X}
             coeffs::Vector{T}
             function $poly{$(αs...),T,X}(::Val{false}, coeffs::Vector{S}) where {$(αs...),T,X,S}
-                N = findlast(!iszero, coeffs)
+                N = findlast(!iscoeffzero, coeffs)
                 N == nothing && return new{$(αs...),T,X}(T[])
                 new{$(αs...),T,X}(T[coeffs[i] for i in firstindex(coeffs):N])
             end

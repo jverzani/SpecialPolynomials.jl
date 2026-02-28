@@ -170,7 +170,7 @@ end
 ## Compute the modified moment
 ## v_j =  ∫ π_j ω(x) dx
 ## (The moment is ∫ x^j ω(x) dx)
-## This can  be overridden when an exact calculuation is known, e.g.:
+## This can  be overridden when an exact calculation is known, e.g.:
 function modified_moment(::Type{W}, j::Int) where {W<:AbstractWeightFunction}
     P = ϟ(W)
     @assert ismonic(P)

@@ -12,7 +12,7 @@ struct DualBernstein{𝐍,α,β,T,X} <: AbstractBernstein{T,X}
     end
 end
 function DualBernstein{𝐍,α,β}(coeffs::AbstractVector{T}; var=:x) where {𝐍,α, β,T}
-        N = findlast(!iszero, coeffs)
+        N = findlast(!iscoeffzero, coeffs)
         N == nothing && return new{𝐍,α,β,T,X}(zeros(T, 0))
         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
         return DualBernstein{𝐍,α,β,T,var}(coeffs[1:N])
@@ -100,7 +100,7 @@ function Polynomials.showterm(
     first::Bool,
     mimetype,
 ) where {N,α,β,T,X}
-    iszero(pj) && return false
+    iscoeffzero(pj) && return false
     !first && print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " : (!first ? "+ " : ""))
     print(io, "$(abs.(pj))⋅β")

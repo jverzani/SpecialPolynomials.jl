@@ -7,9 +7,11 @@ import SpecialFunctions: gamma
 using Polynomials
 import Polynomials:
     basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof, basistype, basis_symbol,
+    iscoeffzero, iscoeffone,
     AbstractBasis, StandardBasis,
     AbstractUnivariatePolynomial,AbstractDenseUnivariatePolynomial,
     MutableDensePolynomial, ImmutableDensePolynomial, MutableDenseViewPolynomial
+
 export basis
 export Basis # ???
 

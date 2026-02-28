@@ -37,7 +37,7 @@ Polynomials._typealias(::Type{P}) where {P<:Bernstein{𝐍}} where {𝐍} = "Ber
 # struct Bernstein{𝐍,T,X} <: AbstractBernstein{T,X}
 #     coeffs::Vector{T}
 #     function Bernstein{𝐍,T,X}(coeffs::AbstractVector{T}) where {𝐍,T,X}
-#         N = findlast(!iszero, coeffs)
+#         N = findlast(!iscoeffzero, coeffs)
 #         N == nothing && return new{𝐍,T,X}(zeros(T, 0))
 #         (N > 𝐍 + 1) && throw(ArgumentError("Wrong length for coefficients"))
 #         return new{𝐍,T,X}(coeffs[1:N])
@@ -58,7 +58,7 @@ function Polynomials.showterm(
     first::Bool,
     mimetype,
 ) where {N,T,X}
-    iszero(pj) && return false
+    iscoeffzero(pj) && return false
     !first && print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " : (!first ? "+ " : ""))
     print(io, "$(abs.(pj))⋅β")
@@ -71,7 +71,7 @@ end
 
 # add default case with no N specified
 function Bernstein(coeffs::AbstractVector{T}, var::Symbol=:x) where {T}
-    l = findlast(!iszero, coeffs)
+    l = findlast(!iscoeffzero, coeffs)
     𝐍 = l == nothing ? -1 : l - 1
     Bernstein{𝐍,T,Symbol(var)}(coeffs[1:(𝐍 + 1)])
 end
@@ -96,7 +96,7 @@ function Base.convert(P::Type{<:Bernstein{𝐍}}, p::Bernstein{𝐌,S}) where {�
     cs = zeros(R, 𝐍 + 1)
     for j in 0:𝐌
         pⱼ = p[j]
-        iszero(pⱼ) && continue
+        iscoeffzero(pⱼ) && continue
         for i in j:(j + 𝐑)
             cs[1 + i] += pⱼ * binomial(𝐌, j) * binomial(𝐑, i - j) / binomial(𝐍, i)
         end
@@ -199,7 +199,7 @@ function simple_deCasteljau_polyval(p::Bernstein{𝐍,T,X}, t::S) where {𝐍,T,
     𝐍 == -1 && return zR
     𝐍 == 0 && return p[0] * one(t)
     n = length(coeffs(p))
-    iszero(n) && return zR
+    iscoeffzero(n) && return zR
 
     bs = [zR for _ in 1:(𝐍 + 1)]
     for i in eachindex(coeffs(p))
@@ -319,7 +319,7 @@ end
 function Polynomials.derivative(p::Bernstein{𝐍,T,X}) where {𝐍,T,X}
     cs = coeffs(p)
     𝐍 < -1 && return p
-    iszero(𝐍) && return zero(p)
+    iscoeffzero(𝐍) && return zero(p)
 
     cs = zeros(T, 𝐍)
     dp = Bernstein{𝐍 - 1,T,X}(𝐍 * diff(coeffs(p)))
