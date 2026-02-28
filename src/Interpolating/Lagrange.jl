@@ -166,7 +166,7 @@ function Polynomials.evalpoly(x, p::Lagrange)
     a = b = zero(x / 1)
     for (xⱼ, wⱼ, cⱼ) in zip(xs, ws, cs)
         Δ = (x - xⱼ)
-        iszero(Δ) && return cⱼ # xj ∈ xs, so sum c_j l_i(xj) = sum c_j δ_{ij} = c_j
+        iscoeffzero(Δ) && return cⱼ # xj ∈ xs, so sum c_j l_i(xj) = sum c_j δ_{ij} = c_j
         l = wⱼ / Δ
         a += l * cⱼ
         b += l

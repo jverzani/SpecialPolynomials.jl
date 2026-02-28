@@ -7,8 +7,8 @@ abstract type AbstractCDOPBasis <: AbstractCOPBasis end
      AbstractCDOPBasis{T,X} <: AbstractCOPBasis{T,X}
 
 Following [Koepf  and Schmersau](https://arxiv.org/pdf/math/9703217.pdf), a family `y(x)=p_n(x)=k_x⋅x^n +  ...`
-for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classic *discrete* orthogonal polynomials if it  is  a
-solution of a differential equation
+for  `n  ∈  {0, 1,…}, k_n ≠ 0` of polynomials is a family of classical *discrete* orthogonal polynomials if it  is  a
+solution of a difference equation
 
 `(a⋅x²+b⋅x+c) ⋅ Δ∇y + (d⋅x + e) ⋅ ∇' + λᵢ⋅ y = 0`,
 

@@ -56,7 +56,7 @@ function Polynomials.showterm(
     first::Bool,
     mimetype,
 ) where {T, B<:AbstractSpecialPolynomialBasis, P<:AbstractUnivariatePolynomial{B}}
-    iszero(pj) && return false
+    iscoeffzero(pj) && return false
     !first && print(io, " ")
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)
         print(io, "- ")

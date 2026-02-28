@@ -29,7 +29,7 @@ function Polynomials.showterm(
     first::Bool,
     mimetype,
 ) where {T,P<:AbstractInterpolatingPolynomial}
-    iszero(pj) && return false
+    iscoeffzero(pj) && return false
     !first && print(io, " ")
     print(io, Polynomials.hasneg(T) && Polynomials.isneg(pj) ? "- " : (!first ? "+ " : ""))
     print(io, "$(abs(pj))⋅$(basis_symbol(P))_$(j)($var)")

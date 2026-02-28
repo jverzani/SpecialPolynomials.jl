@@ -231,11 +231,11 @@ function ⊗(
     as = zeros(R, 1 + N + M)
     for i in eachindex(p)
         pᵢ = p[i]
-        iszero(pᵢ) && continue
+        iscoeffzero(pᵢ) && continue
         for j in eachindex(q)
             qⱼ = q[j]
             pᵢqⱼ = pᵢ * qⱼ
-            iszero(qⱼ) && continue
+            iscoeffzero(qⱼ) && continue
             λᵤ = one(R)
             for k in 0:min(i, j)
                 as[1 + i + j - 2k] += pᵢqⱼ * λᵤ
