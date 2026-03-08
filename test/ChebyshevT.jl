@@ -9,7 +9,7 @@
         [3 // 4, -2 // 1, 1 // 1],
         # AbstractVector
         view([1.0, 2.0], :),
-        3:6
+        3:6,
     ]
         p = @inferred Chebyshev(coeff)
         @test p.coeffs == coeff
@@ -180,11 +180,10 @@ end
     end
 
     ## issue #56
-    coeffs  = [3 // 4, -2 // 1, 1 // 1]
+    coeffs = [3 // 4, -2 // 1, 1 // 1]
     p = Chebyshev(coeffs)
     @test derivative(p) ≈ convert(Chebyshev, derivative(convert(Polynomial, p)))
     @test derivative(p, 2) ≈ convert(Chebyshev, derivative(convert(Polynomial, p), 2))
-
 end
 
 @testset "z-series" for i in 0:5

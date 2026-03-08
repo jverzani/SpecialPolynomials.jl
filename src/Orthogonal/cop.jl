@@ -1,10 +1,14 @@
 ## common functionality for  COP classical orthogonal polynomials
 ## These are described by 5  values: a,.b.c.d.e
 
-abstract type  AbstractCOPBasis <: AbstractOrthogonalBasis end
-const AbstractCOPPolynomial   = AbstractUnivariatePolynomial{<:AbstractCOPBasis,T,X} where {T,X}
+abstract type AbstractCOPBasis <: AbstractOrthogonalBasis end
+const AbstractCOPPolynomial =
+    AbstractUnivariatePolynomial{<:AbstractCOPBasis,T,X} where {T,X}
 
-Polynomials.evalpoly(x, p::P) where {B<:AbstractCOPBasis,P<:AbstractUnivariatePolynomial{B}} = eval_cop(B, coeffs(p), x)
+Polynomials.evalpoly(
+    x,
+    p::P,
+) where {B<:AbstractCOPBasis,P<:AbstractUnivariatePolynomial{B}} = eval_cop(B, coeffs(p), x)
 
 function Base.promote_rule(
     P::Type{<:Polynomials.AbstractPolynomial{T,X}},
@@ -27,7 +31,7 @@ function ⊕(
     error("⊕")
     R = promote_type(T, S)
     P′ = ⟒(P){R,X}
-    N,M = length(p), length(q)
+    N, M = length(p), length(q)
     if N > M
         cs = Polynomials.:⊕(P, p.coeffs, q.coeffs)
         return P′(Val(false), cs)
@@ -74,7 +78,8 @@ end
 
 Polynomials.basis_symbol(::Type{<:AbstractCOPPolynomial}) = "P"
 
-Polynomials.domain(::Type{P}) where {P <:AbstractCOPPolynomial} = Polynomials.domain(basistype(P))
+Polynomials.domain(::Type{P}) where {P<:AbstractCOPPolynomial} =
+    Polynomials.domain(basistype(P))
 Polynomials.domain(::Type{<:AbstractCOPBasis}) = Polynomials.Interval(-Inf, Inf)
 
 """
@@ -191,7 +196,8 @@ end
 (B::Basis{P})(x) where {P<:AbstractCOPPolynomial} = eval_basis(basistype(P), B.n, x)
 
 # Evaluate a basis vector without realizing it and without using Clenshaw
-eval_basis(::Type{P}, n, x) where {P<:AbstractCOPPolynomial} = classical_hypergeometric(basistype(P), n, x)
+eval_basis(::Type{P}, n, x) where {P<:AbstractCOPPolynomial} =
+    classical_hypergeometric(basistype(P), n, x)
 
 """
     eval_hyper(::P, cs,  x::S)

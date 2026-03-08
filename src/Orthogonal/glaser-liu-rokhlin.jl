@@ -118,7 +118,10 @@ pqr_weight(p::P, n, x, dx) where {P} = throw(ArgumentError("Not implemented"))
 # end
 
 # run Newton's method to find zero of p
-function newton(p::P, x0::S) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B},S}
+function newton(
+    p::P,
+    x0::S,
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B},S}
     maxsteps = 25
     dp = derivative(p)
     while maxsteps > 0

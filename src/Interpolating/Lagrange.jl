@@ -108,9 +108,11 @@ struct Lagrange{N,S<:Number,R<:Number,T<:Number,X} <: AbstractInterpolatingPolyn
     end
 
     # no weights
-    function Lagrange(xs::Vector{S},
-                      coeffs::Vector{T},
-                      var::Polynomials.SymbolLike=:x) where {S,T}
+    function Lagrange(
+        xs::Vector{S},
+        coeffs::Vector{T},
+        var::Polynomials.SymbolLike=:x,
+    ) where {S,T}
         xs = unique(xs)
         N = length(xs)
         ws = lagrange_barycentric_weights(xs)
@@ -127,9 +129,12 @@ basis_symbol(::Type{<:Lagrange}) = "ℓ"
 
 ## Boilerplate code reproduced here, as there are three type parameters
 Base.convert(::Type{P}, p::P) where {P<:Lagrange} = p
-function Base.convert(::Type{Lagrange{N,S,R,T}}, p::Lagrange{M,S′,R′,T′,X}) where {N,S,R,T, M,S′,R′,T′,X}
+function Base.convert(
+    ::Type{Lagrange{N,S,R,T}},
+    p::Lagrange{M,S′,R′,T′,X},
+) where {N,S,R,T,M,S′,R′,T′,X}
     M == N || throw(ArgumentError("size mismatch"))
-    Lagrange(S.(p.xs), R.(p.ws), T.(p.coeffs),X)
+    Lagrange(S.(p.xs), R.(p.ws), T.(p.coeffs), X)
 end
 Base.promote_rule(
     ::Type{Lagrange{N,S,R,T}},
@@ -187,7 +192,7 @@ function Base.convert(Q::Type{<:Polynomial}, p::Lagrange{N,S,R,T}) where {N,S,R,
         return cs[1] + 0 * x #Polynomial(cs[1]*ones(T,1))
     else
         for (i, (wᵢ, cᵢ)) in enumerate(zip(ws, cs))
-            lᵢ = prod(x - xⱼ for (j,xⱼ) in enumerate(xs) if j != i)
+            lᵢ = prod(x - xⱼ for (j, xⱼ) in enumerate(xs) if j != i)
             q += lᵢ * wᵢ * cᵢ
         end
     end
@@ -250,7 +255,6 @@ function merge_nodes_weights(
     p1::Lagrange{N,S,R,T,X},
     p2::Lagrange{M,S1,R1,T1,Y},
 ) where {N,S,R,T,X,M,S1,R1,T1,Y}
-
     same_nodes(p1, p2) && return (p1.xs, p1.ws)
 
     p, q = N >= M ? (p1, p2) : (p2, p1)
@@ -279,11 +283,9 @@ polynomials. There are explicit formula for `Chebyshev` and `Chebyshev`, for oth
 lagrange_barycentric_nodes_weights(::Type{<:AbstractSpecialPolynomial}, n::Int) =
     throw(ArgumentError("Not implemented"))
 
-
 # do we have the same nodes (which makes easier to combine)
 same_nodes(p1::Lagrange, p2::Lagrange) = false
-same_nodes(p1::Lagrange{N,S}, p2::Lagrange{N,S}) where {N,S} =
-    p1.xs == p2.xs
+same_nodes(p1::Lagrange{N,S}, p2::Lagrange{N,S}) where {N,S} = p1.xs == p2.xs
 
 ## ----- arithmetic operations
 
@@ -291,15 +293,15 @@ same_nodes(p1::Lagrange{N,S}, p2::Lagrange{N,S}) where {N,S} =
 function _lagrange_op(f, ps...)
     p = first(ps)
     xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
-    Lagrange(xs, ws, f([p.coeffs for p ∈ ps]...), X)
+    Lagrange(xs, ws, f([p.coeffs for p in ps]...), X)
 end
 
 function Base.:+(
     p1::Lagrange{N,S,R,T,X},
     p2::Lagrange{M,S1,R1,T1,Y},
 ) where {N,S,R,T,X,M,S1,R1,T1,Y}
-
-    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+    assert_same_variable(p1, p2) ||
+        throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     ## same nodes/weights
     same_nodes(p1, p2) && return _lagrange_op(+, p1, p2)
@@ -314,8 +316,8 @@ function Base.:*(
     p1::Lagrange{N,S,R,T,X},
     p2::Lagrange{M,S1,R1,T1,Y},
 ) where {N,S,R,T,X,M,S1,R1,T1,Y}
-
-    assert_same_variable(p1, p2) || throw(ArgumentError("`p` and `q` have different indeterminate"))
+    assert_same_variable(p1, p2) ||
+        throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     # same nodes/weigths
     same_nodes(p1, p2) && return _lagrange_op(*, p1, p2)
@@ -323,14 +325,13 @@ function Base.:*(
     xs, ws = merge_nodes_weights(p1, p2)
     ys = p1.(xs) .* p2.(xs)
     return Lagrange(xs, ws, ys, X)
-
 end
 
 Base.:-(p::P) where {P<:Lagrange} = _lagrange_op(-, p)
 
 # Scalar ops
 function Base.:+(p::Lagrange, c::Number)
-    xs, ws, X = p.xs, p.ws,  Polynomials.indeterminate(p)
+    xs, ws, X = p.xs, p.ws, Polynomials.indeterminate(p)
     ys = c * one.(ws)
     q = Lagrange(xs, ws, ys, X)
     p + q
@@ -343,7 +344,6 @@ function Base.:*(p::P, c::Number) where {P<:Lagrange}
     Lagrange(xs, ws, ys, X)
 end
 
-
 ## derivative
 
 ## The derivative can be computed exactly by
@@ -353,10 +353,9 @@ end
 ## l′ⱼ(xᵢ) = wⱼ/wᵢ / (xᵢ - xⱼ) are known.
 ## Using p(x) = ∑ lⱼ fⱼ we get p'(xᵢ) = ∑ l′ⱼ(xᵢ)fⱼ so we have (xᵢ, p′(xᵢ)) values easily computed.
 
-
 # 0-based enumeration p
-l′(p::Lagrange, j, i) = (p.ws[1+j] / p.ws[1+i]) / (p.xs[1+i] - p.xs[1+j])
-l′(p::Lagrange, j) = - sum(l′(p, j′, j) for j′ ∈ eachindex(p) if j′ ≠ j)
+l′(p::Lagrange, j, i) = (p.ws[1 + j] / p.ws[1 + i]) / (p.xs[1 + i] - p.xs[1 + j])
+l′(p::Lagrange, j) = - sum(l′(p, j′, j) for j′ in eachindex(p) if j′ ≠ j)
 
 """
     derivative(p::Lagrange)
@@ -370,14 +369,13 @@ We don't use that here, rather, we use the fact that the derivative evaluated at
 
 """
 function Polynomials.derivative(p::Lagrange)
-
     p′s = zero.(coeffs(p))
 
-    for i ∈  eachindex(p)
+    for i in eachindex(p)
         # p′(xᵢ) = ∑ l′ⱼ(xᵢ) fⱼ
-        for (j, fⱼ) ∈ pairs(p)
+        for (j, fⱼ) in pairs(p)
             l′ⱼᵢ = i == j ? l′(p, j) : l′(p, j, i)
-            p′s[1+i] += l′ⱼᵢ * fⱼ
+            p′s[1 + i] += l′ⱼᵢ * fⱼ
         end
     end
 
@@ -400,16 +398,18 @@ function Polynomials.fit(
     _fit(P, xs, ws, ys, var)
 end
 
-function Polynomials.fit(P::Type{<:Lagrange},
-                         xs::AbstractVector{S},
-                         f; var=:x) where {S}
+function Polynomials.fit(P::Type{<:Lagrange}, xs::AbstractVector{S}, f; var=:x) where {S}
     ws = lagrange_barycentric_weights(xs)
     _fit(P, xs, ws, f.(xs), var)
 end
 
 # fit with weights specified
-function Polynomials.fit(P::Type{<:Lagrange},
-                         xs::AbstractVector{S}, ws::AbstractVector,
-                         f; var=:x) where {S}
+function Polynomials.fit(
+    P::Type{<:Lagrange},
+    xs::AbstractVector{S},
+    ws::AbstractVector,
+    f;
+    var=:x,
+) where {S}
     _fit(P, xs, ws, f.(xs), var)
 end

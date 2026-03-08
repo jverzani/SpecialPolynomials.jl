@@ -44,13 +44,13 @@ julia> SpecialPolynomials.innerproduct(Legendre, p4,  p5)
 Legendre = MutableDensePolynomial{LegendreBasis}
 export Legendre
 Polynomials._typealias(::Type{P}) where {P<:Legendre} = "Legendre"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LegendreBasis}})  = "P"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LegendreBasis}}) = "P"
 
 Polynomials.domain(::Type{<:LegendreBasis}) = Polynomials.Interval(-1, 1)
 
 abcde(::Type{<:LegendreBasis}) = (a=-1, b=0, c=1, d=-2, e=0)
 k0(::Type{<:LegendreBasis}) = 1
-k1k0(::Type{<:LegendreBasis}, n::Int) =  (2n + 1) // (n + 1) #k1k0(Gegenbauer{1/2, eltype(P)}, n)
+k1k0(::Type{<:LegendreBasis}, n::Int) = (2n + 1) // (n + 1) #k1k0(Gegenbauer{1/2, eltype(P)}, n)
 
 norm2(::Type{<:LegendreBasis}, n) = 2 / (2n + 1)
 ω₁₀(::Type{<:LegendreBasis}, n) = sqrt(2n + 1) / (2n + 3)
@@ -72,7 +72,9 @@ C̃n(::Type{<:LegendreBasis}, ::Val{0}) = 0
 b̂̃n(::Type{<:LegendreBasis}, ::Val{0}) = b̂̃n(GegenbauerBasis{1 / 2}, 0)
 ĉ̃n(::Type{<:LegendreBasis}, ::Val{0}) = ĉ̃n(GegenbauerBasis{1 / 2}, 0)
 
-function Polynomials.derivative(p::P) where {B<:LegendreBasis, T,X, P<:AbstractUnivariatePolynomial{B,T,X}}
+function Polynomials.derivative(
+    p::P,
+) where {B<:LegendreBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     hasnan(p) && return ⟒(P){T,X}(T[NaN])
 
     d = degree(p)
@@ -103,7 +105,6 @@ export MonicLegendre
 pqr_symmetry(::Type{<:MonicLegendreBasis}) = true
 pqr_weight(P::Type{<:MonicLegendreBasis}, n, x, dπx) = (2) / (1 - x^2) / dπx^2
 
-
 # Orthonormal
 struct OrthonormalLegendreBasis <: AbstractCCOPBasis end
 ϟ(::Type{OrthonormalLegendreBasis}) = LegendreBasis
@@ -129,7 +130,6 @@ export ShiftedLegendre
 # issue at 0
 An(P::Type{<:ShiftedLegendreBasis}, n::Int) = 2An(LegendreBasis, n)
 Bn(P::Type{<:ShiftedLegendreBasis}, n::Int) = -An(LegendreBasis, n) + Bn(LegendreBasis, n)
-
 
 # MonicShifted
 struct MonicShiftedLegendreBasis <: AbstractCCOPBasis end

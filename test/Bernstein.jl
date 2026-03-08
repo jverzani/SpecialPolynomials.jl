@@ -5,7 +5,7 @@
         ComplexF64[1 - 1im, 2 + 3im],
         [3 // 4, -2 // 1, 1 // 1],
         # AbstractVector
-        view([1,2,3], :),
+        view([1, 2, 3], :),
         2:6,
     ]
         p = Bernstein(coeff)
@@ -139,13 +139,13 @@ end
     B = Bernstein{n}
 
     if VERSION >= v"1.8"
-        ps = [2,1,0,0,0]
-        u,v = B(ps), sum(p*b for (p,b) ∈ zip(ps, basis.(B,0:n)))
+        ps = [2, 1, 0, 0, 0]
+        u, v = B(ps), sum(p*b for (p, b) in zip(ps, basis.(B, 0:n)))
         @test u ≈ v
     end
 
     m = 5
-    p,q = basis(B,3), basis(Bernstein{m},3)
+    p, q = basis(B, 3), basis(Bernstein{m}, 3)
     x = 0.2
     @test (p+q)(x) ≈ p(x) + q(x)
 end

@@ -44,7 +44,6 @@ Polynomials._typealias(::Type{P}) where {P<:Bernstein{𝐍}} where {𝐍} = "Ber
 #     end
 # end
 
-
 export Bernstein
 #Polynomials.@registerN Bernstein 𝐍
 #Polynomials.:⟒(::Type{<:Bernstein{𝐍}}) where {𝐍} = Bernstein{𝐍}
@@ -138,7 +137,10 @@ function Base.convert(P::Type{<:Bernstein}, p::Polynomial{T}) where {T}
 end
 
 Polynomials.domain(::Type{<:BernsteinBasis}) = Polynomials.Interval(0, 1)
-Polynomials.domain(::Type{P}) where {𝐍,B<:BernsteinBasis{𝐍}, P<:AbstractUnivariatePolynomial{B}} = Polynomials.Interval(0, 1)
+Polynomials.domain(
+    ::Type{P},
+) where {𝐍,B<:BernsteinBasis{𝐍},P<:AbstractUnivariatePolynomial{B}} =
+    Polynomials.Interval(0, 1)
 Polynomials.domain(::Type{Bernstein}) = Polynomials.Interval(0, 1) # no N
 Polynomials.degree(p::Bernstein{N,T,X}) where {N,T,X} = degree(convert(Polynomial{T,X}, p))
 
@@ -285,15 +287,14 @@ function Base.:+(p::P, q::P) where {𝐍,T,X,P<:Bernstein{𝐍,T,X}}
     return Bernstein{𝐍}([p[i] + q[i] for i in 0:𝐍], X)
 end
 
-
 # no promote(p1,p2)  called here
 function Base.:*(p::P, q::Q) where {𝐍,T,X,P<:Bernstein{𝐍,T,X},𝐌,S,Y,Q<:Bernstein{𝐌,S,Y}}
     ## use b(n,k) * b(m,j) = choose(n,k)choose(m,j)/choose(n+m,k+j) b(n+m, k+j)
 
     isconstant(p) && return q * constantterm(p)
     isconstant(q) && return p * constantterm(q)
-    assert_same_variable(p, q) || throw(ArgumentError("`p` and `q` have different indeterminate"))
-
+    assert_same_variable(p, q) ||
+        throw(ArgumentError("`p` and `q` have different indeterminate"))
 
     R = typeof(one(promote_type(T, S)) / 1)
     x = variable(Polynomial{R})
