@@ -29,16 +29,28 @@ macro register0(name, parent)
             function $poly{T,X}(coeffs::Tuple) where {T,X}
                 $poly{T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{T}(coeffs::Vector, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
-                $poly{T, Symbol(var)}(coeffs)
+            function $poly{T}(
+                coeffs::Vector,
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {T}
+                $poly{T,Symbol(var)}(coeffs)
             end
-            function $poly{T}(coeffs::Tuple, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
+            function $poly{T}(
+                coeffs::Tuple,
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {T}
                 $poly{T,Symbol(var)}(collect(T, coeffs))
             end
-            function $poly(coeffs::Vector{T}, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
+            function $poly(
+                coeffs::Vector{T},
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {T}
                 $poly{T}(coeffs, var)
             end
-            function $poly(coeffs::Tuple{Vararg{T}}, var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {T}
+            function $poly(
+                coeffs::Tuple{Vararg{T}},
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {T}
                 $poly{T}(coeffs, var)
             end
         end
@@ -63,7 +75,10 @@ macro registerN(name, parent, params...)
     quote
         struct $poly{$(αs...),T,X} <: $parent_type{$(αs...),T,X}
             coeffs::Vector{T}
-            function $poly{$(αs...),T,X}(::Val{false}, coeffs::Vector{S}) where {$(αs...),T,X,S}
+            function $poly{$(αs...),T,X}(
+                ::Val{false},
+                coeffs::Vector{S},
+            ) where {$(αs...),T,X,S}
                 N = findlast(!iscoeffzero, coeffs)
                 N == nothing && return new{$(αs...),T,X}(T[])
                 new{$(αs...),T,X}(T[coeffs[i] for i in firstindex(coeffs):N])
@@ -77,23 +92,31 @@ macro registerN(name, parent, params...)
             function $poly{$(αs...),T,X}(coeffs::Tuple) where {$(αs...),T,X}
                 $poly{$(αs...),T,X}(Val(false), collect(T, coeffs))
             end
-            function $poly{$(αs...),T}(coeffs::Vector,
-                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
-                $poly{$(αs...), T, Symbol(var)}(coeffs)
-            end
-
-            function $poly{$(αs...),T}(coeffs::Tuple,
-                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
+            function $poly{$(αs...),T}(
+                coeffs::Vector,
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {$(αs...),T}
                 $poly{$(αs...),T,Symbol(var)}(coeffs)
             end
 
-            function $poly{$(αs...)}(coeffs::Vector{T},
-                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
+            function $poly{$(αs...),T}(
+                coeffs::Tuple,
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {$(αs...),T}
+                $poly{$(αs...),T,Symbol(var)}(coeffs)
+            end
+
+            function $poly{$(αs...)}(
+                coeffs::Vector{T},
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {$(αs...),T}
                 $poly{$(αs...),T}(coeffs, var)
             end
 
-            function $poly{$(αs...)}(coeffs::Tuple{Vararg{T}},
-                    var::Polynomials.SymbolLike = Polynomials.Var(:x)) where {$(αs...),T}
+            function $poly{$(αs...)}(
+                coeffs::Tuple{Vararg{T}},
+                var::Polynomials.SymbolLike=Polynomials.Var(:x),
+            ) where {$(αs...),T}
                 $poly{$(αs...),T}(coeffs, var)
             end
         end
@@ -136,13 +159,11 @@ macro registerN(name, parent, params...)
         Base.:+(
             p::P,
             q::Q,
-        ) where {$(αs...),T,X,P<:$poly{$(αs...),T,X},S,Q<:$poly{$(αs...),S,X}} =
-            ⊕(P, p, q)
+        ) where {$(αs...),T,X,P<:$poly{$(αs...),T,X},S,Q<:$poly{$(αs...),S,X}} = ⊕(P, p, q)
         Base.:*(
             p::P,
             q::Q,
-        ) where {$(αs...),T,X,P<:$poly{$(αs...),T,X},S,Q<:$poly{$(αs...),S,X}} =
-            ⊗(P, p, q)
+        ) where {$(αs...),T,X,P<:$poly{$(αs...),T,X},S,Q<:$poly{$(αs...),S,X}} = ⊗(P, p, q)
         Base.divrem(p1::$poly{$(αs...),T}, p2::$poly{$(αs...),T}) where {$(αs...),T} =
             _divrem(p1, p2)
 
@@ -166,7 +187,9 @@ macro register_monic(B)
     monic = esc(B)
 
     quote
-        Polynomials.basis_symbol(::Type{P}) where {B<:$monic,P<:AbstractUnivariatePolynomial{B}} =
+        Polynomials.basis_symbol(
+            ::Type{P},
+        ) where {B<:$monic,P<:AbstractUnivariatePolynomial{B}} =
             Polynomials.basis_symbol(ImmutableDensePolynomial{ϟ(B)}) * "̃"
         SpecialPolynomials.ismonic(::Type{<:$monic}) = true
         SpecialPolynomials.abcde(B::Type{<:$monic}) = abcde(ϟ(B))
@@ -187,8 +210,10 @@ macro register_orthonormal(B)
     orthonormal = esc(B)
 
     quote
-        Polynomials.basis_symbol(::Type{P}) where {B<:$orthonormal,P<:AbstractUnivariatePolynomial{B}} =
-            Polynomials.basis_symbol(ImmutableDensePolynomial{ϟ(B)}) *  "̃"
+        Polynomials.basis_symbol(
+            ::Type{P},
+        ) where {B<:$orthonormal,P<:AbstractUnivariatePolynomial{B}} =
+            Polynomials.basis_symbol(ImmutableDensePolynomial{ϟ(B)}) * "̃"
         SpecialPolynomials.isorthonormal(::Type{<:$orthonormal}) = true
         SpecialPolynomials.abcde(B::Type{<:$orthonormal}) = abcde(ϟ(B))
         SpecialPolynomials.weight_function(B::Type{<:$orthonormal}) = weight_function(ϟ(B))
@@ -213,12 +238,14 @@ macro register_orthonormal(B)
 end
 
 # P̃ = P(αx+β), so P̃'' = α^2P''(α x+ β); P̃' = αP'(αx+β)
-macro register_shifted(B,  alpha, beta)
+macro register_shifted(B, alpha, beta)
     shifted = esc(B)
 
     quote
-        Polynomials.basis_symbol(::Type{P}) where {B<:$shifted,P<:AbstractUnivariatePolynomial{B}} =
-            Polynomials.basis_symbol(ImmutableDensePolynomial{ϟ(B)}) *  "̃"
+        Polynomials.basis_symbol(
+            ::Type{P},
+        ) where {B<:$shifted,P<:AbstractUnivariatePolynomial{B}} =
+            Polynomials.basis_symbol(ImmutableDensePolynomial{ϟ(B)}) * "̃"
 
         function SpecialPolynomials.abcde(B::Type{<:$shifted})
             α, β = $alpha, $beta
@@ -242,7 +269,6 @@ macro register_shifted(B,  alpha, beta)
         end
     end
 end
-
 
 # macro register_monic(name)
 #     monic = esc(name)

@@ -43,10 +43,11 @@ LaurentPolynomial(-5.4569682106375694e-12 + 1.4551915228366852e-11*x - 7.2759576
 """
 Laguerre = MutableDensePolynomial{LaguerreBasis{α}} where {α}
 export Laguerre
-Polynomials._typealias(::Type{P}) where {α, P<:Laguerre{α}} = "Laguerre{$α}"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LaguerreBasis{α}}}) where {α} = "Lᵅ"
+Polynomials._typealias(::Type{P}) where {α,P<:Laguerre{α}} = "Laguerre{$α}"
+Polynomials.basis_symbol(
+    ::Type{<:AbstractUnivariatePolynomial{LaguerreBasis{α}}},
+) where {α} = "Lᵅ"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LaguerreBasis{0}}}) = "L"
-
 
 Polynomials.domain(::Type{<:LaguerreBasis}) = Polynomials.Interval(0, Inf)
 
@@ -108,7 +109,6 @@ end
 ## --------------------------------------------------
 ##
 
-
 struct MonicLaguerreBasis{α} <: AbstractCCOPBasis end
 ϟ(::Type{MonicLaguerreBasis{α}}) where {α} = LaguerreBasis{α}
 @register_monic(MonicLaguerreBasis)
@@ -123,5 +123,7 @@ struct OrthonormalLaguerreBasis{α} <: AbstractCCOPBasis end
 @register_orthonormal(OrthonormalLaguerreBasis)
 
 OrthonormalLaguerre = MutableDensePolynomial{OrthonormalLaguerreBasis{α}} where {α}
-Polynomials._typealias(::Type{P}) where {α, P<:OrthonormalLaguerre{α}} = "OrthonormalLaguerre{α}"
+Polynomials._typealias(
+    ::Type{P},
+) where {α,P<:OrthonormalLaguerre{α}} = "OrthonormalLaguerre{α}"
 export OrthonormalLaguerre

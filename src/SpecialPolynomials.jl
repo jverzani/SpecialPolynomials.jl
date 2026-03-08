@@ -6,15 +6,27 @@ import SpecialFunctions: gamma
 
 using Polynomials
 import Polynomials:
-    basis, isconstant, constantterm, assert_same_variable, StandardBasisPolynomial, ⟒, constructorof, basistype, basis_symbol,
-    iscoeffzero, iscoeffone,
-    AbstractBasis, StandardBasis,
-    AbstractUnivariatePolynomial,AbstractDenseUnivariatePolynomial,
-    MutableDensePolynomial, ImmutableDensePolynomial, MutableDenseViewPolynomial
+    basis,
+    isconstant,
+    constantterm,
+    assert_same_variable,
+    StandardBasisPolynomial,
+    ⟒,
+    constructorof,
+    basistype,
+    basis_symbol,
+    iscoeffzero,
+    iscoeffone,
+    AbstractBasis,
+    StandardBasis,
+    AbstractUnivariatePolynomial,
+    AbstractDenseUnivariatePolynomial,
+    MutableDensePolynomial,
+    ImmutableDensePolynomial,
+    MutableDenseViewPolynomial
 
 export basis
 export Basis # ???
-
 
 #import Intervals
 #import Intervals: Open, Closed, Unbounded, bounds_types

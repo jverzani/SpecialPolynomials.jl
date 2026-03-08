@@ -1,6 +1,6 @@
 #@registerN Meixner AbstractCDOP2 γ μ
 
-struct MeixnerBasis{γ, μ} <: AbstractCDOPBasis end
+struct MeixnerBasis{γ,μ} <: AbstractCDOPBasis end
 export Meixner
 
 """
@@ -8,9 +8,9 @@ export Meixner
 
 References: [Koekoek and Swarttouw §1.9](https://arxiv.org/pdf/math/9602214.pdf)
 """
-Meixner{γ, μ} = MutableDensePolynomial{MeixnerBasis{γ, μ}} where {γ,μ}
+Meixner{γ,μ} = MutableDensePolynomial{MeixnerBasis{γ,μ}} where {γ,μ}
 Polynomials._typealias(::Type{P}) where {γ,μ,P<:Meixner{γ,μ}} = "Meixner{$γ, $μ}"
-Polynomials.basis_symbol(::Type{<:Meixner{γ, μ}}) where {γ, μ} = "m⁽ᵞᵝ⁾"
+Polynomials.basis_symbol(::Type{<:Meixner{γ,μ}}) where {γ,μ} = "m⁽ᵞᵝ⁾"
 
 Polynomials.domain(::Type{<:MeixnerBasis{γ,μ}}) where {γ,μ} = Polynomials.Interval(0, Inf)
 abcde(::Type{<:MeixnerBasis{γ,μ}}) where {γ,μ} =

@@ -27,8 +27,12 @@ Base.eltype(::Type{<:AbstractSpecialPolynomial{T}}) where {T} = T
 Base.eltype(::Type{<:AbstractSpecialPolynomial}) = Float64
 
 # use ArgumentError to give message. Also could use hint.
-Base.convert(::Type{Q}, p::P) where {P<:AbstractPolynomial, Q<:AbstractSpecialPolynomial} =
-    throw(ArgumentError("There is no `convert` method defined for a polynomial of type $P to one of type $Q. Maybe try converting through the `Polynomial` type (e.g `convert(Q, convert(Polynomial, p))`)"))
+Base.convert(::Type{Q}, p::P) where {P<:AbstractPolynomial,Q<:AbstractSpecialPolynomial} =
+    throw(
+        ArgumentError(
+            "There is no `convert` method defined for a polynomial of type $P to one of type $Q. Maybe try converting through the `Polynomial` type (e.g `convert(Q, convert(Polynomial, p))`)",
+        ),
+    )
 
 ## Display
 
@@ -46,7 +50,6 @@ function unicode_superscript(io, j)
     end
 end
 
-
 function Polynomials.showterm(
     io::IO,
     ::Type{P},
@@ -55,7 +58,7 @@ function Polynomials.showterm(
     j,
     first::Bool,
     mimetype,
-) where {T, B<:AbstractSpecialPolynomialBasis, P<:AbstractUnivariatePolynomial{B}}
+) where {T,B<:AbstractSpecialPolynomialBasis,P<:AbstractUnivariatePolynomial{B}}
     iscoeffzero(pj) && return false
     !first && print(io, " ")
     if Polynomials.hasneg(T) && Polynomials.isneg(pj)

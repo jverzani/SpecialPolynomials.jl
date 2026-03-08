@@ -52,7 +52,11 @@ DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 
         x = variable(P)
         p0, p1, p2, p3, p4, p5, p6 = ps = basis.(P, 0:6)
         p = P([1, 2, 3, 4, 5, 6])
-        @testset for x in range(max(-1, first(domain(P))), stop=min(1, last(domain(P))), length=10)
+        @testset for x in range(
+            max(-1, first(domain(P))),
+            stop=min(1, last(domain(P))),
+            length=10,
+        )
             @test p(x) ≈ 1p0(x) + 2p1(x) + 3p2(x) + 4p3(x) + 5p4(x) + 6p5(x)
         end
 
@@ -87,12 +91,11 @@ DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 
         @test_throws ArgumentError variable(P, :x) ≈ variable(P, :y)
     end
 
-    @testset for P ∈ Ps
-        @inferred P([1,2,3]) # not @inferred P([1,2,3], :x)
-        @inferred P{Int}([1,2,3]) # not @inferred P{Int}([1,2,3], :x)
-        @inferred P{Int,:x}([1,2,3])
+    @testset for P in Ps
+        @inferred P([1, 2, 3]) # not @inferred P([1,2,3], :x)
+        @inferred P{Int}([1, 2, 3]) # not @inferred P{Int}([1,2,3], :x)
+        @inferred P{Int,:x}([1, 2, 3])
     end
-
 end
 
 @testset "Structural equations" begin
@@ -213,7 +216,7 @@ end
     end
 
     # Issue #43 conversion from Polynomials.ChebyshevT
-  #  @test_throws ArgumentError convert(Legendre, ChebyshevT([0,1]))
+    #  @test_throws ArgumentError convert(Legendre, ChebyshevT([0,1]))
 end
 
 @testset "Evaluation" begin
@@ -359,8 +362,14 @@ end
     end
 
     # comrade matrix approach compared to conversion
-    @testset for P in (Legendre, MonicLegendre, Chebyshev, MonicChebyshev, ChebyshevU, MonicChebyshevU) #(Legendre, Chebyshev, ChebyshevU)
-
+    @testset for P in (
+        Legendre,
+        MonicLegendre,
+        Chebyshev,
+        MonicChebyshev,
+        ChebyshevU,
+        MonicChebyshevU,
+    ) #(Legendre, Chebyshev, ChebyshevU)
         @testset for T in (Float64, Complex{Float64})
             ps = vcat(rand(T, 4), 1)
             p = P(ps)
@@ -416,7 +425,7 @@ end
 
     @testset for P in Ps
         P <: SP.AbstractOrthogonalPolynomial || continue
-        B  = Polynomials.basistype(P)
+        B = Polynomials.basistype(P)
         !all(isfinite.(extrema(domain(P)))) && continue
         q = sum(f(tau) * w for (tau, w) in zip(SP.gauss_nodes_weights(B, n)...))
         p = SP.innerproduct(B, f, one)
@@ -435,25 +444,21 @@ end
 
 # issue 44 allows fully typed array construction, as `N` parameter is removed
 @testset "array elements" begin
-
-    @testset for P ∈ Ps
-        p,q = basis.(P, (2,3))
-        @test typeof([p]) == typeof([p,q])
+    @testset for P in Ps
+        p, q = basis.(P, (2, 3))
+        @test typeof([p]) == typeof([p, q])
     end
 
     q = basis(LaurentPolynomial, 3) # not Polynomial v4.0
-    @testset for P ∈ Ps
-        p = basis(P,2)
-        @test typeof([q]) == typeof([p,q])
+    @testset for P in Ps
+        p = basis(P, 2)
+        @test typeof([q]) == typeof([p, q])
     end
-
 end
 
 @testset "Shifted" begin
-    for (P,Q) ∈ ((Legendre, ShiftedLegendre),
-                 (Jacobi{1/2, 1/2}, ShiftedJacobi{1/2, 1/2}))
-
-        p,q = basis(P, 4), basis(Q,4)
+    for (P, Q) in ((Legendre, ShiftedLegendre), (Jacobi{1/2,1/2}, ShiftedJacobi{1/2,1/2}))
+        p, q = basis(P, 4), basis(Q, 4)
         x = Polynomial(:x)
         ϕ(x) = 2x - 1
 

@@ -80,11 +80,11 @@ end
     n = 5
     xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
     a, b, c, d, e = SpecialPolynomials.abcde(P)
-    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) ∈ zip(xs, λs)]
+    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) in zip(xs, λs)]
     N = length(ws)
 
     itr = isodd(n) ? (2:2:N) : (1:2:N)
-    for i ∈ itr
+    for i in itr
         ws[i] = -ws[i]
     end
 
@@ -93,9 +93,11 @@ end
 
     P = Legendre
     xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
-    ws = [sqrt((1-xⱼ^2) * wⱼ) for (xⱼ, wⱼ) ∈ zip(xs, λs)]
-    for j ∈ 0:n; ws[1+j] = (-1)^j * ws[1+j]; end
+    ws = [sqrt((1-xⱼ^2) * wⱼ) for (xⱼ, wⱼ) in zip(xs, λs)]
+    for j in 0:n
+        ;
+        ws[1 + j] = (-1)^j * ws[1 + j];
+    end
     xs′, ws′ = SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)
     @test (ws / first(ws)) ≈ (ws′/first(ws′)) # up to a constant
-
 end

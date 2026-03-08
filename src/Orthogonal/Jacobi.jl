@@ -1,7 +1,6 @@
 ## Jacobi Polynomials
 
-struct JacobiBasis{α, β} <: AbstractCCOPBasis end
-
+struct JacobiBasis{α,β} <: AbstractCCOPBasis end
 
 """
     Jacobi{α,  β, T}
@@ -30,13 +29,15 @@ Special cases include `Jacobi{α-1/2,α-1/2} = Gegenbauer{α}`, `Jacobi{-1/2,-1/
 """
 Jacobi = MutableDensePolynomial{JacobiBasis{α,β}} where {α,β}
 export Jacobi
-Polynomials._typealias(::Type{P}) where {α, β, P<:Jacobi{α, β}} = "Jacobi{$α,$β}"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{JacobiBasis{α,β}}}) where {α,β} =  "Jᵅᵝ"
+Polynomials._typealias(::Type{P}) where {α,β,P<:Jacobi{α,β}} = "Jacobi{$α,$β}"
+Polynomials.basis_symbol(
+    ::Type{<:AbstractUnivariatePolynomial{JacobiBasis{α,β}}},
+) where {α,β} = "Jᵅᵝ"
 
 Polynomials.domain(::Type{<:JacobiBasis{α,β}}) where {α,β} =
     Polynomials.Interval{β >= 0 ? Open : Closed,α >= 0 ? Open : Closed}(-1, 1)
 
-abcde(::Type{<:JacobiBasis{α,β}}) where {α,β} = (a=-1, b=0, c=1, d=-(α + β + 2), e=β - α)
+abcde(::Type{<:JacobiBasis{α,β}}) where {α,β} = (a=-1, b=0, c=1, d=(-(α + β + 2)), e=β - α)
 
 k0(::Type{<:JacobiBasis}) = 1
 function k1k0(::Type{<:JacobiBasis{α,β}}, n::Int) where {α,β}
@@ -121,21 +122,20 @@ end
 
 # overrides
 B̃n(::Type{<:JacobiBasis{α,β}}, ::Val{0}) where {α,β} =
-    iszero(α + β) ? (α - β)  / 2 : (α - β) / (2(α + β + 2))
+    iszero(α + β) ? (α - β) / 2 : (α - β) / (2(α + β + 2))
 C̃n(::Type{<:JacobiBasis{α,β}}, ::Val{1}) where {α,β} =
     -((α - β)^2 - (α + β + 2)^2) / ((α + β + 2)^2 * (α + β + 3))
 
 b̂̃n(::Type{<:JacobiBasis{α,β}}, ::Val{0}) where {α,β} = NaN
 ĉ̃n(::Type{<:Jacobi}, ::Val{0}) = 0
 ĉ̃n(B::Type{<:JacobiBasis{α,β}}, ::Val{1}) where {α,β} =
-    ((α - β)^2 - (α + β + 2)^2) /
-    ((α + β + 1) * (α + β + 2)^2 * (α + β + 3))
+    ((α - β)^2 - (α + β + 2)^2) / ((α + β + 1) * (α + β + 2)^2 * (α + β + 3))
 
 ##
 ## --------------------------------------------------
 ##
 struct ShiftedJacobiBasis{α,β} <: AbstractCCOPBasis end
-ϟ(::Type{ShiftedJacobiBasis{α,β}}) where {α,β}= JacobiBasis{α,β}
+ϟ(::Type{ShiftedJacobiBasis{α,β}}) where {α,β} = JacobiBasis{α,β}
 @register_shifted(ShiftedJacobiBasis, 2, -1)
 """
     ShiftedJacobi
@@ -172,15 +172,15 @@ end
 # Pₙ₊₁ = (Aₙ*x + Bₙ)Pₙ - CₙPₙ₋₁
 function An(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     n == 0 && return α + β + 2
-    -ζ₁ₓ(P,n-1)/ζ₂(P,n-1)
+    -ζ₁ₓ(P, n-1)/ζ₂(P, n-1)
 end
 function Bn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     if iszero(n)
-        num,den = (α^2 - β^2 - (α + β)*(α + β + 2)), (2*(α + β))
+        num, den = (α^2 - β^2 - (α + β)*(α + β + 2)), (2*(α + β))
         iszero(num) && return -1 - β
         return num/den
     end
-    -ζ₁c(P,n-1)/ζ₂(P,n-1)
+    -ζ₁c(P, n-1)/ζ₂(P, n-1)
 end
 function Cn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
     if n == 0
@@ -196,23 +196,25 @@ function Cn(P::Type{<:ShiftedJacobiBasis{α,β}}, n::Int) where {α,β}
         end
         return num/den
     end
-    ζ₀(P,n-1)/ζ₂(P,n-1)
+    ζ₀(P, n-1)/ζ₂(P, n-1)
 end
 
 # --- monic
-struct MonicJacobiBasis{α, β} <: AbstractCCOPBasis end
-ϟ(::Type{MonicJacobiBasis{α, β}}) where {α, β} = JacobiBasis{α, β}
+struct MonicJacobiBasis{α,β} <: AbstractCCOPBasis end
+ϟ(::Type{MonicJacobiBasis{α,β}}) where {α,β} = JacobiBasis{α,β}
 @register_monic(MonicJacobiBasis)
 
-MonicJacobi = MutableDensePolynomial{MonicJacobiBasis{α, β}} where {α, β}
+MonicJacobi = MutableDensePolynomial{MonicJacobiBasis{α,β}} where {α,β}
 Polynomials._typealias(::Type{P}) where {α,β,P<:MonicJacobi{α,β}} = "MonicJacobi{$α, $β}"
 export MonicJacobi
 
 #--- orthogonal
 struct OrthonormalJacobiBasis{α,β} <: AbstractCCOPBasis end
-ϟ(::Type{OrthonormalJacobiBasis{α,β}}) where {α, β} = JacobiBasis{α, β}
+ϟ(::Type{OrthonormalJacobiBasis{α,β}}) where {α,β} = JacobiBasis{α,β}
 @register_orthonormal(OrthonormalJacobiBasis)
 
-OrthonormalJacobi = MutableDensePolynomial{OrthonormalJacobiBasis{α, β}} where {α, β}
-Polynomials._typealias(::Type{P}) where {α, β, P<:OrthonormalJacobi{α, β}} = "OrthonormalJacobi{$α, $β}"
+OrthonormalJacobi = MutableDensePolynomial{OrthonormalJacobiBasis{α,β}} where {α,β}
+Polynomials._typealias(
+    ::Type{P},
+) where {α,β,P<:OrthonormalJacobi{α,β}} = "OrthonormalJacobi{$α, $β}"
 export OrthonormalJacobi

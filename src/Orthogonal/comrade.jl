@@ -5,7 +5,9 @@
 # generate the  matrix for an orthogonal polynomial family
 # should have eigvals(comrade_matrix(p)) ≈ roots(convert(Polynomial, p))
 # This isn't exported
-function comrade_matrix(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
+function comrade_matrix(
+    p::P,
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}}
     U, V = comrade_pencil(p)
     U * inv(V)
 end
@@ -13,11 +15,14 @@ end
 # Generate the [comrade pencil](http://www.cecm.sfu.ca/personal/pborwein/MITACS/papers/LinMatPol.pdf)
 # C₀, C₁ with λ C₁ - C₀ the linearization; and C₀ ⋅ C₁⁻¹ the companion matrix
 # can be used with square matrix coefficients
-function comrade_pencil(p::P, symmetrize=false) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}}
+function comrade_pencil(
+    p::P,
+    symmetrize=false,
+) where {B<:AbstractCCOPBasis,T,P<:AbstractUnivariatePolynomial{B,T}}
     comrade_pencil(p, αβγk(p)..., symmetrize)
 end
 
-function αβγk(p::P) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}}
+function αβγk(p::P) where {B<:AbstractCCOPBasis,T,P<:AbstractUnivariatePolynomial{B,T}}
     n = Polynomials.degree(p)
     𝐏 = _comrade_pencil_type(p)
 
@@ -36,8 +41,13 @@ function αβγk(p::P) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolyn
 
     (α, β, γ, kₙ₋₁, kₙ)
 end
-_comrade_pencil_type(p::P) where {B<:AbstractCCOPBasis, T,P<:AbstractUnivariatePolynomial{B,T}} = ⟒(P){T}
-_comrade_pencil_type(p::P) where {B<:AbstractCCOPBasis,T,M<:AbstractMatrix{T},P<:AbstractUnivariatePolynomial{B,M}} = ⟒(P){M}
+_comrade_pencil_type(
+    p::P,
+) where {B<:AbstractCCOPBasis,T,P<:AbstractUnivariatePolynomial{B,T}} = ⟒(P){T}
+_comrade_pencil_type(
+    p::P,
+) where {B<:AbstractCCOPBasis,T,M<:AbstractMatrix{T},P<:AbstractUnivariatePolynomial{B,M}} =
+    ⟒(P){M}
 
 # α = [α₀, α₁, ⋯, αₙ₋₂]
 # β = [β₀, β₁, ⋯, βₙ₋₂, βₙ₋₁]
@@ -137,7 +147,8 @@ Ũ[end,end] *= p(λ)
 L*Ũ - (λ*C₁ - C₀) ≈ 0 # if atol=sqrt(eps())
 ```
 """
-comrade_pencil_LU(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}} = comrade_pencil_LU(p, αβγk(p)...)
+comrade_pencil_LU(p::P) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}} =
+    comrade_pencil_LU(p, αβγk(p)...)
 
 function comrade_pencil_LU(
     p::P,
@@ -642,7 +653,10 @@ function _eigvals(B::Matrix{T}) where {T}
 end
 
 # one step improves accuracy
-function newton_refinement(λs, p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
+function newton_refinement(
+    λs,
+    p::P,
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}}
     p′ = derivative(p)
     λs .- p.(λs) ./ p′.(λs)
 end
@@ -728,7 +742,10 @@ end
 ## * Cs -- a vector of Gauss Transforms
 ## * B -- an Upper triangular matrix
 ## Matrix(Cs, B) is comrade matrix
-function comrade_decomposition(P::Type{PP}, ps) where {B<:AbstractCCOPBasis, PP<:AbstractUnivariatePolynomial{B}}
+function comrade_decomposition(
+    P::Type{PP},
+    ps,
+) where {B<:AbstractCCOPBasis,PP<:AbstractUnivariatePolynomial{B}}
     n = length(ps) - 1
     As = An.(B, 0:(n - 1))
     Bs = Bn.(B, 0:(n - 1))
@@ -819,7 +836,9 @@ polynomials. It could find use as an extremely fast method to get a
 rough estimate of the spectrum"
 
 """
-function Polynomials.roots(p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
+function Polynomials.roots(
+    p::P,
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}}
     Cs, Bₚ = comrade_decomposition(P, float(coeffs(p)))
     λs = AVW_eigvals(Cs, Bₚ)
 
@@ -841,7 +860,10 @@ end
 ## test root quality
 ## could presumably be much more efficient
 ## This test backwards stability
-function a_posteriori_check(λs, p::P) where {B<:AbstractCCOPBasis, P<:AbstractUnivariatePolynomial{B}}
+function a_posteriori_check(
+    λs,
+    p::P,
+) where {B<:AbstractCCOPBasis,P<:AbstractUnivariatePolynomial{B}}
     ps = coeffs(p)
     n = length(ps) - 1
     v(λ) = [basis(P, i)(λ) for i in (n - 1):-1:0]

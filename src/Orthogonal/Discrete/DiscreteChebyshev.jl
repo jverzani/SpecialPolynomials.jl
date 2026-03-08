@@ -44,10 +44,13 @@ true
 ```
 
 """
-const DiscreteChebyshev = MutableDensePolynomial{DiscreteChebyshevBasis{α, β}} where {α, β}
-Polynomials._typealias(::Type{P}) where {α,β,P<:DiscreteChebyshev{α,β}} = "DiscreteChebyshev{$α,$β}"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{DiscreteChebyshevBasis{α,β}}}) where {α,β} = "K⁽ᵅᵝ⁾"
-
+const DiscreteChebyshev = MutableDensePolynomial{DiscreteChebyshevBasis{α,β}} where {α,β}
+Polynomials._typealias(
+    ::Type{P},
+) where {α,β,P<:DiscreteChebyshev{α,β}} = "DiscreteChebyshev{$α,$β}"
+Polynomials.basis_symbol(
+    ::Type{<:AbstractUnivariatePolynomial{DiscreteChebyshevBasis{α,β}}},
+) where {α,β} = "K⁽ᵅᵝ⁾"
 
 Polynomials.domain(::Type{<:DiscreteChebyshevBasis{α,β}}) where {α,β} =
     Polynomials.Interval(-Inf, Inf)
