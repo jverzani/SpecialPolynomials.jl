@@ -68,7 +68,8 @@ orthogonal polynomials.
 """
 AbstractCCOPBasis
 # type for dispatch
-const AbstractCCOPPolynomial = AbstractUnivariatePolynomial{<:AbstractCCOPBasis,T,X} where {T,X}
+const AbstractCCOPPolynomial =
+    AbstractUnivariatePolynomial{<:AbstractCCOPBasis,T,X} where {T,X}
 
 # for conversion to base case
 # \upstigma[tab]
@@ -134,8 +135,8 @@ C̃n(B::Type{<:AbstractCOPBasis}, n::Val) = throw(ArgumentError("not defined"))
 
 # may be overridden to speed up eval_cop()
 function ABCₙ(B::Type{<:AbstractCOPBasis}, n::Int)
-    a, b = An(B,n), Bn(B,n)
-    n > 0 && return (A=a, B=b, C=Cn(B,n))
+    a, b = An(B, n), Bn(B, n)
+    n > 0 && return (A=a, B=b, C=Cn(B, n))
     n <= 0 && return (A=a, B=b, C=0*b)
 end
 ## ---> CCOPBasis now
@@ -153,7 +154,7 @@ function B̃n(B::Type{<:AbstractCCOPBasis}, a, b, c, d, e, n::Int)
 
     iszero(den) && return B̃n(B, Val(n))
 
-    val =  num / den
+    val = num / den
 
     val
 end
@@ -169,7 +170,7 @@ function C̃n(B::Type{<:AbstractCCOPBasis}, a, b, c, d, e, n::Int)
 
     iszero(den) && return C̃n(B, Val(n))
 
-    val = ( num) / den
+    val = (num) / den
 
     val
 end
@@ -321,16 +322,39 @@ end
 ##
 # delegate P{B} -> B for tests
 # preferred usage is B (not P)
-abcde(::Type{P}) where {B<:AbstractCOPBasis, P<:AbstractUnivariatePolynomial{B}} = abcde(B)
-abcdeᴵ(::Type{P}) where {B<:AbstractCOPBasis, P<:AbstractUnivariatePolynomial{B}} = abcdeᴵ(B)
-for fn ∈ (:An, :an, :αn, :ân,:αᴵn,
-          :Bn, :bn, :βn, :b̂n,:βᴵn,
-          :Cn, :cn, :γn, :ĉn, :γᴵn,
-          :ABCₙ, :k0, :kn, :k1k0, :k1k_1,
-          :monic,
-          :gauss_nodes_weights, :weight_function, :innerproduct)
+abcde(::Type{P}) where {B<:AbstractCOPBasis,P<:AbstractUnivariatePolynomial{B}} = abcde(B)
+abcdeᴵ(::Type{P}) where {B<:AbstractCOPBasis,P<:AbstractUnivariatePolynomial{B}} = abcdeᴵ(B)
+for fn in (
+    :An,
+    :an,
+    :αn,
+    :ân,
+    :αᴵn,
+    :Bn,
+    :bn,
+    :βn,
+    :b̂n,
+    :βᴵn,
+    :Cn,
+    :cn,
+    :γn,
+    :ĉn,
+    :γᴵn,
+    :ABCₙ,
+    :k0,
+    :kn,
+    :k1k0,
+    :k1k_1,
+    :monic,
+    :gauss_nodes_weights,
+    :weight_function,
+    :innerproduct,
+)
     @eval begin
-        $(fn)(::Type{P},i::Int) where {B<:AbstractCOPBasis, P<:AbstractUnivariatePolynomial{B}} = $(fn)(B,i)
+        $(fn)(
+            ::Type{P},
+            i::Int,
+        ) where {B<:AbstractCOPBasis,P<:AbstractUnivariatePolynomial{B}} = $(fn)(B, i)
     end
 end
 
@@ -342,8 +366,7 @@ end
 function Base.convert(
     ::Type{Q},
     p::P,
-) where {Q<:Polynomials.StandardBasisPolynomial,
-         P<:AbstractCOPBasis}
+) where {Q<:Polynomials.StandardBasisPolynomial,P<:AbstractCOPBasis}
     X = Polynomials.indeterminate(Q, p)
     T = eltype(Q)
     x = variable(⟒(Q){T,X})
@@ -353,8 +376,10 @@ end
 function Base.convert(
     ::Type{Q},
     p::P,
-) where {Q<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
-         P<:Polynomials.StandardBasisPolynomial}
+) where {
+    Q<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
+    P<:Polynomials.StandardBasisPolynomial,
+}
     _convert_cop(Q, p)
 end
 
@@ -362,24 +387,32 @@ end
 ## * use FastTransforms, when available for T <: AbstractFloat; see connection.jl
 ## * use  _convert_cop when possible (needs to match σ)
 ## * use  conversion  through Polynomial type
-function Base.convert(::Type{Q}, p::P) where {
+function Base.convert(
+    ::Type{Q},
+    p::P,
+) where {
     Q<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
-    P<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis}}
+    P<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
+}
     _convert(Q, p)
 end
 
 # work around method ambiguity introduced in abstract
 # dispatch  to  specific FastTransform  method  (defined in `connection.jl`) or
 # use this default
-function _convert(::Type{Q}, p::P) where {
+function _convert(
+    ::Type{Q},
+    p::P,
+) where {
     Q<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
-    P<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis}}
+    P<:AbstractOrthogonalPolynomial{<:AbstractCCOPBasis},
+}
     a, b, c, d, e = abcde(basistype(P))
     ā, b̄, c̄, d̄, ē = abcde(basistype(Q))
 
     same_σ = a == ā && b == b̄ && c == c̄
 
-    if same_σ  && !(Q <: Hermite || P <: Hermite)  # σ ==  σ̄   and not Hermite
+    if same_σ && !(Q <: Hermite || P <: Hermite)  # σ ==  σ̄   and not Hermite
         _convert_cop(Q, p)
     else
         T = eltype(Q)
@@ -393,7 +426,10 @@ end
 
 # Polynomials.scalar_add (c,p)
 #function Base.:+(p::P, c::S) where {B<:AbstractCCOPBasis, T,X,P<:AbstractUnivariatePolynomial{B,T,X}, S<:Number}
-function Polynomials.scalar_add(c::S, p::P) where {B<:AbstractCCOPBasis, T,X,P<:AbstractUnivariatePolynomial{B,T,X}, S<:Number}
+function Polynomials.scalar_add(
+    c::S,
+    p::P,
+) where {B<:AbstractCCOPBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X},S<:Number}
     c′ = c / k0(B) #one(T) * ⟒(P)(c)[0] #  c / k0(P), needed to add to a coefficient
     R = promote_type(T, typeof(c′))
     N = length(p)
@@ -449,11 +485,12 @@ end
 # end
 
 # multiplication intercepts P{B,S,X} x P{B,T,X}
-for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+for P in Polynomials.ZeroBasedDensePolynomialContainerTypes
     @eval begin
-        function Base.:*(p::P, q::Q) where {B <: AbstractCCOPBasis,X,
-                                            T, P<:$P{B,T,X},
-                                            S, Q<:$P{B,S,X}}
+        function Base.:*(
+            p::P,
+            q::Q,
+        ) where {B<:AbstractCCOPBasis,X,T,P<:$P{B,T,X},S,Q<:$P{B,S,X}}
             p′, q′ = _convert_cop.(Polynomial, (p, q))
             _convert_cop(⟒(P), p′ * q′)
         end
@@ -474,7 +511,9 @@ end
 # end
 # use pn= [â,b̂,ĉ] ⋅ [p'_{n+1}, p'_n, p'_{n-1}] to
 # find expression for p' in terms of p
-function Polynomials.derivative(p::P) where {B<:AbstractCOPBasis,T,X, P<:AbstractUnivariatePolynomial{B,T,X}}
+function Polynomials.derivative(
+    p::P,
+) where {B<:AbstractCOPBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     R = eltype(one(eltype(p)) / 1)
     d = degree(p)
     d ≤ 0 && return zero(⟒(P){R,X})
@@ -498,11 +537,12 @@ function Polynomials.derivative(p::P) where {B<:AbstractCOPBasis,T,X, P<:Abstrac
     dp
 end
 
-function Polynomials.integrate(p::P) where {B<:AbstractCOPBasis, T, X, P<:AbstractUnivariatePolynomial{B,T,X}}
-
+function Polynomials.integrate(
+    p::P,
+) where {B<:AbstractCOPBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     R = typeof(one(T) / 1)
     Q = ⟒(P){R,X}
-    hasnan(p) &&  return Q(NaN)
+    hasnan(p) && return Q(NaN)
 
     n = degree(p)
     if n == -1
@@ -532,8 +572,6 @@ function Polynomials.integrate(p::P) where {B<:AbstractCOPBasis, T, X, P<:Abstra
     return ∫p
 end
 
-
-
 ##
 ## ------------------------------------------------
 ##
@@ -545,15 +583,18 @@ end
 ## Volume 83, Number 290, November 2014, Pages 2893–2914 S 0025-5718(2014)02821-4
 ## https://www.jstor.org/stable/24488682
 
-function lagrange_barycentric_nodes_weights(P::Type{<:PP}, n::Int) where {B<:AbstractCCOPBasis, PP<:AbstractUnivariatePolynomial{B}}
+function lagrange_barycentric_nodes_weights(
+    P::Type{<:PP},
+    n::Int,
+) where {B<:AbstractCCOPBasis,PP<:AbstractUnivariatePolynomial{B}}
     ## formula (2.15) simplified as we use ratios in Lagrange
     xs, λs = gauss_nodes_weights(B, n+1)
     a, b, c, d, e = abcde(P)
-    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) ∈ zip(xs, λs)]
+    ws = [sqrt((a*xᵢ^2 + b*xᵢ + c) * λᵢ) for (xᵢ, λᵢ) in zip(xs, λs)]
     N = length(ws)
 
     itr = isodd(n) ? (2:2:N) : (1:2:N)
-    for i ∈ itr
+    for i in itr
         ws[i] = -ws[i]
     end
 

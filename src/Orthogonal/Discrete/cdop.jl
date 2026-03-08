@@ -44,7 +44,8 @@ The above, is termed the eigenvalue equation (e.g. [Goertz and Offner](https://a
 AbstractCDOPBasis
 
 # type for dispatch
-const AbstractCDOPPolynomial = AbstractUnivariatePolynomial{<:AbstractCDOPBasis,T,X} where {T,X}
+const AbstractCDOPPolynomial =
+    AbstractUnivariatePolynomial{<:AbstractCDOPBasis,T,X} where {T,X}
 
 #AbstractCDOP
 
@@ -72,7 +73,10 @@ const AbstractCDOPPolynomial = AbstractUnivariatePolynomial{<:AbstractCDOPBasis,
 ϛ(P::Type{<:AbstractCDOPPolynomial}) = FallingFactorial
 
 # compose with FallingFactorial
-function Base.convert(::Type{Q}, p::P) where {Q<:AbstractCDOPPolynomial,P<:AbstractCDOPPolynomial}
+function Base.convert(
+    ::Type{Q},
+    p::P,
+) where {Q<:AbstractCDOPPolynomial,P<:AbstractCDOPPolynomial}
     T = eltype(P)
     _convert_cop(Q, _convert_cop(FallingFactorial{T}, p))
 end
@@ -141,7 +145,6 @@ function α̃n(B::Type{<:AbstractCDOPBasis}, n::Int)
     return val
 end
 
-
 function β̃n(B::Type{<:AbstractCDOPBasis}, n::Int)
     a, b, c, d, e = abcde(B)
     S = Int#eltype(P)
@@ -177,7 +180,6 @@ function γ̃n(B::Type{<:AbstractCDOPBasis}, n::Int)
     return val
 end
 γ̃n(B::Type{<:AbstractCDOPBasis}, n::Val) = throw(ArgumentError("Not defined"))
-
 
 function abcdeᴵ(B::Type{<:AbstractCDOPBasis})
     a, b, c, d, e = abcde(B).a, abcde(B).b, abcde(B).c, abcde(B).d, abcde(B).e
@@ -222,11 +224,12 @@ function ĉ̃n(B::Type{<:AbstractCDOPBasis}, n::Int)
     return val
 end
 
-for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+for P in Polynomials.ZeroBasedDensePolynomialContainerTypes
     @eval begin
-        function Base.:*(p::P, q::Q) where {B <: AbstractCDOPBasis,X,
-                                            T, P<:$P{B,T,X},
-                                            S, Q<:$P{B,S,X}}
+        function Base.:*(
+            p::P,
+            q::Q,
+        ) where {B<:AbstractCDOPBasis,X,T,P<:$P{B,T,X},S,Q<:$P{B,S,X}}
             p′, q′ = _convert_cop.(FallingFactorial, (p, q))
             _convert_cop(⟒(P), p′ * q′)
         end

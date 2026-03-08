@@ -23,11 +23,13 @@ Polynomial(-0.5 + 2.0*x + 4.5*x^2)
 """
 Gegenbauer = MutableDensePolynomial{GegenbauerBasis{α}} where {α}
 Polynomials._typealias(::Type{P}) where {α,P<:Gegenbauer{α}} = "Gegenbauer{$(α)}"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{GegenbauerBasis{α}}}) where {α} = "Cᵅ"
+Polynomials.basis_symbol(
+    ::Type{<:AbstractUnivariatePolynomial{GegenbauerBasis{α}}},
+) where {α} = "Cᵅ"
 
 Polynomials.domain(::Type{<:GegenbauerBasis{α}}) where {α} = Polynomials.Interval(-1, 1)
 
-abcde(::Type{<:GegenbauerBasis{α}}) where {α} =(a=-1, b=0, c=1, d=-(2α + 1), e=0)
+abcde(::Type{<:GegenbauerBasis{α}}) where {α} = (a=-1, b=0, c=1, d=(-(2α + 1)), e=0)
 
 k0(::Type{<:Gegenbauer}) = 1
 k1k0(::Type{<:GegenbauerBasis{α}}, k::Int) where {α} = (2 * (α + k)) / (k + 1)
@@ -58,7 +60,7 @@ end
 # overrides; big speedup if we avoid generating  from  a,b,c,d,e
 B̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} = 0
 C̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} =
-    ( n * (n + 2 * α - 1)) / (4 * (n^2 + 2 * n * α - n + α^2 - α))
+    (n * (n + 2 * α - 1)) / (4 * (n^2 + 2 * n * α - n + α^2 - α))
 b̂̃n(::Type{<:GegenbauerBasis{α}}, n::Int) where {α} = 0 # one(S) *  4/α/(α+2)
 b̂̃n(::Type{<:GegenbauerBasis{α}}, ::Val{N}) where {α,N} = 0 # one(S) *  4/α/(α+2)
 ĉ̃n(::Type{<:GegenbauerBasis{α}}, ::Val{0}) where {α} = 0 #one(S) *  4/α/(α+2)
@@ -69,5 +71,7 @@ struct OrthonormalGegenbauerBasis{α} <: AbstractCCOPBasis end
 @register_orthonormal(OrthonormalGegenbauerBasis)
 
 OrthonormalGegenbauer = MutableDensePolynomial{OrthonormalGegenbauerBasis{α}} where {α}
-Polynomials._typealias(::Type{P}) where {α,P<:OrthonormalGegenbauer{α}} = "OrthonormalGegenbauer{$α}"
+Polynomials._typealias(
+    ::Type{P},
+) where {α,P<:OrthonormalGegenbauer{α}} = "OrthonormalGegenbauer{$α}"
 export OrthonormalGegenbauer

@@ -42,7 +42,7 @@ julia> [basis(ChebyshevHermite, i)(x) for i in 0:5]
 const Hermite = MutableDensePolynomial{HermiteBasis}
 export Hermite
 Polynomials._typealias(::Type{P}) where {P<:Hermite} = "Hermite"
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{HermiteBasis}})  = "H"
+Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{HermiteBasis}}) = "H"
 
 Polynomials.domain(::Type{HermiteBasis}) = Polynomials.Interval(-Inf, Inf)
 
@@ -82,7 +82,8 @@ C̃n(B::Type{HermiteBasis}, n::Val{2}) = 0
 ## https://arxiv.org/pdf/1901.01648.pdf. Connection formula (14)
 ##  x^n  = n! sum(H_{n-2j}/ (2^j(n-2j)!j!) j = 0:floor(n/2))
 
-Base.convert(P::Type{<:AbstractUnivariatePolynomial{HermiteBasis}}, q::Polynomial) = connection(P, q)
+Base.convert(P::Type{<:AbstractUnivariatePolynomial{HermiteBasis}}, q::Polynomial) =
+    connection(P, q)
 function Base.iterate(
     o::Connection{P,Q},
     state=nothing,
@@ -115,7 +116,9 @@ function __hermite_lambda(n, k)
 end
 
 # 2x more performant
-function Polynomials.integrate(p::P) where {B<:HermiteBasis, T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
+function Polynomials.integrate(
+    p::P,
+) where {B<:HermiteBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     # int H_n = 1/(n+1) H_{n+1}
     R = eltype(one(T) / 1)
     d = degree(p)
@@ -160,7 +163,9 @@ Type for the Probabalist's  [Hermite](https://en.wikipedia.org/wiki/Hermite_poly
 """
 const ChebyshevHermite = MutableDensePolynomial{ChebyshevHermiteBasis}
 
-Polynomials.basis_symbol(::Type{<:AbstractDenseUnivariatePolynomial{ChebyshevHermiteBasis}}) = "Hₑ"
+Polynomials.basis_symbol(
+    ::Type{<:AbstractDenseUnivariatePolynomial{ChebyshevHermiteBasis}},
+) = "Hₑ"
 Polynomials.domain(::Type{ChebyshevHermiteBasis}) = Polynomials.Interval(-Inf, Inf)
 
 # https://arxiv.org/pdf/1901.01648.pdf eqn 17
@@ -169,7 +174,7 @@ abcde(::Type{ChebyshevHermiteBasis}) = (a=0, b=0, c=1, d=-1, e=0)
 kn(::Type{ChebyshevHermiteBasis}, n::Int)    = 1
 k1k0(::Type{ChebyshevHermiteBasis}, k::Int)  = 1
 k1k_1(::Type{ChebyshevHermiteBasis}, k::Int) = 1
-ismonic(::Type{ChebyshevHermiteBasis})        = true
+ismonic(::Type{ChebyshevHermiteBasis})       = true
 
 weight_function(::Type{ChebyshevHermiteBasis}) = x -> exp(-(x^2) / 2)
 generating_function(::Type{ChebyshevHermiteBasis}) = (t, x) -> exp(t * x - t^2 / 2)
@@ -200,11 +205,9 @@ pqr_weight(P::Type{ChebyshevHermiteBasis}, n, x, dπx) =
 ## TODO: work  on  types
 AbstractHermite{T,X} = Union{Hermite{T,X},ChebyshevHermite{T,X}}
 
-for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+for P in Polynomials.ZeroBasedDensePolynomialContainerTypes
     @eval begin
-        function Base.:*(p::P, q::Q) where {B <: HermiteBasis,X,
-                                            T, P<:$P{B,T,X},
-                                            S, Q<:$P{B,S,X}}
+        function Base.:*(p::P, q::Q) where {B<:HermiteBasis,X,T,P<:$P{B,T,X},S,Q<:$P{B,S,X}}
             ⊗(B, p, q)
         end
     end
@@ -219,7 +222,15 @@ function ⊗(
     ::Type{<:AbstractHermiteBasis},#    ::Type{<:AbstractHermite},
     p::P,
     q::Q,
-) where {B,T,X,S,Y,P<:AbstractUnivariatePolynomial{B,T,X},Q<:AbstractUnivariatePolynomial{B,S,Y}}
+) where {
+    B,
+    T,
+    X,
+    S,
+    Y,
+    P<:AbstractUnivariatePolynomial{B,T,X},
+    Q<:AbstractUnivariatePolynomial{B,S,Y},
+}
     R = eltype(one(promote_type(T, S)) / 1)
     N, M = degree(p), degree(q)
     N == -1 && return zero(⟒(P){R,Y})

@@ -104,11 +104,12 @@ end
 
 k0(P::Type{<:FallingFactorialBasis}) = 1
 
-for P ∈ Polynomials.ZeroBasedDensePolynomialContainerTypes
+for P in Polynomials.ZeroBasedDensePolynomialContainerTypes
     @eval begin
-        function Base.:*(p::P, q::Q) where {B <: FallingFactorialBasis,X,
-                                            T, P<:$P{B,T,X},
-                                            S, Q<:$P{B,S,X}}
+        function Base.:*(
+            p::P,
+            q::Q,
+        ) where {B<:FallingFactorialBasis,X,T,P<:$P{B,T,X},S,Q<:$P{B,S,X}}
             p′, q′ = convert.(Polynomial, (p, q))
             convert(⟒(P), p′ * q′)
         end
@@ -203,14 +204,19 @@ end
 function Base.convert(
     ::Type{P},
     q::Q,
-) where {P<:Polynomials.StandardBasisPolynomial,Q<:AbstractUnivariatePolynomial{FallingFactorialBasis}}
+) where {
+    P<:Polynomials.StandardBasisPolynomial,
+    Q<:AbstractUnivariatePolynomial{FallingFactorialBasis},
+}
     q(variable(P))
 end
 function Base.convert(
     ::Type{P},
     q::Q,
-) where {P<:AbstractUnivariatePolynomial{FallingFactorialBasis},
-         Q<:Polynomials.StandardBasisPolynomial}
+) where {
+    P<:AbstractUnivariatePolynomial{FallingFactorialBasis},
+    Q<:Polynomials.StandardBasisPolynomial,
+}
     connection(P, q)
 end
 

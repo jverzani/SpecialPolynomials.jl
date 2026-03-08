@@ -3,7 +3,6 @@
 
 struct BesselBasis{α} <: AbstractCCOPBasis end
 
-
 """
     Bessel{α}
 
@@ -33,12 +32,13 @@ julia> [basis(Bessel{3//2, 𝐐}, i)(x) for i in 0:5]
 Bessel = MutableDensePolynomial{BesselBasis{α}} where {α}
 Polynomials._typealias(::Type{P}) where {P<:Bessel} = "Bessel"
 export Bessel
-Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{BesselBasis{α}}}) where {α} = "Cᵅ"
-
+Polynomials.basis_symbol(
+    ::Type{<:AbstractUnivariatePolynomial{BesselBasis{α}}},
+) where {α} = "Cᵅ"
 
 Polynomials.domain(::Type{<:BesselBasis}) = Polynomials.Interval(0, Inf)
 
-abcde(::Type{BesselBasis{α}}) where{α} = (a=1, b=0, c=0, d=α, e=2)
+abcde(::Type{BesselBasis{α}}) where {α} = (a=1, b=0, c=0, d=α, e=2)
 
 function k1k0(::Type{BesselBasis{α}}, k::Int) where {α}
     k < 0 && return zero(α) / 1
@@ -90,8 +90,8 @@ end
 #Bn(::Type{<:AbstractDenseUnivariatePolynomial{BesselBasis{1}}, n::Int, ::Type{S}) where {S} = error("α=1 is not correct")
 #B̃n(P::Type{<:AbstractDenseUnivariatePolynomial{BesselBasis{2}}, ::Val{0}) where {α} =  one(eltype(P))  # 0  otherwise
 #iszero(N) #?  one(eltype(P)) : zero(eltype(P)))
-C̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} =  -4/(α^2*(α + 1))
-ĉ̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} =  Inf
+C̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} = -4/(α^2*(α + 1))
+ĉ̃n(::Type{<:BesselBasis{α}}, ::Val{1}) where {α} = Inf
 
 b̂̃n(P::Type{BesselBasis{2}}, n::Int) = 2 // (n * (2n + 2))
-b̂̃n(P::Type{BesselBasis{2}}, ::Val{0}) =  Inf
+b̂̃n(P::Type{BesselBasis{2}}, ::Val{0}) = Inf

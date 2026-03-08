@@ -207,11 +207,8 @@ end
     # Jacobi{α - 1/2, α-1/2 } = Gegenbauer{α}
     # Legendre = Gegenbauer{1/2}
     # ChebyshevU = Gegenbauer{1}
-    @testset for (alpha, Q) in (
-        (1/4, Jacobi{1/4 - 1/2, 1/4 - 1/2}),
-        (1, ChebyshevU),
-        (1/2, Legendre),
-    )
+    @testset for (alpha, Q) in
+                 ((1/4, Jacobi{1/4 - 1/2,1/4 - 1/2}), (1, ChebyshevU), (1/2, Legendre))
         P = Gegenbauer{alpha}
         @testset for i in 2:6
             p = basis(P, i)
@@ -219,8 +216,6 @@ end
             monic(p)(x) ≈ monic(q)(x)
         end
     end
-
-
 end
 
 @testset "Jacobi" begin
@@ -244,7 +239,8 @@ end
     end
 
     x = variable(Polynomial)
-    @testset for (α, β) in ((1 / 2, 1 / 2), (-1 / 2, 1 / 2), (1 / 2, -1 / 2), (-1 / 2, -1 / 2))
+    @testset for (α, β) in
+                 ((1 / 2, 1 / 2), (-1 / 2, 1 / 2), (1 / 2, -1 / 2), (-1 / 2, -1 / 2))
         P = Jacobi{α,β}
         @testset for n in 2:5
             p = basis(P, n)
@@ -274,7 +270,8 @@ end
     @testset for μ in (1 / 4, 1 / 2, 1, 2)
         P = Charlier{μ}
         @testset for i in 0:5
-            @test basis(P, i)(x) ≈ SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
+            @test basis(P, i)(x) ≈
+                  SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
         end
     end
 end
@@ -287,7 +284,8 @@ end
 
             P = Hahn{α,β,𝐍}
             @testset for i in 0:𝐍
-                @test basis(P, i)(x) ≈ SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
+                @test basis(P, i)(x) ≈
+                      SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
             end
         end
     end
@@ -308,7 +306,8 @@ end
         @testset for N in (3, 6)
             P = Krawchouk{p,N}
             @testset for i in 0:N
-                @test basis(P, i)(x) ≈ SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
+                @test basis(P, i)(x) ≈
+                      SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
             end
         end
     end
@@ -320,7 +319,8 @@ end
         @testset for μ in (1 / 4, 1 / 2, 3 / 4)
             P = Meixner{γ,μ}
             @testset for i in 0:4
-                @test basis(P, i)(x) ≈ SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
+                @test basis(P, i)(x) ≈
+                      SP.classical_hypergeometric(Polynomials.basistype(P), i, x)
             end
         end
     end

@@ -44,9 +44,9 @@ knk_1(::Type{P}, n) where {P<:Union{Polynomials.StandardBasisPolynomial,FallingF
     one(eltype(one(P)))
 =#
 
-kn(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
-k1k0(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
-knk_1(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
+kn(::Type{B}, n) where {B<:Polynomials.StandardBasis} = 1
+k1k0(::Type{B}, n) where {B<:Polynomials.StandardBasis} = 1
+knk_1(::Type{B}, n) where {B<:Polynomials.StandardBasis} = 1
 
 #kn(::Type{B}, n) where {B <: FallingFactorialBasis} = 1
 #k1k0(::Type{B}, n) where {B <: FallingFactorialBasis} = 1
@@ -54,8 +54,15 @@ knk_1(::Type{B}, n) where {B <: Polynomials.StandardBasis} = 1
 
 ## If  the connection  coefficients for  (P,Q) satisfy c₀⋅ C̃ⁱⱼ + c₁⋅C̃ⁱ⁺¹ⱼ  + c₂⋅*C̃ⁱ⁺²ⱼ = 0 for some computable
 ##  values c₀,c₁,c₂ then this  will implement  `convert(Q,p::P)`
-function _convert_cop(::Type{Q}, p::P) where {B<:Union{StandardBasis, AbstractCOPBasis},  P<:AbstractUnivariatePolynomial{B},
-                                              B′<:Union{StandardBasis, AbstractCOPBasis}, Q<:AbstractUnivariatePolynomial{B′}}
+function _convert_cop(
+    ::Type{Q},
+    p::P,
+) where {
+    B<:Union{StandardBasis,AbstractCOPBasis},
+    P<:AbstractUnivariatePolynomial{B},
+    B′<:Union{StandardBasis,AbstractCOPBasis},
+    Q<:AbstractUnivariatePolynomial{B′},
+}
     d = degree(p)
     T, S = eltype(Q), eltype(p)  #
     R = typeof(one(T) * p[0] / 1)
@@ -94,7 +101,12 @@ end
 ## Use FastTransform for conversion, as possible, when loaded
 
 ##  Koepf and Schmersa Theorem 2, p11 connection for P to Q when σ = σ̂
-function connection_m(::Type{P}, ::Type{Q}, m, n) where {P<:AbstractCCOPBasis,Q<:AbstractCCOPBasis}
+function connection_m(
+    ::Type{P},
+    ::Type{Q},
+    m,
+    n,
+) where {P<:AbstractCCOPBasis,Q<:AbstractCCOPBasis}
     a, b, c, d, e = abcde(P)
     ā, b̄, c̄, d̄, ē = abcde(Q)
 
@@ -188,7 +200,7 @@ function connection(
     cs = zeros(T, n + 1)
 
     for k in 0:n
-        for (i, val) in Connection{basistype(P), basistype(Q)}(n, k)
+        for (i, val) in Connection{basistype(P),basistype(Q)}(n, k)
             cs[1 + k] = muladd(q[i], val, cs[1 + k])
         end
     end
