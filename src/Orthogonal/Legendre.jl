@@ -47,6 +47,7 @@ Polynomials._typealias(::Type{P}) where {P<:Legendre} = "Legendre"
 Polynomials.basis_symbol(::Type{<:AbstractUnivariatePolynomial{LegendreBasis}}) = "P"
 
 Polynomials.domain(::Type{<:LegendreBasis}) = Polynomials.Interval(-1, 1)
+Base.extrema(::Type{<:LegendreBasis}) = (-1, 1)  # needed by @register_shifted macro for ShiftedLegendreBasis
 
 abcde(::Type{<:LegendreBasis}) = (a=-1, b=0, c=1, d=-2, e=0)
 k0(::Type{<:LegendreBasis}) = 1
@@ -125,11 +126,29 @@ Shifted Legendre polynomial constructor. Shifted Legendre polynoials are orthogo
 """
 ShiftedLegendre = MutableDensePolynomial{ShiftedLegendreBasis}
 Polynomials._typealias(::Type{P}) where {P<:ShiftedLegendre} = "ShiftedLegendre"
+weight_function(::Type{<:ShiftedLegendreBasis}) = x -> one(x)
 export ShiftedLegendre
 
 # issue at 0
 An(P::Type{<:ShiftedLegendreBasis}, n::Int) = 2An(LegendreBasis, n)
 Bn(P::Type{<:ShiftedLegendreBasis}, n::Int) = -An(LegendreBasis, n) + Bn(LegendreBasis, n)
+
+function Polynomials.derivative(
+    p::P
+) where {B<:ShiftedLegendreBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
+    hasnan(p) && return ⟒(P){T,X}(T[NaN])
+
+    d = degree(p)
+    qs = zeros(T, d)
+
+    for i in 0:(d - 1)
+        gamma = 2 * (2i + 1)
+        qs[i + 1] = gamma * sum(p[j] for j in (i + 1):2:d)
+    end
+
+    dp = ⟒(P){T,X}(qs)
+    return dp
+end
 
 # MonicShifted
 struct MonicShiftedLegendreBasis <: AbstractCCOPBasis end
