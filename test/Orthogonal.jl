@@ -23,6 +23,7 @@ Ps = (
     OrthonormalGegenbauer{1 / 2},
     Bessel{3 / 2}, # Bessel{1} is an issue
     Bessel{1 / 2},
+    ShiftedLegendre
 )
 DPs = (Charlier{1 / 2}, Meixner{1 / 2,1 / 2}, Krawchouk{1 / 2,10}, Hahn{1 / 4,1 / 2,10})
 
@@ -365,6 +366,7 @@ end
     @testset for P in (
         Legendre,
         MonicLegendre,
+        ShiftedLegendre,
         Chebyshev,
         MonicChebyshev,
         ChebyshevU,

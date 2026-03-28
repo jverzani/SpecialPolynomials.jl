@@ -133,24 +133,24 @@ end
     end
 end
 
-# @testset "Shifted Legendre" begin
-#     T = Float64
-#     P = ShiftedLegendre{T}
+@testset "Shifted Legendre" begin
+    T = Float64
+    P = ShiftedLegendre{T}
 
-#     p0 = P([1])  # 1
-#     p1 = P([0, 1]) # x
-#     p2 = P([0, 0, 1]) #
-#     p3 = P([0, 0, 0, 1]) #
-#     p4 = P([0, 0, 0, 0, 1]) #
+    p0 = P([1])  # 1
+    p1 = P([0, 1]) # x
+    p2 = P([0, 0, 1]) #
+    p3 = P([0, 0, 0, 1]) #
+    p4 = P([0, 0, 0, 0, 1]) #
 
-#     @testset for x in range(0, stop=1, length=5)
-#         @test_broken p0(x) ≈ 1
-#         @test_broken p1(x) ≈ 2x - 1
-#         @test_broken p2(x) ≈ 6x^2 - 6x + 1
-#         @test_broken p3(x) ≈ 20x^3 - 30x^2 + 12x - 1
-#         @test_broken p4(x) ≈ 70x^4 - 140x^3 + 90x^2 - 20x + 1
-#     end
-# end
+    @testset for x in range(0, stop=1, length=5)
+        @test p0(x) ≈ 1
+        @test p1(x) ≈ 2x - 1
+        @test p2(x) ≈ 6x^2 - 6x + 1
+        @test p3(x) ≈ 20x^3 - 30x^2 + 12x - 1
+        @test p4(x) ≈ 70x^4 - 140x^3 + 90x^2 - 20x + 1
+    end
+end
 
 @testset "Laguerre" begin
     P = Laguerre{0}
