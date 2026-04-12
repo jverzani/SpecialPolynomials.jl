@@ -134,7 +134,7 @@ An(P::Type{<:ShiftedLegendreBasis}, n::Int) = 2An(LegendreBasis, n)
 Bn(P::Type{<:ShiftedLegendreBasis}, n::Int) = -An(LegendreBasis, n) + Bn(LegendreBasis, n)
 
 function Polynomials.derivative(
-    p::P
+    p::P,
 ) where {B<:ShiftedLegendreBasis,T,X,P<:AbstractUnivariatePolynomial{B,T,X}}
     hasnan(p) && return ⟒(P){T,X}(T[NaN])
 
