@@ -228,12 +228,9 @@ macro register_orthonormal(B)
         SpecialPolynomials.B̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} = B̃n(ϟ(B), v)
         SpecialPolynomials.C̃n(B::Type{<:$orthonormal}, n::Int) = C̃n(ϟ(B), n)
         SpecialPolynomials.C̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} = C̃n(ϟ(B), v)
-        SpecialPolynomials.ẫn(B::Type{<:$orthonormal}, v::Val{N}) where {N} =
-            ẫn(ϟ(B), v)
-        SpecialPolynomials.b̂̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} =
-            b̂̃n(ϟ(B), v)
-        SpecialPolynomials.ĉ̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} =
-            ĉ̃n(ϟ(B), v)
+        SpecialPolynomials.ẫn(B::Type{<:$orthonormal}, v::Val{N}) where {N} = ẫn(ϟ(B), v)
+        SpecialPolynomials.b̂̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} = b̂̃n(ϟ(B), v)
+        SpecialPolynomials.ĉ̃n(B::Type{<:$orthonormal}, v::Val{N}) where {N} = ĉ̃n(ϟ(B), v)
     end
 end
 
