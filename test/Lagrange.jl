@@ -95,8 +95,7 @@ end
     xs, λs = SpecialPolynomials.gauss_nodes_weights(P, n+1)
     ws = [sqrt((1-xⱼ^2) * wⱼ) for (xⱼ, wⱼ) in zip(xs, λs)]
     for j in 0:n
-        ;
-        ws[1 + j] = (-1)^j * ws[1 + j];
+        ws[1 + j] = (-1)^j * ws[1 + j]
     end
     xs′, ws′ = SpecialPolynomials.lagrange_barycentric_nodes_weights(P, n)
     @test (ws / first(ws)) ≈ (ws′/first(ws′)) # up to a constant
