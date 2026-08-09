@@ -154,31 +154,21 @@ function connection_m(
 ) where {P<:FallingFactorialBasis,Q<:AbstractCDOPBasis}
     ā, b̄, c̄, d̄, ē = abcde(Q)
 
-    c₀ =
-        (2m * ā + ā + d̄) *
-        (2m * ā + 3ā + d̄) *
-        (2m * ā + 2ā + d̄)^2 *
-        (2m * ā + d̄) *
-        (n - m)
+    c₀ = (2m * ā + ā + d̄) * (2m * ā + 3ā + d̄) * (2m * ā + 2ā + d̄)^2 * (2m * ā + d̄) * (n - m)
 
     c₁ = (2m * ā + ā + d̄) * (2m * ā + 3ā + d̄) * (2m * ā + 2ā + d̄) * (m + 1)
     c₁a = 2m^2 * n * ā^2 - 2m^2 * ā^2
     c₁a +=
-        m^2 * ā * d̄ + 2m^2 * ā * b̄ + 2m * n * ā^2 + 2m * n * ā * d̄ - 2m * ā^2 -
-        m * ā * d̄ +
+        m^2 * ā * d̄ + 2m^2 * ā * b̄ + 2m * n * ā^2 + 2m * n * ā * d̄ - 2m * ā^2 - m * ā * d̄ +
         2m * ā * b̄ +
         m * d̄^2
-    c₁a +=
-        2m * d̄ * b̄ + n * ā * d̄ + 2n * ā * ē - n * d̄ * b̄ - ā * d̄ +
-        d̄ * b̄ +
-        d̄ * ē
+    c₁a += 2m * d̄ * b̄ + n * ā * d̄ + 2n * ā * ē - n * d̄ * b̄ - ā * d̄ + d̄ * b̄ + d̄ * ē
     c₁ *= c₁a
 
     c₂ = (m + 1) * (2m * ā + d̄)
     c₂a = m^4 * ā^3 + 4m^3 * ā^3 + 2m^3 * ā^2 * d̄ + 6m^2 * ā^3 + 6m * ā^2 * d̄
     c₂a +=
-        4m^2 * ā^2 * c̄ + 2m^2 * ā^2 * ē + m^2 * ā * d̄^2 - m^2 * ā * d̄ * b̄ -
-        m^2 * ā * b̄^2 +
+        4m^2 * ā^2 * c̄ + 2m^2 * ā^2 * ē + m^2 * ā * d̄^2 - m^2 * ā * d̄ * b̄ - m^2 * ā * b̄^2 +
         4m * ā^3 +
         6m^2 * ā^2 * d̄
     c₂a +=
@@ -192,9 +182,7 @@ function connection_m(
         4ā^2 * c̄ +
         2ā^2 * ē +
         ā * d̄^2
-    c₂a +=
-        -ā * d̄ * b̄ + 4ā * d̄ * c̄ + 2 * ā * d̄ * ē - ā * b̄^2 + ā * ē^2 -
-        d̄^2 * b̄ + d̄^2 * c̄
+    c₂a += -ā * d̄ * b̄ + 4ā * d̄ * c̄ + 2 * ā * d̄ * ē - ā * b̄^2 + ā * ē^2 - d̄^2 * b̄ + d̄^2 * c̄
     c₂a += -d̄ * b̄^2 - d̄ * b̄ * ē
     c₂ *= c₂a * (m + 2) * (m * ā + n * ā + ā + d̄)
 

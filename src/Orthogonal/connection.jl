@@ -120,16 +120,15 @@ function connection_m(
 
     c1 = -d ⋅ b ⋅ n ⋅ d̄ + 2d ⋅ a ⋅ m² ⋅ b + d ⋅ b ⋅ d̄ + 2d ⋅ a ⋅ m ⋅ b + 2d ⋅ ē ⋅ n ⋅ a
     c1 +=
-        d ⋅ d̄ ⋅ ē + 2d ⋅ d̄ ⋅ b ⋅ m - m ⋅ b ⋅ d̄² - e ⋅ d̄² - 4a² ⋅ m² ⋅ e -
-        m² ⋅ a ⋅ b ⋅ d̄ + b ⋅ n ⋅ d̄ ⋅ a - 2e ⋅ d̄ ⋅ a
+        d ⋅ d̄ ⋅ ē + 2d ⋅ d̄ ⋅ b ⋅ m - m ⋅ b ⋅ d̄² - e ⋅ d̄² - 4a² ⋅ m² ⋅ e - m² ⋅ a ⋅ b ⋅ d̄ +
+        b ⋅ n ⋅ d̄ ⋅ a - 2e ⋅ d̄ ⋅ a
     c1 +=
         -4a² ⋅ m ⋅ e - 4e ⋅ d̄ ⋅ a ⋅ m + 2m² ⋅ a² ⋅ ē + 2ē ⋅ a² ⋅ n² - 2ē ⋅ a² ⋅ n -
         m ⋅ a ⋅ b ⋅ d̄ + 2m ⋅ d̄ ⋅ ē ⋅ a
     c1 += 2m ⋅ ē ⋅ a² - b ⋅ n² ⋅ d̄ ⋅ a
     c1 *= (d̄ + 2a ⋅ m + 2a) ⋅ (m + 1) ⋅ (d̄ + a + 2a ⋅ m) ⋅ (d̄ + 3a + 2a ⋅ m)
 
-    c2 =
-        -(d̄ + 2a ⋅ m) ⋅ (m + 1) ⋅ (-a ⋅ m - 2a + a ⋅ n - d̄ + d) ⋅ (a ⋅ m + a ⋅ n + a + d̄)
+    c2 = -(d̄ + 2a ⋅ m) ⋅ (m + 1) ⋅ (-a ⋅ m - 2a + a ⋅ n - d̄ + d) ⋅ (a ⋅ m + a ⋅ n + a + d̄)
     c2a =
         a ⋅ b² ⋅ m² - 4a² ⋅ m² ⋅ c - 8a² ⋅ m ⋅ c + 2a ⋅ m ⋅ b² - 4a ⋅ d̄ ⋅ m ⋅ c +
         m ⋅ b² ⋅ d̄ - 4a ⋅ d̄ ⋅ c - a ⋅ ē² + a ⋅ b² - c ⋅ d̄²
@@ -167,22 +166,18 @@ function connection_m(
     ā, b̄, c̄, d̄, ē = abcde(Q)
     ā², b̄², c̄², d̄², ē², m², n² = ā^2, b̄^2, c̄^2, d̄^2, ē^2, m^2, n^2
 
-    c0 =
-        (n - m) ⋅ (d̄ + 2ā ⋅ m) ⋅ (d̄ + 3ā + 2ā ⋅ m) ⋅ (d̄ + ā + 2ā ⋅ m) ⋅
-        (d̄ + 2ā ⋅ m + 2ā)^2
+    c0 = (n - m) ⋅ (d̄ + 2ā ⋅ m) ⋅ (d̄ + 3ā + 2ā ⋅ m) ⋅ (d̄ + ā + 2ā ⋅ m) ⋅ (d̄ + 2ā ⋅ m + 2ā)^2
 
     c1 =
-        (
-            d̄ ⋅ ē + b̄ ⋅ d̄ + 2d̄ ⋅ b̄ ⋅ m + 2ā ⋅ m² ⋅ b̄ + 2ā ⋅ m ⋅ b̄ + 2ē ⋅ ā ⋅ n -
-            d̄ ⋅ b̄ ⋅ n
-        ) ⋅ (d̄ + 2ā ⋅ m + 2ā)
+        (d̄ ⋅ ē + b̄ ⋅ d̄ + 2d̄ ⋅ b̄ ⋅ m + 2ā ⋅ m² ⋅ b̄ + 2ā ⋅ m ⋅ b̄ + 2ē ⋅ ā ⋅ n - d̄ ⋅ b̄ ⋅ n) ⋅
+        (d̄ + 2ā ⋅ m + 2ā)
     c1 *= (m + 1) ⋅ (d̄ + 3ā + 2ā ⋅ m) ⋅ (d̄ + ā + 2ā ⋅ m)
 
     c2 = -(m + 2)
     c2a = -4ā² ⋅ c̄ ⋅ m²
     c2a +=
-        ā ⋅ b̄² ⋅ m² + 2ā ⋅ b̄² ⋅ m - 4ā ⋅ c̄ ⋅ m ⋅ d̄ - 8ā² ⋅ c̄ ⋅ m + m ⋅ b̄² ⋅ d̄ -
-        ā ⋅ ē^2 - d̄² ⋅ c̄ + b̄ ⋅ ē ⋅ d̄ - 4ā² ⋅ c̄
+        ā ⋅ b̄² ⋅ m² + 2ā ⋅ b̄² ⋅ m - 4ā ⋅ c̄ ⋅ m ⋅ d̄ - 8ā² ⋅ c̄ ⋅ m + m ⋅ b̄² ⋅ d̄ - ā ⋅ ē^2 -
+        d̄² ⋅ c̄ + b̄ ⋅ ē ⋅ d̄ - 4ā² ⋅ c̄
     c2a += -4ā ⋅ c̄ ⋅ d̄ + ā ⋅ b̄² + b̄² ⋅ d̄
     c2 *= c2a ⋅ (ā ⋅ m + ā ⋅ n + ā + d̄) ⋅ (m + 1) ⋅ (d̄ + 2ā ⋅ m)
 
